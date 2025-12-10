@@ -1,13 +1,11 @@
 from fastapi import FastAPI
-import asyncio
+from app.routers import auth  # <--- Import the router
 
 app = FastAPI(title="AI Career Partner")
 
+# Include the Auth Router
+app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
+
 @app.get("/")
 async def root():
-    return {"message": "System Online", "status": "active"}
-
-@app.get("/test-db")
-async def test_db():
-    # We will replace this with real DB code later
-    return {"database": "Connected (Simulation)"}
+    return {"message": "System Online"}
