@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  # 1. Your FastAPI Application
+  backend:
+    build: .
+    container_name: career_backend
+    ports:
+      - "8000:8000"  # You can access API at localhost:8000
+    volumes:
+      - .:/app       # SYNC: Changes on your PC -> update Container immediately
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://admin:password123@db:5432/career_db
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - db
+      - redis
+
+  # 2. The Database (With Vector Support)
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: career_db
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=password123
+      - POSTGRES_DB=career_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # 3. Redis (For Task Queue)
+  redis:
+    image: redis:alpine
+    container_name: career_redis
+    ports:
+      - "6379:6379"
+
+volumes:
+  postgres_data:

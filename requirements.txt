@@ -1,0 +1,9 @@
+fastapi>=0.110.0
+uvicorn[standard]
+sqlmodel              # ORM
+asyncpg               # Async Postgres driver
+pydantic-settings     # Config management
+python-multipart      # For file uploads
+celery                # Background tasks
+redis                 # Connector for Redis
+requests              # Simple HTTP requests
