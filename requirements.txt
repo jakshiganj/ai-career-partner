@@ -11,3 +11,7 @@ requests              # Simple HTTP requests
 passlib[bcrypt]
 bcrypt==4.0.1
 python-jose[cryptography]
+pgvector             # PostgreSQL vector extension
+pdfplumber           # PDF text extraction
+google-generativeai  # Google Gemini API
+sentence-transformers # Text embeddings

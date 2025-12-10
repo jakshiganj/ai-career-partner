@@ -8,7 +8,8 @@ from alembic import context
 # 1. IMPORT YOUR MODELS
 from app.models.user import User
 from app.models.profile import CandidateProfile
-# from app.models.resume import Resume  # <--- Uncomment this later
+from app.models.resume import Resume 
+from app.models.job import Job
 
 # 2. CONFIG SETUP
 config = context.config
