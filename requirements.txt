@@ -13,5 +13,9 @@ bcrypt==4.0.1
 python-jose[cryptography]
 pgvector             # PostgreSQL vector extension
 pdfplumber           # PDF text extraction
-google-generativeai  # Google Gemini API
+google-genai         # Google Gemini API (New SDK)
 sentence-transformers # Text embeddings
+google-adk            # Google Agent Development Kit
+langgraph             # State machine for agents
+langchain-google-genai # LangChain integration for Gemini
+pytest                # Testing framework

@@ -2,12 +2,21 @@ from sqlmodel import SQLModel, Field
 from typing import Optional
 from datetime import datetime
 
-class User(SQLModel, table=True):
+class UserBase(SQLModel):
+    email: str = Field(unique=True, index=True)
+    full_name: str
+    is_active: bool = Field(default=True)
+
+class UserCreate(UserBase):
+    password: str
+
+class UserRead(UserBase):
+    id: int
+    created_at: datetime
+
+class User(UserBase, table=True):
     __tablename__ = "users"
 
     id: Optional[int] = Field(default=None, primary_key=True)
-    email: str = Field(unique=True, index=True)
     password_hash: str
-    full_name: str
     created_at: datetime = Field(default_factory=datetime.utcnow)
-    is_active: bool = Field(default=True)

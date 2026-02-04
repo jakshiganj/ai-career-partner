@@ -1,18 +1,11 @@
-import google.generativeai as genai
-import os
 import json
-
-# 1. Configure the API
-GEMINI_KEY = os.getenv("GEMINI_API_KEY")
-genai.configure(api_key=GEMINI_KEY)
+from app.agents.gemini_client import gemini_client
 
 def analyze_cv_with_gemini(cv_text: str) -> dict:
     """
     Sends CV text to Gemini and asks for a structured critique.
     """
-    model = genai.GenerativeModel('gemini-2.5-flash')
-
-    # 2. The "System Prompt" - This tells the AI how to behave
+    
     prompt = f"""
     You are an expert strict Career Coach for Computer Science students. 
     Analyze the following resume text. 
@@ -34,15 +27,10 @@ def analyze_cv_with_gemini(cv_text: str) -> dict:
     }}
     """
 
+    response_text = gemini_client.generate_content(model='gemini-2.5-flash', prompt=prompt)
+
     try:
-        # 3. Call the API
-        response = model.generate_content(prompt)
-        
-        # 4. Clean up the response (Gemini sometimes adds ```json ... ```)
-        clean_text = response.text.replace("```json", "").replace("```", "").strip()
-        
+        clean_text = response_text.replace("```json", "").replace("```", "").strip()
         return json.loads(clean_text)
-        
     except Exception as e:
-        print(f"AI Error: {e}")
-        return {"error": "Failed to analyze CV", "details": str(e)}
+        return {"error": "Failed to analyze CV", "details": str(e), "raw": response_text}

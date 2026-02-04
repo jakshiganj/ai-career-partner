@@ -1,4 +1,8 @@
 from fastapi import FastAPI
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from app.routers import auth  
 from app.routers import cv
 from app.routers import matcher
