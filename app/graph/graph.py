@@ -9,7 +9,8 @@ from app.agents.graph_rag.agent import graph_rag_agent
 def cv_critic_node(state: AgentState):
     cv_text = state['candidate_profile'].get('raw_cv', '')
     critique = analyze_cv_with_gemini(cv_text)
-    return {"messages": [f"CV Score: {critique.get('score')}"]}
+    # Update the state with the full critique for other nodes to use
+    return {"critique": critique, "messages": [f"CV Score: {critique.get('score')}"]}
 
 def graph_rag_node(state: AgentState):
     skills = state['candidate_profile'].get('skills', [])

@@ -21,7 +21,13 @@ def test_signup_logic():
         print("Attempting User.from_orm(user_create)...")
         # SQLModel 0.0.16+ uses from_orm or model_validate depending on Pydantic version
         # Let's see if this fails
-        user = User.from_orm(user_create)
+        # This line will raise a validation error because `password_hash` is missing.
+        # The test should follow the router's logic to construct the User model.
+        user = User(
+            email=user_create.email,
+            full_name=user_create.full_name,
+            password_hash=get_password_hash(user_create.password)
+        )
         print(f"User model created: {user}")
 
         # 2. Test Hashing
