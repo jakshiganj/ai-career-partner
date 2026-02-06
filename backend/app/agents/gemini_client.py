@@ -11,14 +11,15 @@ class GeminiClient:
             print("WARNING: GEMINI_API_KEY not set. Agents will use mock responses.")
             self.client = None
 
-    def generate_content(self, model: str, prompt: str) -> str:
+    def generate_content(self, model: str, prompt: str, config: dict = None) -> str:
         if not self.client:
             return '{"mock": "response", "details": "Gemini Key missing"}'
         
         try:
              response = self.client.models.generate_content(
                 model=model,
-                contents=prompt
+                contents=prompt,
+                config=config
             )
              return response.text
         except Exception as e:
