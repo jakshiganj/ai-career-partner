@@ -25,6 +25,7 @@ async def match_job_to_cv(
         
     # 2. Generate Embeddings (if not already done)
     if cv.embedding is None: 
+        cv.embedding = get_embedding(cv.content_text)
         session.add(cv)
         await session.commit()
     
