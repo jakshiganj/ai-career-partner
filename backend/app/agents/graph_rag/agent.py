@@ -33,8 +33,8 @@ class GraphRAGAgent:
                         result = session.run(query, skill=skill)
                         for record in result:
                             related_skills.add(record["related_skill"])
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        print(f"Error querying Neo4j for skill '{skill}': {e}") # Replace with logging
         except Exception as e:
             print(f"Warning: Neo4j not reachable. Using fallback data. (Error: {str(e)[:50]}...)")
             # Fallback if DB is completely down
