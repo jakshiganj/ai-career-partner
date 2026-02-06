@@ -19,3 +19,5 @@ google-adk            # Google Agent Development Kit
 langgraph             # State machine for agents
 langchain-google-genai # LangChain integration for Gemini
 pytest                # Testing framework
+neo4j                 # Graph Database driver
+duckduckgo-search     # Web Search tool
