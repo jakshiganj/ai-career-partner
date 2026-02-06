@@ -22,7 +22,7 @@ async def signup(user_create: UserCreate, session: AsyncSession = Depends(get_se
     # 2. Hash the password and create User instance
     hashed_password = get_password_hash(user_create.password)
     # Exclude 'password' from the source data, add 'password_hash'
-    user_data = user_create.dict(exclude={"password"})
+    user_data = user_create.model_dump(exclude={"password"})
     user = User(**user_data, password_hash=hashed_password)
     
     # 3. Save to Database
