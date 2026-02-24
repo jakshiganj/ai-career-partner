@@ -11,6 +11,7 @@ from app.models.profile import CandidateProfile
 from app.models.resume import Resume 
 from app.models.job import Job
 from app.models.task_state import TaskState, DecisionAudit
+from app.models.esco import EscoSkill, EscoRelation
 
 # 2. CONFIG SETUP
 config = context.config

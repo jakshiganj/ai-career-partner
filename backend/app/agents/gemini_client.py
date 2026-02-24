@@ -25,4 +25,21 @@ class GeminiClient:
         except Exception as e:
             return json.dumps({"error": str(e)})
 
+    def embed_content(self, model: str, content: str) -> list[float]:
+        if not self.client:
+            return [0.0] * 768
+        
+        try:
+            response = self.client.models.embed_content(
+                model=model,
+                contents=content
+            )
+            # The structure for google-genai SDK 
+            if hasattr(response, 'embeddings') and len(response.embeddings) > 0:
+                return response.embeddings[0].values
+            return [0.0] * 768
+        except Exception as e:
+            print(f"Embedding error: {str(e)}")
+            return [0.0] * 768
+
 gemini_client = GeminiClient()

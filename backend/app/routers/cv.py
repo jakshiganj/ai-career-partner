@@ -41,9 +41,7 @@ async def analyze_cv(cv_id: int, session: AsyncSession = Depends(get_session)):
         raise HTTPException(status_code=404, detail="CV not found")
         
     # 2. Send the text to the AI Agent
-    # Note: If analyze_cv_with_gemini is blocking, it might block the event loop.
-    # Assuming it's fine for now or handles concurrency internally.
-    critique_result = analyze_cv_with_gemini(cv.content_text)
+    critique_result = await analyze_cv_with_gemini(cv.content_text, session)
     
     # 3. (Optional) Save the result to the DB? 
     # For now, just return it to the user

@@ -26,7 +26,7 @@ export default function DashboardPage() {
             if (fb.error) {
                 feedbackString = `Error: ${fb.error}\nDetails: ${fb.details}`;
             } else if (fb.score !== undefined) {
-                feedbackString = `Score: ${fb.score}/100\n\nSummary: ${fb.summary}\n\nStrong Points:\n${fb.strong_points?.map((p: string) => `- ${p}`).join('\n') || 'None'}\n\nWeaknesses:\n${fb.weaknesses?.map((w: any) => `- ${w.point}: ${w.suggestion}`).join('\n') || 'None'}\n\nMissing Keywords:\n${fb.missing_keywords?.join(', ') || 'None'}`;
+                feedbackString = `🎯 Score: ${fb.score}/100\n\n📌 Summary: ${fb.summary}\n\n✅ Matching Core Skills:\n${fb.matching_skills?.map((p: string) => `  • ${p}`).join('\n') || 'None'}\n\n⚠️ Missing Critical Skills:\n${fb.missing_critical_skills?.map((w: string) => `  • ${w}`).join('\n') || 'None'}\n\n🔄 Transferable Skills:\n${fb.transferable_skills?.map((t: string) => `  • ${t}`).join('\n') || 'None'}`;
             } else {
                 feedbackString = JSON.stringify(fb, null, 2);
             }

@@ -105,9 +105,7 @@ class SupervisorAgent:
         )
 
         try:
-            cv_result = await asyncio.get_event_loop().run_in_executor(
-                None, analyze_cv_with_gemini, cv_text
-            )
+            cv_result = await analyze_cv_with_gemini(cv_text, self.session)
             is_paused, missing = _detect_input_required(str(cv_result))
             await _log_decision(
                 self.session, self.task_state.id, "cv_critic",

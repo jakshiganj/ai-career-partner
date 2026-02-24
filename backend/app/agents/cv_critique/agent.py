@@ -1,35 +1,48 @@
 import json
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.agents.gemini_client import gemini_client
+from app.retrieval.graph_rag import fetch_skill_context
 
-def analyze_cv_with_gemini(cv_text: str) -> dict:
+async def analyze_cv_with_gemini(cv_text: str, session: AsyncSession) -> dict:
     """
-    Sends CV text to Gemini and asks for a structured critique, 
-    tailored for Computer Science undergrads/graduates.
+    1. Quick keyword extraction
+    2. Fetch GraphRAG context for those keywords
+    3. Final gap analysis against general SWE roles
     """
     
-    system_instruction = """
-    You are an expert Technical Recruiter and Career Coach for Computer Science students. 
+    # 1. Quick LLM call to extract top 3-5 keywords
+    extract_prompt = f"Extract the top 5 most important technical skills from this CV as a simple comma-separated list without extras:\n{cv_text[:2000]}"
+    try:
+        keywords_str = gemini_client.generate_content('gemini-2.5-flash', extract_prompt)
+    except Exception:
+        keywords_str = "Python, React, SQL"
+        
+    # 2. Fetch Graph Context from ESCO
+    context = await fetch_skill_context(keywords_str, session, limit=5)
+    
+    # 3. Final Gap Analysis Prompt
+    system_instruction = f"""
+    You are an expert Technical Recruiter and Career Coach for Software Engineering roles. 
     Analyze the following resume text. 
     
-    Focus on:
-    1. **Action Verbs**: Flag weak words like "Worked on", "Helped", "Participated". Suggest strong alternatives like "Engineered", "Deployed", "Orchestrated".
-    2. **Metrics**: Identify claims that lack quantification (e.g., "Improved performance" vs "Reduced latency by 40%").
-    3. **Tech Stack**: ensure modern tools are highlighted (e.g., Docker, Kubernetes, React, FastAPI).
-    4. **Formatting**: Infer if the structure is logical (Education -> Skills -> Experience -> Projects).
+    We also have the following ESCO Knowledge Graph context for the user's base skills:
+    {context}
+    
+    Using this graph context:
+    1. Identify `matching_skills` that the user has which align with modern SWE demands.
+    2. Identify `missing_critical_skills` they should learn based on the 'broader' or 'transversal' skills in the graph context.
+    3. Identify `transferable_skills` from their background.
 
     Return the response ONLY as valid JSON in this format:
-    {
+    {{
         "score": 85,
-        "summary": "Strong technical skills but lacks leadership examples.",
-        "weaknesses": [
-            { "point": "Used 'helped' multiple times", "suggestion": "Use 'collaborated' or 'spearheaded'" },
-            { "point": "Project X lacks metrics", "suggestion": "Add user count or performance gain" }
-        ],
-        "strong_points": ["Good use of modern frameworks", "Clear education section"],
-        "missing_keywords": ["CI/CD", "Unit Testing", "System Design"]
-    }
+        "summary": "Strong core backend skills but missing cloud deployment tools.",
+        "matching_skills": ["Python", "FastAPI"],
+        "missing_critical_skills": ["Docker", "Kubernetes"],
+        "transferable_skills": ["Project Management", "Agile methodologies"]
+    }}
     """
-
+    
     response_text = gemini_client.generate_content(
         model='gemini-2.5-flash', 
         prompt=cv_text,
