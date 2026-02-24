@@ -21,3 +21,5 @@ langchain-google-genai # LangChain integration for Gemini
 pytest                # Testing framework
 neo4j                 # Graph Database driver
 duckduckgo-search     # Web Search tool
+beautifulsoup4        # HTML parsing (used by market trends scraper)
+httpx                 # Async HTTP client

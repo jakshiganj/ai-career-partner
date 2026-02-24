@@ -2,21 +2,25 @@ version: '3.8'
 
 services:
   # 1. Your FastAPI Application
+  # NOTE: Use `docker compose --profile docker up` to also run the backend in Docker.
+  # For local development, run `uvicorn app.main:app --reload` directly instead
+  # and use `docker compose up` only for db, redis, neo4j.
   backend:
+    profiles: [docker]
     build: ./backend
     container_name: career_backend
     ports:
-      - "8000:8000"  # You can access API at localhost:8000
+      - "8000:8000"
     volumes:
       - ./backend:/app       # SYNC: Changes on your PC -> update Container immediately
+    env_file:
+      - ./backend/.env
     environment:
       - DATABASE_URL=postgresql+asyncpg://admin:password123@db:5432/career_db
       - REDIS_URL=redis://redis:6379/0
     depends_on:
       - db
       - redis
-    env_file:
-      - ./backend/.env
 
   # 2. The Database (With Vector Support)
   db:

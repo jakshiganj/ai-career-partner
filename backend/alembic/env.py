@@ -10,6 +10,7 @@ from app.models.user import User
 from app.models.profile import CandidateProfile
 from app.models.resume import Resume 
 from app.models.job import Job
+from app.models.task_state import TaskState, DecisionAudit
 
 # 2. CONFIG SETUP
 config = context.config
