@@ -1,0 +1,25 @@
+fastapi>=0.110.0
+uvicorn[standard]
+sqlmodel              # ORM
+asyncpg               # Async Postgres driver
+alembic                # Database migrations
+pydantic-settings     # Config management
+python-multipart      # For file uploads
+celery                # Background tasks
+redis                 # Connector for Redis
+requests              # Simple HTTP requests
+passlib[bcrypt]
+bcrypt==4.0.1
+python-jose[cryptography]
+pgvector             # PostgreSQL vector extension
+pdfplumber           # PDF text extraction
+google-genai         # Google Gemini API (New SDK)
+sentence-transformers # Text embeddings
+google-adk            # Google Agent Development Kit
+langgraph             # State machine for agents
+langchain-google-genai # LangChain integration for Gemini
+pytest                # Testing framework
+neo4j                 # Graph Database driver
+duckduckgo-search     # Web Search tool
+beautifulsoup4        # HTML parsing (used by market trends scraper)
+httpx                 # Async HTTP client
