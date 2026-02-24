@@ -18,10 +18,20 @@ export default function DashboardPage() {
     const [running, setRunning] = useState(false);
     const [pipelineMsg, setPipelineMsg] = useState<string | null>(null);
 
-    function handleCVResult(_id: number, fb: string, preview: string) {
-
+    function handleCVResult(_id: number, fb: any, preview: string) {
         setCvText(preview);
-        setFeedback(fb);
+
+        let feedbackString = fb;
+        if (typeof fb === 'object' && fb !== null) {
+            if (fb.error) {
+                feedbackString = `Error: ${fb.error}\nDetails: ${fb.details}`;
+            } else if (fb.score !== undefined) {
+                feedbackString = `Score: ${fb.score}/100\n\nSummary: ${fb.summary}\n\nStrong Points:\n${fb.strong_points?.map((p: string) => `- ${p}`).join('\n') || 'None'}\n\nWeaknesses:\n${fb.weaknesses?.map((w: any) => `- ${w.point}: ${w.suggestion}`).join('\n') || 'None'}\n\nMissing Keywords:\n${fb.missing_keywords?.join(', ') || 'None'}`;
+            } else {
+                feedbackString = JSON.stringify(fb, null, 2);
+            }
+        }
+        setFeedback(feedbackString);
     }
 
     function addSkill(e: React.KeyboardEvent) {

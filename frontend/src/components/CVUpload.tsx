@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import { uploadCV, analyzeCV } from '../api/cv';
 
 interface Props {
-    onResult?: (cvId: number, feedback: string, preview: string) => void;
+    onResult?: (cvId: number, feedback: any, preview: string) => void;
 }
 
 export default function CVUpload({ onResult }: Props) {
