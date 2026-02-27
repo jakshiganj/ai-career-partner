@@ -1,0 +1,192 @@
+﻿alembic : INFO  [alembic
+.runtime.migration] 
+Context impl 
+PostgresqlImpl.
+At line:1 char:1
++ alembic revision 
+--autogenerate -m "Add 
+UUID and new models" 
+*>&1 | O ...
++ ~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo      
+        : NotSpecified  
+  : (INFO  [alembic..   
+ ..PostgresqlImpl.:S    
+tring) [], RemoteEx    
+ception
+    + FullyQualifiedErr 
+   orId : NativeComman  
+  dError
+ 
+INFO  [alembic.runtime.m
+igration] Will assume 
+transactional DDL.
+INFO  [alembic.runtime.p
+lugins] setting up 
+autogenerate plugin alem
+bic.autogenerate.schemas
+INFO  [alembic.runtime.p
+lugins] setting up 
+autogenerate plugin alem
+bic.autogenerate.tables
+INFO  [alembic.runtime.p
+lugins] setting up 
+autogenerate plugin alem
+bic.autogenerate.types
+INFO  [alembic.runtime.p
+lugins] setting up 
+autogenerate plugin alem
+bic.autogenerate.constra
+ints
+INFO  [alembic.runtime.p
+lugins] setting up 
+autogenerate plugin alem
+bic.autogenerate.default
+s
+INFO  [alembic.runtime.p
+lugins] setting up 
+autogenerate plugin alem
+bic.autogenerate.comment
+s
+INFO  [alembic.autogener
+ate.compare.tables] 
+Detected added table 
+'candidateprofile'
+INFO  [alembic.ddl.postg
+resql] Detected 
+sequence named 
+'profiles_id_seq' as 
+owned by integer column 
+'profiles(id)', 
+assuming SERIAL and 
+omitting
+INFO  [alembic.autogener
+ate.compare.tables] 
+Detected removed table 
+'profiles'
+INFO  [alembic.ddl.postg
+resql] Detected 
+sequence named 'decision
+_audits_id_seq' as 
+owned by integer column 
+'decision_audits(id)', 
+assuming SERIAL and 
+omitting
+INFO  [alembic.ddl.postg
+resql] Detected 
+sequence named 
+'resumes_id_seq' as 
+owned by integer column 
+'resumes(id)', assuming 
+SERIAL and omitting
+INFO  [alembic.ddl.postg
+resql] Detected 
+sequence named 
+'esco_relations_id_seq' 
+as owned by integer 
+column 
+'esco_relations(id)', 
+assuming SERIAL and 
+omitting
+INFO  [alembic.ddl.postg
+resql] Detected 
+sequence named 
+'esco_skills_id_seq' as 
+owned by integer column 
+'esco_skills(id)', 
+assuming SERIAL and 
+omitting
+INFO  [alembic.ddl.postg
+resql] Detected 
+sequence named 
+'jobs_id_seq' as owned 
+by integer column 
+'jobs(id)', assuming 
+SERIAL and omitting
+INFO  [alembic.ddl.postg
+resql] Detected 
+sequence named 
+'task_states_id_seq' as 
+owned by integer column 
+'task_states(id)', 
+assuming SERIAL and 
+omitting
+INFO  [alembic.ddl.postg
+resql] Detected 
+sequence named 
+'users_id_seq' as owned 
+by integer column 
+'users(id)', assuming 
+SERIAL and omitting
+INFO  [alembic.autogener
+ate.compare.types] 
+Detected type change 
+from INTEGER() to 
+Uuid() on 
+'decision_audits.id'
+INFO  [alembic.autogener
+ate.compare.types] 
+Detected type change 
+from INTEGER() to 
+Uuid() on 'decision_audi
+ts.task_state_id'
+INFO  [alembic.autogener
+ate.compare.types] 
+Detected type change 
+from INTEGER() to 
+Uuid() on 'esco_relation
+s.source_skill_id'
+INFO  [alembic.autogener
+ate.compare.types] 
+Detected type change 
+from INTEGER() to 
+Uuid() on 'esco_relation
+s.target_skill_id'
+INFO  [alembic.autogener
+ate.compare.types] 
+Detected type change 
+from INTEGER() to 
+Uuid() on 
+'esco_relations.id'
+INFO  [alembic.autogener
+ate.compare.types] 
+Detected type change 
+from INTEGER() to 
+Uuid() on 
+'esco_skills.id'
+INFO  [alembic.autogener
+ate.compare.types] 
+Detected type change 
+from INTEGER() to 
+Uuid() on 'jobs.id'
+INFO  [alembic.autogener
+ate.compare.types] 
+Detected type change 
+from INTEGER() to 
+Uuid() on 'resumes.id'
+INFO  [alembic.autogener
+ate.compare.types] 
+Detected type change 
+from INTEGER() to 
+Uuid() on 
+'resumes.user_id'
+INFO  [alembic.autogener
+ate.compare.types] 
+Detected type change 
+from INTEGER() to 
+Uuid() on 
+'task_states.id'
+INFO  [alembic.autogener
+ate.compare.types] 
+Detected type change 
+from INTEGER() to 
+Uuid() on 
+'task_states.user_id'
+INFO  [alembic.autogener
+ate.compare.types] 
+Detected type change 
+from INTEGER() to 
+Uuid() on 'users.id'
+Generating C:\Users\jaksh\ai-career-partner\backend\alembic\versions\854a008eca1b_add_uuid_and_new_models.py ...  done

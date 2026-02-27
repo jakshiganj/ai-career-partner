@@ -7,17 +7,23 @@ export interface PipelineRunPayload {
 }
 
 export async function runPipeline(payload: PipelineRunPayload) {
-    const { data } = await client.post('/pipeline/run', payload);
-    return data as { message: string; task_state_id: number; subscribe_at: string };
+    const { data } = await client.post('/pipeline/start', {
+        cv_text: payload.cv_text,
+        job_description: payload.goal, // Frontend "goal" maps to Backend "job_description"
+        options: {
+            run_interview_prep: true,
+            tone: "formal"
+        }
+    });
+    return data as { status: string; pipeline_id: string };
 }
 
-export async function getTaskState(taskId: number) {
-    const { data } = await client.get(`/pipeline/${taskId}`);
+export async function getTaskState(pipelineId: string) {
+    const { data } = await client.get(`/pipeline/${pipelineId}/status`);
     return data as {
-        id: number;
         status: string;
-        current_agent: string | null;
-        missing_fields: string | null;
-        updated_at: string;
+        current_stage: number;
+        completed_stages: number[];
+        error_log: string[];
     };
 }

@@ -1,12 +1,13 @@
 from sqlmodel import SQLModel, Field, Column
 from typing import Optional
 from datetime import datetime
+import uuid
 from pgvector.sqlalchemy import Vector
 
 class Job(SQLModel, table=True):
     __tablename__ = "jobs"
 
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
     title: str
     description_text: str
     

@@ -10,8 +10,7 @@ from app.routers import matcher
 from app.routers import interview
 
 # Import models so SQLModel creates the tables
-from app.models import user, resume, job, profile  # noqa: F401
-from app.models import task_state  # noqa: F401
+from app.models import user, resume, job, profile, task_state, pipeline, cv_history, job_market, interview_roadmap, preference, esco  # noqa: F401
 
 app = FastAPI(title="AI Career Partner")
 
@@ -33,7 +32,19 @@ from app.routers import agents
 app.include_router(agents.router, prefix="/agents", tags=["Agent API"])
 
 from app.routers import pipeline
-app.include_router(pipeline.router, prefix="/pipeline", tags=["Orchestrator Pipeline"])
+app.include_router(pipeline.router, prefix="/api/pipeline", tags=["Orchestrator Pipeline"])
+
+from app.routers import linkedin
+app.include_router(linkedin.router, prefix="/auth", tags=["LinkedIn OAuth"])
+
+from app.routers import scrape
+app.include_router(scrape.router, prefix="/api/linkedin", tags=["LinkedIn Scrape"])
+
+from app.routers import preferences
+app.include_router(preferences.router, prefix="/api/preferences", tags=["User Settings"])
+
+from app.routers import dashboard
+app.include_router(dashboard.router, prefix="/api/dashboard", tags=["Dashboard"])
 
 from fastapi.staticfiles import StaticFiles
 

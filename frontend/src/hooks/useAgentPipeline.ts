@@ -12,7 +12,7 @@ export interface PipelineEvent {
 }
 
 interface UsePipelineOptions {
-    userId: number | null;
+    userId: string | null;
     onEvent?: (event: PipelineEvent) => void;
 }
 
@@ -24,7 +24,7 @@ export function useAgentPipeline({ userId, onEvent }: UsePipelineOptions) {
 
     const connect = useCallback(() => {
         if (!userId || wsRef.current) return;
-        const wsUrl = `ws://${import.meta.env.VITE_WS_HOST ?? 'localhost:8000'}/pipeline/ws/${userId}`;
+        const wsUrl = `ws://${import.meta.env.VITE_WS_HOST ?? 'localhost:8000'}/api/pipeline/ws/${userId}`;
         const ws = new WebSocket(wsUrl);
 
         ws.onopen = () => {
