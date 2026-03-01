@@ -8,6 +8,8 @@ from sqlmodel import select
 
 from app.models.pipeline import PipelineRun, PipelineState
 from app.models.cv_history import CVVersion
+from app.models.job_market import JobMatch, SalaryBenchmark
+from app.models.interview_roadmap import SkillRoadmap
 
 from app.agents.linkedin_import_agent import LinkedInImportAgent
 from app.agents.cv_critique.agent import analyze_cv_with_gemini
@@ -57,8 +59,103 @@ class MasterOrchestratorAgent:
                 aws = [ws.send_json(payload) for ws in manager.active_connections[user_id]]
                 if aws:
                     await asyncio.gather(*aws, return_exceptions=True)
+                
+                # Also send specific payload for waiting_for_input
+                if status == "waiting_for_input":
+                    aws_wait = [ws.send_json({
+                        "type": "WAITING_FOR_INPUT",
+                        "status": "waiting_for_input",
+                        "missing_fields": state.missing_fields
+                    }) for ws in manager.active_connections[user_id]]
+                    if aws_wait:
+                        await asyncio.gather(*aws_wait, return_exceptions=True)
         except Exception as e:
             print("WS broadcast failed:", e)
+
+    async def _persist_to_tables(self, run: PipelineRun, state: PipelineState):
+        """
+        Stage 7: Persist pipeline results to dedicated database tables.
+        This ensures data is queryable independently of state_json.
+        """
+        user_id = run.user_id
+        pipeline_id = run.id
+        
+        try:
+            # 1. Persist salary benchmarks
+            if state.salary_benchmarks and state.salary_benchmarks.get("salary_min"):
+                sb = SalaryBenchmark(
+                    role_title=state.job_description[:100] if state.job_description else "Unknown",
+                    experience_level="mid",
+                    location="remote",
+                    salary_min=state.salary_benchmarks.get("salary_min"),
+                    salary_median=state.salary_benchmarks.get("salary_median"),
+                    salary_max=state.salary_benchmarks.get("salary_max"),
+                    currency=state.salary_benchmarks.get("currency", "USD"),
+                    source_url="MarketConnectorAgent",
+                )
+                self.session.add(sb)
+                print(f"[PERSIST] Saved salary benchmark: {sb.salary_min}-{sb.salary_max} {sb.currency}")
+
+            # 2. Persist primary job match from classifier
+            jm = JobMatch(
+                user_id=user_id,
+                pipeline_id=pipeline_id,
+                job_title=state.job_description[:100] if state.job_description else "Target Role",
+                company=None,
+                match_score=state.ats_score / 100.0 if state.ats_score else None,
+                tier=state.job_tier,
+                missing_skills=state.missing_skills or [],
+                salary_min=state.salary_benchmarks.get("salary_min") if state.salary_benchmarks else None,
+                salary_max=state.salary_benchmarks.get("salary_max") if state.salary_benchmarks else None,
+            )
+            self.session.add(jm)
+            print(f"[PERSIST] Saved job match: tier={state.job_tier}, score={jm.match_score}")
+
+            # 3. Persist scraped market jobs as additional matches
+            market_data = state.model_dump(mode="json").get("market_analysis", {})
+            if isinstance(market_data, dict):
+                analysis = market_data.get("market_analysis", {})
+                seen_titles = set()
+                for skill, info in analysis.items():
+                    if not isinstance(info, dict):
+                        continue
+                    for snippet in info.get("snippets", []):
+                        parts = snippet.split(" at ", 1)
+                        title = parts[0].strip() if parts else snippet.strip()
+                        company = parts[1].strip() if len(parts) == 2 else None
+                        if title.lower() in seen_titles:
+                            continue
+                        seen_titles.add(title.lower())
+                        scraped_match = JobMatch(
+                            user_id=user_id,
+                            pipeline_id=pipeline_id,
+                            job_title=title,
+                            company=company,
+                            match_score=None,
+                            tier=None,
+                            missing_skills=[],
+                        )
+                        self.session.add(scraped_match)
+                if seen_titles:
+                    print(f"[PERSIST] Saved {len(seen_titles)} scraped job matches")
+
+            # 4. Persist skill roadmap
+            if state.skill_roadmap:
+                sr = SkillRoadmap(
+                    user_id=user_id,
+                    pipeline_id=pipeline_id,
+                    roadmap=state.skill_roadmap,
+                    target_role=state.job_description[:100] if state.job_description else None,
+                )
+                self.session.add(sr)
+                print(f"[PERSIST] Saved skill roadmap with {len(state.skill_roadmap)} phases")
+
+            await self.session.commit()
+            print(f"[PERSIST] ✅ All tables persisted successfully")
+            
+        except Exception as e:
+            print(f"[PERSIST] ⚠️ Table persistence failed (non-fatal): {e}")
+            # Don't re-raise — persistence failure shouldn't kill the pipeline
     
     async def start_pipeline(self, user_id: str, cv_raw: str, job_description: str) -> PipelineState:
         """Entrypoint for stage 1-7 execution"""
@@ -115,6 +212,13 @@ class MasterOrchestratorAgent:
                 print(f"[PIPELINE {pipeline_id}] Starting Stage 1: Ingest")
                 await self._update_state(run, state, "running", 1)
                 
+                # Check 1: Missing CV data
+                if not state.cv_raw or len(state.cv_raw.strip()) < 50:
+                    print(f"[PIPELINE {pipeline_id}] Pausing: Missing CV data")
+                    state.missing_fields = ["cv_raw"]
+                    await self._update_state(run, state, "waiting_for_input", 1)
+                    return
+                
                 # Stage 2: Analyse (Parallel)
                 print(f"[PIPELINE {pipeline_id}] Starting Stage 2: Analyse")
                 await self._update_state(run, state, "running", 2)
@@ -136,6 +240,13 @@ class MasterOrchestratorAgent:
                     
                 state.salary_benchmarks = market_result
                 
+                # Check 2: Missing Job Description data before Stage 3
+                if not state.job_description or len(state.job_description.strip()) < 20:
+                    print(f"[PIPELINE {pipeline_id}] Pausing: Missing Job Description")
+                    state.missing_fields = ["job_description"]
+                    await self._update_state(run, state, "waiting_for_input", 2)
+                    return
+                    
                 # Stage 3: Optimise (Sequential)
                 print(f"[PIPELINE {pipeline_id}] Starting Stage 3: Optimise")
                 await self._update_state(run, state, "running", 3)
@@ -165,14 +276,17 @@ class MasterOrchestratorAgent:
                 # Stage 6: Interview Prep
                 print(f"[PIPELINE {pipeline_id}] Starting Stage 6: Interview Prep")
                 await self._update_state(run, state, "running", 6)
-                state.interview_question_bank = [
-                    "Tell me about a time you used the skills on your resume.",
-                    f"How would you approach the challenges mentioned in this {state.job_tier} role?"
-                ]
+                from app.agents.interview_prep.agent import generate_interview_questions
+                state.interview_question_bank = await generate_interview_questions(
+                    state.job_description, state.cv_raw, state.job_tier
+                )
                 
                 # Stage 7: Persist & Notify
                 print(f"[PIPELINE {pipeline_id}] Starting Stage 7: Persist")
                 await self._update_state(run, state, "running", 7)
+                
+                # Persist to dedicated tables (job_matches, salary_benchmarks, skill_roadmaps)
+                await self._persist_to_tables(run, state)
 
                 await self._update_state(run, state, "completed", 7)
                 print(f"[PIPELINE {pipeline_id}] ✅ COMPLETED SUCCESSFULLY")
@@ -183,4 +297,3 @@ class MasterOrchestratorAgent:
                 traceback.print_exc()
                 state.error_log.append(str(e))
                 await self._update_state(run, state, "failed")
-

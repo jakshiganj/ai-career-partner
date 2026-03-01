@@ -12,6 +12,7 @@ const STATUS_BADGE: Record<PipelineStatus, { cls: string; label: string }> = {
     Paused: { cls: 'badge-paused', label: 'Paused — Input Required' },
     Success: { cls: 'badge-success', label: 'Complete' },
     Failed: { cls: 'badge-failed', label: 'Failed' },
+    waiting_for_input: { cls: 'badge-paused', label: 'Waiting for Input' },
 };
 
 interface Props {
@@ -66,9 +67,9 @@ export default function AgentStatusCard({ connected, status, lastEvent }: Props)
                 })}
             </div>
 
-            {status === 'Paused' && lastEvent?.missing_fields && (
+            {(status === 'Paused' || status === 'waiting_for_input') && lastEvent?.missing_fields && (
                 <div className="alert alert-warn mt-2" style={{ marginTop: '1rem' }}>
-                    ⚠️ Missing info detected: <strong>{lastEvent.missing_fields}</strong>
+                    ⚠️ Missing info detected: <strong>{Array.isArray(lastEvent.missing_fields) ? lastEvent.missing_fields.join(', ') : lastEvent.missing_fields}</strong>
                 </div>
             )}
 

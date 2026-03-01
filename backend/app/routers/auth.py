@@ -4,6 +4,7 @@ from sqlmodel import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_session
 from app.models.user import User, UserCreate, UserRead
+from app.models.preference import UserPreference
 from app.core.security import get_password_hash, verify_password, create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
 from datetime import timedelta
 
@@ -29,6 +30,11 @@ async def signup(user_create: UserCreate, session: AsyncSession = Depends(get_se
     session.add(user)
     await session.commit()
     await session.refresh(user)
+
+    # 4. Auto-create default preferences
+    default_pref = UserPreference(user_id=user.id)
+    session.add(default_pref)
+    await session.commit()
     
     return user
 

@@ -19,7 +19,6 @@ export default function CVUpload({ onResult }: Props) {
     const [analyzing, setAnalyzing] = useState(false);
     const [fileName, setFileName] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
-    const [preview, setPreview] = useState<string | null>(null);
 
     // Client-side PII Redaction
     const redactPII = (text: string) => {
@@ -77,18 +76,11 @@ export default function CVUpload({ onResult }: Props) {
             const redactedText = redactPII(rawText);
 
             // 3. Send securely redacted text to backend endpoint
-            let token = localStorage.getItem('token');
+            let token = localStorage.getItem('access_token') || localStorage.getItem('token');
             if (!token) {
-                // If local dev missing token, mock a quick login to get one to prevent 401s
-                const mockAuth = await axios.post('http://localhost:8000/auth/login', new URLSearchParams({
-                    username: 'test@example.com',
-                    password: 'password'
-                }), { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
-                token = mockAuth.data.access_token;
-                localStorage.setItem('token', token as string);
-
-                // Store user Id so Dashboard doesn't default to 1 blindly
-                localStorage.setItem('user_id', '1'); // For robust routing
+                setError('You must be logged in to upload a CV.');
+                setUploading(false);
+                return;
             }
 
             const res = await axios.post(
@@ -97,17 +89,16 @@ export default function CVUpload({ onResult }: Props) {
                 { headers: { Authorization: `Bearer ${token}` } }
             );
 
-            setPreview(res.data.profile.headline || 'Profile Extracted');
             setUploading(false);
 
             // 4. Auto-analyze for ATS Scoring and pipelines
             setAnalyzing(true);
             const analysis = await axios.post(`http://localhost:8000/cv/analyze/${res.data.cv_id}`, {}, {
-                headers: { Authorization: token ? `Bearer ${token}` : '' }
+                headers: { Authorization: `Bearer ${token}` }
             });
             setAnalyzing(false);
 
-            onResult?.(res.data.cv_id, analysis.data.ai_feedback, redactedText.substring(0, 150));
+            onResult?.(res.data.cv_id, analysis.data.ai_feedback, redactedText);
         } catch (e: any) {
             setError(e?.response?.data?.detail ?? e.message ?? 'Upload failed.');
             setUploading(false);
@@ -149,43 +140,28 @@ export default function CVUpload({ onResult }: Props) {
                     id="cv-file-input"
                 />
                 {isLoading ? (
-                    <div className="flex flex-col items-center gap-1" style={{ gap: '0.75rem', alignItems: 'center', display: 'flex', flexDirection: 'column' }}>
-                        <div className="spinner" style={{ width: 32, height: 32, borderWidth: 3 }} />
-                        <p style={{ color: 'var(--accent-blue)', fontWeight: 500 }}>
+                    <div className="flex flex-col items-center" style={{ gap: '0.75rem' }}>
+                        <div className="spinner" style={{ width: 28, height: 28, borderWidth: 3, borderColor: 'rgba(37,99,235,0.2)', borderTopColor: '#2563eb' }} />
+                        <p className="text-sm" style={{ color: 'var(--accent-blue)', fontWeight: 500 }}>
                             {uploading ? 'Parsing & Redacting PII locally...' : 'Analyzing with Gemini AI…'}
                         </p>
                     </div>
                 ) : fileName ? (
-                    <div>
-                        <div style={{ fontSize: '2rem' }}>✅</div>
-                        <p className="font-semibold" style={{ marginTop: '0.5rem', color: 'var(--success)' }}>Successfully uploaded: {fileName}</p>
-                        <p className="text-xs" style={{ color: 'var(--accent-blue)', marginTop: '0.25rem', fontWeight: 600 }}>Ready for Analysis Pipeline! Click to replace.</p>
+                    <div className="flex flex-col items-center" style={{ gap: '0.35rem' }}>
+                        <div style={{ fontSize: '1.5rem' }}>✅</div>
+                        <p className="font-semibold text-sm" style={{ color: 'var(--accent-green)' }}>Uploaded: {fileName}</p>
+                        <p className="text-xs" style={{ color: 'var(--accent-blue)', fontWeight: 500 }}>Ready for Analysis! Click to replace.</p>
                     </div>
                 ) : (
-                    <div>
-                        <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>📄</div>
-                        <p className="font-semibold">Drop your CV here or click to browse</p>
-                        <p className="text-xs text-muted mt-1">PDF files only (Max 5MB)</p>
+                    <div className="flex flex-col items-center" style={{ gap: '0.35rem' }}>
+                        <div style={{ fontSize: '2rem', opacity: 0.7 }}>📄</div>
+                        <p className="font-semibold text-sm">Drop your CV here or click to browse</p>
+                        <p className="text-xs text-muted">PDF files only (Max 5MB)</p>
                     </div>
                 )}
             </div>
 
             {error && <div className="alert alert-error" style={{ marginTop: '0.75rem' }}>{error}</div>}
-
-            {preview && !isLoading && (
-                <div style={{
-                    marginTop: '0.75rem',
-                    padding: '0.75rem 1rem',
-                    background: 'var(--bg-elevated)',
-                    borderRadius: 'var(--radius-md)',
-                    fontSize: '0.8rem',
-                    color: 'var(--text-muted)',
-                    fontFamily: 'monospace',
-                }}>
-                    <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>Extracted: </span>
-                    {preview}…
-                </div>
-            )}
         </div>
     );
 }

@@ -8,7 +8,7 @@ Endpoints:
   POST /api/pipeline/{id}/resume  → Resume a stopped pipeline
 """
 import uuid
-from typing import Optional
+from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
@@ -107,6 +107,54 @@ async def resume_pipeline(
         "resumed_from_stage": run.current_stage,
         "status": "running"
     }
+
+class PipelineInputRequest(BaseModel):
+    job_description: Optional[str] = None
+    cv_raw: Optional[str] = None
+    skills: Optional[List[str]] = None
+
+@router.patch("/{pipeline_id}/input")
+async def provide_pipeline_input(
+    pipeline_id: uuid.UUID,
+    request: PipelineInputRequest,
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+):
+    """Provide missing data to a waiting pipeline and resume it."""
+    run = await session.get(PipelineRun, pipeline_id)
+    if not run or run.user_id != current_user.id:
+        raise HTTPException(status_code=404, detail="Pipeline run not found")
+        
+    state = PipelineState(**run.state_json)
+    
+    if state.status != "waiting_for_input":
+        raise HTTPException(status_code=400, detail=f"Pipeline is not waiting for input (status: {state.status})")
+        
+    # Update provided data
+    if request.job_description:
+        state.job_description = request.job_description
+    if request.cv_raw:
+        state.cv_raw = request.cv_raw
+    if request.skills:
+        # If they manually provided skills, store them somewhere or just append to raw CV text so parser picks them up later,
+        # Or store in missing_skills wait no, missing_skills is what they don't have. Let's just append to cv_raw for simplicity
+        # so the parser and agents see it.
+        state.cv_raw += f"\\n\\nSkills: {', '.join(request.skills)}"
+        
+    state.status = "running"
+    state.missing_fields = []
+    
+    run.state_json = state.model_dump(mode="json")
+    run.status = "running"
+    session.add(run)
+    await session.commit()
+    
+    # Resume orchestrator
+    orchestrator = MasterOrchestratorAgent(session)
+    import asyncio
+    asyncio.create_task(orchestrator.run_pipeline_stages(run.id))
+    
+    return {"status": "resumed"}
 
 # Very simple connection manager for the demo
 class ConnectionManager:

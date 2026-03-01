@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import axios from 'axios';
+import { Button } from './ui/button';
 
 interface Props {
     onScrapeComplete?: (scrapedData: any) => void;
@@ -42,7 +43,6 @@ export default function LinkedInURLInput({ onScrapeComplete }: Props) {
                 setError('Could not scrape public profile (Private or Blocked). Falling back to CV data.');
             }
         } catch (e: any) {
-            // Mute hard errors as per requirements
             setError('Failed silently. Continuing with CV data only.');
         } finally {
             setLoading(false);
@@ -50,30 +50,33 @@ export default function LinkedInURLInput({ onScrapeComplete }: Props) {
     }
 
     return (
-        <div className="card p-4 mt-4" style={{ backgroundColor: '#f9f9fb', border: '1px dashed #cdd0d8' }}>
-            <h4 className="text-sm font-semibold mb-2" style={{ color: '#0a66c2' }}>Optional: Scrape Public Profile</h4>
-            <p className="text-xs text-muted mb-3">
+        <div>
+            <p className="section-label" style={{ color: 'var(--accent-blue)' }}>
+                Optional: Scrape Public Profile
+            </p>
+            <p className="text-xs mb-3" style={{ color: 'var(--text-muted)' }}>
                 Paste your open public LinkedIn URL to pull basic metadata into your Candidate Profile.
             </p>
-            <div className="flex gap-2">
+            <div className="flex gap-2" style={{ gap: '0.5rem' }}>
                 <input
                     type="text"
-                    className="input flex-1"
+                    className="form-input flex-1 text-sm"
+                    style={{ flex: 1 }}
                     placeholder="https://www.linkedin.com/in/your-profile"
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
                     disabled={loading || scraped}
                 />
-                <button
-                    className="btn primary"
+                <Button
+                    variant={scraped ? "secondary" : "default"}
+                    size="default"
                     onClick={handleScrape}
                     disabled={loading || scraped || !url}
-                    style={{ backgroundColor: '#0a66c2' }}
                 >
-                    {loading ? 'Scraping...' : scraped ? 'Synced!' : 'Scrape'}
-                </button>
+                    {loading ? 'Scraping...' : scraped ? '✓ Synced' : 'Scrape'}
+                </Button>
             </div>
-            {error && <p className="text-xs text-error mt-2">{error}</p>}
+            {error && <p className="text-xs mt-1" style={{ color: 'var(--accent-red)', marginTop: '0.5rem' }}>{error}</p>}
         </div>
     );
 }

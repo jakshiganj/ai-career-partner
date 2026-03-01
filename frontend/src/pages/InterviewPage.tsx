@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import axios from 'axios';
 
 interface Message {
     id: number;
@@ -10,41 +11,168 @@ export default function InterviewPage() {
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState('');
     const [connected, setConnected] = useState(false);
-    const [sessionId] = useState(() => crypto.randomUUID().slice(0, 8));
+    const [audioMode, setAudioMode] = useState(false);
+
     const wsRef = useRef<WebSocket | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const idRef = useRef(0);
+
+    // Audio Capture State
+    const audioCtxRef = useRef<AudioContext | null>(null);
+    const mediaStreamRef = useRef<MediaStream | null>(null);
+    const processorRef = useRef<ScriptProcessorNode | null>(null);
+
+    // Audio Playback State
+    const playCtxRef = useRef<AudioContext | null>(null);
+    const nextPlayTimeRef = useRef<number>(0);
+
+    // Heartbeat State
+    const pingIntervalRef = useRef<number | null>(null);
 
     function addMsg(type: Message['type'], text: string) {
         setMessages(prev => [...prev, { id: idRef.current++, type, text }]);
     }
 
-    function connect() {
-        const wsUrl = `ws://${import.meta.env.VITE_WS_HOST ?? 'localhost:8000'}/ws/interview/${sessionId}`;
-        const ws = new WebSocket(wsUrl);
+    async function connect(enableAudio: boolean = false) {
+        setAudioMode(enableAudio);
+        try {
+            const res = await axios.post('http://localhost:8000/api/interview/start', {}, {
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+            });
+            const newSessionId = res.data.session_id;
 
-        ws.onopen = () => {
-            setConnected(true);
-        };
+            const wsUrl = `ws://${import.meta.env.VITE_WS_HOST ?? 'localhost:8000'}/ws/interview/${newSessionId}`;
+            const ws = new WebSocket(wsUrl);
+            ws.binaryType = "arraybuffer";
 
-        ws.onmessage = (ev) => {
-            try {
-                const data = JSON.parse(ev.data);
-                if (data.type === 'system') {
-                    addMsg('system', data.message);
-                } else if (data.type === 'agent_response') {
-                    addMsg('agent', data.text);
+            ws.onopen = async () => {
+                setConnected(true);
+                playCtxRef.current = new AudioContext({ sampleRate: 24000 }); // Gemini Live returns 24kHz
+                nextPlayTimeRef.current = 0;
+
+                if (enableAudio) {
+                    await startAudioCapture(ws);
                 }
-            } catch { /* ignore */ }
-        };
 
-        ws.onclose = () => {
-            setConnected(false);
-            addMsg('system', 'Session ended. Click Connect to start a new session.');
-            wsRef.current = null;
-        };
+                // 30s Heartbeat Ping
+                pingIntervalRef.current = window.setInterval(() => {
+                    if (ws.readyState === WebSocket.OPEN) {
+                        ws.send(JSON.stringify({ type: "ping" }));
+                    }
+                }, 30000);
+            };
 
-        wsRef.current = ws;
+            ws.onmessage = async (ev) => {
+                if (ev.data instanceof ArrayBuffer) {
+                    // Binary audio chunk from backend
+                    playAudioChunk(ev.data);
+                } else {
+                    try {
+                        const data = JSON.parse(ev.data);
+                        if (data.type === 'system') {
+                            addMsg('system', data.message);
+                        } else if (data.type === 'agent_transcript') {
+                            addMsg('agent', data.text);
+                        }
+                    } catch { /* ignore */ }
+                }
+            };
+
+            ws.onclose = () => {
+                setConnected(false);
+                addMsg('system', 'Session ended. Click Connect to start a new session. Your results are being scored and will appear in the dashboard.');
+                cleanupAudio();
+                if (pingIntervalRef.current) clearInterval(pingIntervalRef.current);
+                wsRef.current = null;
+            };
+
+            wsRef.current = ws;
+        } catch (e) {
+            console.error("Failed to start interview session", e);
+            addMsg('system', 'Failed to connect to the interview server.');
+        }
+    }
+
+    async function startAudioCapture(ws: WebSocket) {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaStreamRef.current = stream;
+
+            const audioCtx = new AudioContext({ sampleRate: 16000 });
+            audioCtxRef.current = audioCtx;
+
+            const source = audioCtx.createMediaStreamSource(stream);
+            const processor = audioCtx.createScriptProcessor(4096, 1, 1);
+            processorRef.current = processor;
+
+            processor.onaudioprocess = (e) => {
+                if (ws.readyState !== WebSocket.OPEN) return;
+
+                // Get Float32 PCM
+                const inputData = e.inputBuffer.getChannelData(0);
+
+                // Convert to Int16 PCM
+                const int16Array = new Int16Array(inputData.length);
+                for (let i = 0; i < inputData.length; i++) {
+                    const s = Math.max(-1, Math.min(1, inputData[i]));
+                    int16Array[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+                }
+
+                // Send Binary ArrayBuffer chunk directly
+                ws.send(int16Array.buffer);
+            };
+
+            source.connect(processor);
+            processor.connect(audioCtx.destination); // Required for script processor to run
+        } catch (err) {
+            console.error("Microphone access denied or failed", err);
+            addMsg('system', "Microphone access failed. Text mode only.");
+            setAudioMode(false);
+        }
+    }
+
+    function playAudioChunk(arrayBuffer: ArrayBuffer) {
+        if (!playCtxRef.current) return;
+        const ctx = playCtxRef.current;
+
+        const int16Data = new Int16Array(arrayBuffer);
+        const float32Data = new Float32Array(int16Data.length);
+        for (let i = 0; i < int16Data.length; i++) {
+            float32Data[i] = int16Data[i] / 32768.0;
+        }
+
+        const audioBuffer = ctx.createBuffer(1, float32Data.length, 24000);
+        audioBuffer.getChannelData(0).set(float32Data);
+
+        const source = ctx.createBufferSource();
+        source.buffer = audioBuffer;
+        source.connect(ctx.destination);
+
+        const currentTime = ctx.currentTime;
+        if (nextPlayTimeRef.current < currentTime) {
+            nextPlayTimeRef.current = currentTime; // Buffer underrun, catch up
+        }
+
+        source.start(nextPlayTimeRef.current);
+        nextPlayTimeRef.current += audioBuffer.duration;
+    }
+
+    function cleanupAudio() {
+        if (processorRef.current && audioCtxRef.current) {
+            processorRef.current.disconnect();
+        }
+        if (audioCtxRef.current) {
+            audioCtxRef.current.close();
+            audioCtxRef.current = null;
+        }
+        if (playCtxRef.current) {
+            playCtxRef.current.close();
+            playCtxRef.current = null;
+        }
+        if (mediaStreamRef.current) {
+            mediaStreamRef.current.getTracks().forEach(t => t.stop());
+            mediaStreamRef.current = null;
+        }
     }
 
     function disconnect() {
@@ -54,8 +182,10 @@ export default function InterviewPage() {
     function sendMessage() {
         const text = input.trim();
         if (!text || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
+
         addMsg('user', text);
-        wsRef.current.send(text);
+        // Send as JSON text command to backend so backend adds to transcript and forwards to gemini
+        wsRef.current.send(JSON.stringify({ type: "candidate_transcript", text }));
         setInput('');
     }
 
@@ -70,21 +200,27 @@ export default function InterviewPage() {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
-    useEffect(() => () => { wsRef.current?.close(); }, []);
+    useEffect(() => {
+        return () => {
+            cleanupAudio();
+            if (pingIntervalRef.current) clearInterval(pingIntervalRef.current);
+            wsRef.current?.close();
+        };
+    }, []);
 
     return (
-        <div className="page">
-            <div className="container">
-                <div style={{ marginBottom: '1.5rem' }}>
-                    <h1>🎤 Interview Coach</h1>
-                    <p style={{ marginTop: '0.4rem' }}>
-                        Practice your interview answers in real-time with an AI coach.
+        <div className="page" style={{ paddingBottom: '4rem' }}>
+            <div className="container max-w-5xl mx-auto px-4 mt-8">
+                <div style={{ marginBottom: '1.5rem', textAlign: 'center' }}>
+                    <h1 className="text-3xl font-bold gradient-text pb-2">🎤 Live Voice Interview</h1>
+                    <p style={{ color: 'var(--text-muted)' }}>
+                        Practice speaking with the Gemini 2.0 Live Audio Agent
                     </p>
                 </div>
 
-                <div className="dashboard-grid">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Chat Panel */}
-                    <div className="card" style={{ gridColumn: '1 / -1', padding: 0, overflow: 'hidden' }}>
+                    <div className="card lg:col-span-2 flex flex-col pt-0 px-0" style={{ height: '600px' }}>
                         {/* Header bar */}
                         <div style={{
                             display: 'flex',
@@ -93,93 +229,100 @@ export default function InterviewPage() {
                             padding: '1rem 1.5rem',
                             borderBottom: '1px solid var(--border-subtle)',
                         }}>
-                            <div className="flex items-center gap-1" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            <div className="flex items-center gap-2">
                                 <div style={{
                                     width: 10, height: 10, borderRadius: '50%',
                                     background: connected ? 'var(--accent-green)' : 'var(--text-muted)',
                                     boxShadow: connected ? '0 0 8px var(--accent-green)' : 'none',
                                     transition: 'all 0.3s',
                                 }} />
-                                <span className="font-semibold">
-                                    {connected ? `Session #${sessionId}` : 'Not connected'}
+                                <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>
+                                    {connected ? `Agent Connected (${audioMode ? 'Voice' : 'Text'})` : 'Offline'}
                                 </span>
-                                {connected && (
-                                    <span className="badge badge-working" style={{ fontSize: '0.72rem' }}>Live</span>
-                                )}
                             </div>
-                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            <div className="flex gap-2">
                                 {!connected ? (
-                                    <button id="connect-ws-btn" className="btn btn-primary" onClick={connect}>
-                                        🔌 Connect
-                                    </button>
+                                    <>
+                                        <button className="btn btn-primary" onClick={() => connect(true)}>
+                                            🎙️ Start Voice Call
+                                        </button>
+                                        <button className="btn" style={{ background: 'var(--bg-elevated)' }} onClick={() => connect(false)}>
+                                            ⌨️ Text Only
+                                        </button>
+                                    </>
                                 ) : (
-                                    <button id="disconnect-ws-btn" className="btn btn-danger" onClick={disconnect}>
-                                        Disconnect
+                                    <button className="btn btn-danger" onClick={disconnect}>
+                                        End Interview
                                     </button>
                                 )}
                             </div>
                         </div>
 
                         {/* Messages */}
-                        <div className="chat-messages" style={{ minHeight: 380 }}>
+                        <div className="overflow-y-auto p-4 flex-1 space-y-4" style={{ background: 'var(--bg-site)' }}>
                             {messages.length === 0 && (
-                                <div style={{ textAlign: 'center', marginTop: '3rem', color: 'var(--text-muted)' }}>
-                                    <div style={{ fontSize: '3rem', marginBottom: '0.75rem' }}>🎤</div>
-                                    <p className="text-sm">Click <strong>Connect</strong> to start your mock interview session.</p>
+                                <div style={{ textAlign: 'center', marginTop: '4rem', color: 'var(--text-muted)' }}>
+                                    <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🎙️</div>
+                                    <p className="text-sm">Click <strong>Start Voice Call</strong> to begin speaking with the agent.</p>
                                 </div>
                             )}
                             {messages.map(msg => (
-                                <div key={msg.id} className={`chat-bubble ${msg.type}`}>
-                                    {msg.text}
+                                <div key={msg.id} className={`flex ${msg.type === 'user' ? 'justify-end' : msg.type === 'system' ? 'justify-center' : 'justify-start'}`}>
+                                    <div style={{
+                                        maxWidth: '80%', padding: '0.75rem 1rem', borderRadius: '1rem',
+                                        background: msg.type === 'user' ? 'var(--accent-blue)' : msg.type === 'system' ? 'transparent' : 'var(--bg-elevated)',
+                                        color: msg.type === 'user' ? 'white' : msg.type === 'system' ? 'var(--text-muted)' : 'var(--text-primary)',
+                                        fontSize: msg.type === 'system' ? '0.8rem' : '0.95rem',
+                                        border: msg.type === 'agent' ? '1px solid var(--border-subtle)' : 'none'
+                                    }}>
+                                        {msg.text}
+                                    </div>
                                 </div>
                             ))}
                             <div ref={messagesEndRef} />
                         </div>
 
                         {/* Input */}
-                        <div className="chat-input-row">
-                            <input
-                                id="interview-message-input"
-                                className="form-input"
-                                style={{ flex: 1 }}
-                                placeholder={connected ? 'Type your answer and press Enter…' : 'Connect first to start chatting'}
-                                value={input}
-                                onChange={e => setInput(e.target.value)}
-                                onKeyDown={handleKeyDown}
-                                disabled={!connected}
-                            />
-                            <button
-                                id="interview-send-btn"
-                                className="btn btn-primary"
-                                onClick={sendMessage}
-                                disabled={!connected || !input.trim()}
-                            >
-                                Send
-                            </button>
+                        <div className="p-4 border-t" style={{ borderColor: 'var(--border-subtle)', background: 'var(--bg-card)' }}>
+                            <div className="flex gap-2">
+                                <input
+                                    className="form-input flex-1"
+                                    placeholder={connected ? (audioMode ? 'Speak, or type supplementary text...' : 'Type your answer...') : 'Connect first to start chatting'}
+                                    value={input}
+                                    onChange={e => setInput(e.target.value)}
+                                    onKeyDown={handleKeyDown}
+                                    disabled={!connected}
+                                />
+                                <button
+                                    className="btn btn-primary"
+                                    onClick={sendMessage}
+                                    disabled={!connected || !input.trim()}
+                                >
+                                    Send
+                                </button>
+                            </div>
                         </div>
                     </div>
 
                     {/* Tips Card */}
-                    <div className="card card-full">
-                        <h3 style={{ marginBottom: '1rem' }}>💡 Interview Tips</h3>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.85rem' }}>
-                            {[
-                                { icon: '🎯', tip: 'Use STAR method', desc: 'Situation, Task, Action, Result' },
-                                { icon: '⏱️', tip: 'Keep answers concise', desc: 'Aim for 90–120 seconds' },
-                                { icon: '🔍', tip: 'Research the company', desc: 'Show domain knowledge' },
-                                { icon: '💬', tip: 'Ask great questions', desc: 'Prepare 2–3 insightful ones' },
-                            ].map(({ icon, tip, desc }) => (
-                                <div key={tip} style={{
-                                    padding: '1rem',
-                                    background: 'var(--bg-elevated)',
-                                    borderRadius: 'var(--radius-md)',
-                                    border: '1px solid var(--border-subtle)',
-                                }}>
-                                    <div style={{ fontSize: '1.5rem', marginBottom: '0.35rem' }}>{icon}</div>
-                                    <div className="font-semibold text-sm">{tip}</div>
-                                    <div className="text-xs text-muted mt-1">{desc}</div>
-                                </div>
-                            ))}
+                    <div className="space-y-6">
+                        <div className="card">
+                            <h3 className="text-lg font-bold mb-4" style={{ color: 'var(--text-primary)' }}>💡 Interview Guidance</h3>
+                            <div className="space-y-3">
+                                {[
+                                    { icon: '🎯', tip: 'Use STAR method', desc: 'Situation, Task, Action, Result' },
+                                    { icon: '🎙️', tip: 'Voice Modality', desc: 'Interrupt the agent anytime by simply speaking.' },
+                                    { icon: '⏱️', tip: 'Keep answers concise', desc: 'Aim for 90–120 seconds maximum per answer.' }
+                                ].map(({ icon, tip, desc }) => (
+                                    <div key={tip} className="p-3 rounded-lg" style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)' }}>
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span>{icon}</span>
+                                            <span className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>{tip}</span>
+                                        </div>
+                                        <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>{desc}</div>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     </div>
                 </div>

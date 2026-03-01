@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { Card } from './ui/card';
 
 interface Preferences {
     email_digest_enabled: boolean;
@@ -11,6 +12,7 @@ export default function EmailPreferences() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [msg, setMsg] = useState<string | null>(null);
+    const [expanded, setExpanded] = useState(false);
 
     useEffect(() => {
         fetchPrefs();
@@ -37,7 +39,6 @@ export default function EmailPreferences() {
         const newPrefs = { ...prefs, [key]: !prefs[key] };
         setPrefs(newPrefs);
 
-        // Auto-save
         setSaving(true);
         setMsg(null);
         try {
@@ -48,52 +49,83 @@ export default function EmailPreferences() {
             setTimeout(() => setMsg(null), 3000);
         } catch (e) {
             setMsg('Failed to update.');
-            // Revert on fail
             setPrefs(prefs);
         } finally {
             setSaving(false);
         }
     }
 
-    if (loading) return <div className="spinner inline-block"></div>;
+    if (loading) return <div className="spinner inline-block" style={{ borderColor: 'rgba(37,99,235,0.2)', borderTopColor: '#2563eb' }} />;
     if (!prefs) return null;
 
+    const toggleItems = [
+        {
+            key: 'email_digest_enabled' as keyof Preferences,
+            title: 'Weekly Progress Digest',
+            desc: 'Get a summary of your career progression every Monday.',
+        },
+        {
+            key: 'receive_job_alerts' as keyof Preferences,
+            title: 'Live Job Alerts',
+            desc: 'Instant emails when a "Realistic Match" is found.',
+        },
+    ];
+
     return (
-        <div className="card shadow-sm border border-subtle mt-6 lg:col-span-1 border-t-4 border-t-accent">
-            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-muted">Email Preferences</h3>
-
-            <div className="space-y-4">
-                {/* Feature 10 Toggle */}
-                <div className="flex items-center justify-between p-3 bg-elevated rounded border">
-                    <div>
-                        <h4 className="text-sm font-semibold">Weekly Progress Digest</h4>
-                        <p className="text-xs text-secondary mt-1 max-w-[200px]">Get a summary of your career progression every Monday.</p>
-                    </div>
-                    <button
-                        className={`w-12 h-6 rounded-full transition-colors relative ${prefs.email_digest_enabled ? 'bg-accent' : 'bg-subtle'}`}
-                        onClick={() => handleToggle('email_digest_enabled')}
-                        disabled={saving}
-                    >
-                        <div className={`w-4 h-4 rounded-full bg-white absolute top-1 transition-all ${prefs.email_digest_enabled ? 'left-7' : 'left-1'}`} />
-                    </button>
-                </div>
-
-                <div className="flex items-center justify-between p-3 bg-elevated rounded border opacity-70">
-                    <div>
-                        <h4 className="text-sm font-semibold">Live Job Alerts</h4>
-                        <p className="text-xs text-secondary mt-1 max-w-[200px]">Instant emails when a "Realistic Match" is found.</p>
-                    </div>
-                    <button
-                        className={`w-12 h-6 rounded-full transition-colors relative ${prefs.receive_job_alerts ? 'bg-accent' : 'bg-subtle'}`}
-                        onClick={() => handleToggle('receive_job_alerts')}
-                        disabled={saving}
-                    >
-                        <div className={`w-4 h-4 rounded-full bg-white absolute top-1 transition-all ${prefs.receive_job_alerts ? 'left-7' : 'left-1'}`} />
-                    </button>
-                </div>
+        <Card className="overflow-hidden">
+            {/* Accordion Header */}
+            <div
+                className="accordion-header"
+                onClick={() => setExpanded(!expanded)}
+            >
+                <h3 className="section-label" style={{ marginBottom: 0 }}>📧 Email Preferences</h3>
+                <span className={`accordion-chevron ${expanded ? 'open' : ''}`}>▼</span>
             </div>
 
-            {msg && <p className="text-xs text-success mt-3">{msg}</p>}
-        </div>
+            {/* Accordion Body */}
+            <div className={`accordion-body ${expanded ? 'open' : ''}`}>
+                <div className="space-y-3">
+                    {toggleItems.map(({ key, title, desc }) => (
+                        <div key={key} className="flex items-center justify-between p-3 rounded-lg" style={{
+                            background: 'var(--bg-elevated)',
+                            border: '1px solid var(--border-subtle)',
+                        }}>
+                            <div>
+                                <h4 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{title}</h4>
+                                <p className="text-xs mt-1" style={{ color: 'var(--text-muted)', maxWidth: 220 }}>{desc}</p>
+                            </div>
+                            <button
+                                className="relative flex-shrink-0"
+                                style={{
+                                    width: 44,
+                                    height: 24,
+                                    borderRadius: 9999,
+                                    border: 'none',
+                                    cursor: saving ? 'default' : 'pointer',
+                                    transition: 'background 0.2s',
+                                    background: prefs[key] ? 'var(--accent-blue)' : 'rgba(148,163,184,0.3)',
+                                }}
+                                onClick={() => handleToggle(key)}
+                                disabled={saving}
+                            >
+                                <div style={{
+                                    width: 18,
+                                    height: 18,
+                                    borderRadius: '50%',
+                                    background: '#fff',
+                                    boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
+                                    position: 'absolute',
+                                    top: 3,
+                                    transition: 'left 0.2s ease',
+                                    left: prefs[key] ? 23 : 3,
+                                }} />
+                            </button>
+                        </div>
+                    ))}
+                </div>
+
+                {msg && <p className="text-xs mt-2" style={{ color: 'var(--accent-green)' }}>{msg}</p>}
+            </div>
+        </Card>
     );
 }

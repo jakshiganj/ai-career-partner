@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 
-export type PipelineStatus = 'Idle' | 'Working' | 'Paused' | 'Success' | 'Failed';
+export type PipelineStatus = 'Idle' | 'Working' | 'Paused' | 'Success' | 'Failed' | 'waiting_for_input';
 
 export interface PipelineEvent {
-    type: 'CONNECTED' | 'STATE_UPDATE' | 'PAUSED';
+    type: 'CONNECTED' | 'STATE_UPDATE' | 'PAUSED' | 'WAITING_FOR_INPUT';
     status?: PipelineStatus;
     current_agent?: string;
     task_state_id?: number;
-    missing_fields?: string;
+    missing_fields?: string[];
     message?: string;
 }
 

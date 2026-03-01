@@ -8,7 +8,7 @@ from pydantic import BaseModel
 class PipelineState(BaseModel):
     pipeline_id: str
     user_id: str
-    status: Literal["running", "completed", "failed", "partial"]
+    status: Literal["running", "completed", "failed", "partial", "waiting_for_input"]
     current_stage: int
     cv_raw: str
     job_description: str
@@ -29,6 +29,7 @@ class PipelineState(BaseModel):
     created_at: datetime
     completed_at: Optional[datetime] = None
     error_log: List[str] = []
+    missing_fields: Optional[List[str]] = []
 
 class PipelineRun(SQLModel, table=True):
     __tablename__ = "pipeline_runs"

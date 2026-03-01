@@ -12,7 +12,7 @@ interface CVVersion {
 }
 
 interface Props {
-    userId: number;
+    userId: string;
 }
 
 export default function CVTimeline({ userId }: Props) {

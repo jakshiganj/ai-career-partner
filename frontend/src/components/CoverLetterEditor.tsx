@@ -65,10 +65,10 @@ export default function CoverLetterEditor({ initialContent, onRegenerate }: Prop
                     </div>
                 )}
                 <textarea
-                    className="w-full h-[400px] p-4 bg-elevated border rounded resize-y font-sans text-sm leading-relaxed text-secondary focus:outline-accent"
+                    className="w-full h-[60vh] max-h-96 min-h-[300px] p-4 text-sm font-sans bg-transparent border-none resize-none focus:outline-none focus:ring-0 leading-relaxed overflow-y-auto"
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
-                    spellCheck={false}
+                    placeholder="Cover letter content..."
                 />
             </div>
             <p className="text-xs text-muted mt-3 text-right">

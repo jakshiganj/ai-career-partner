@@ -5,15 +5,16 @@ from app.core.security import get_current_user
 from app.models.user import User
 from app.models.preference import UserPreference
 from pydantic import BaseModel
+from typing import Optional
 import uuid
 
 router = APIRouter()
 
 class PreferenceUpdate(BaseModel):
-    email_digest_enabled: bool
-    preferred_tone: str
-    target_role: str
-    expected_salary: int
+    email_digest_enabled: Optional[bool] = None
+    preferred_tone: Optional[str] = None
+    target_role: Optional[str] = None
+    expected_salary: Optional[int] = None
 
 @router.get("/")
 async def get_preferences(
@@ -38,11 +39,13 @@ async def update_preferences(
     session: AsyncSession = Depends(get_session)  
 ):
     pref = await session.get(UserPreference, current_user.id)
+    # Only update fields that were actually sent
+    update_data = data.model_dump(exclude_unset=True)
     if not pref:
-        pref = UserPreference(user_id=current_user.id, **data.model_dump())
+        pref = UserPreference(user_id=current_user.id, **update_data)
         session.add(pref)
     else:
-        for k, v in data.model_dump().items():
+        for k, v in update_data.items():
             setattr(pref, k, v)
         session.add(pref)
         
