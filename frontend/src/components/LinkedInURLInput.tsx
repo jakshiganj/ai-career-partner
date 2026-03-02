@@ -3,7 +3,7 @@ import axios from 'axios';
 import { Button } from './ui/button';
 
 interface Props {
-    onScrapeComplete?: (scrapedData: any) => void;
+    onScrapeComplete?: (scrapedData: unknown) => void;
 }
 
 export default function LinkedInURLInput({ onScrapeComplete }: Props) {
@@ -42,7 +42,7 @@ export default function LinkedInURLInput({ onScrapeComplete }: Props) {
             } else {
                 setError('Could not scrape public profile (Private or Blocked). Falling back to CV data.');
             }
-        } catch (e: any) {
+        } catch {
             setError('Failed silently. Continuing with CV data only.');
         } finally {
             setLoading(false);

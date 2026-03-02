@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import CVDiff from './CVDiff';
 
@@ -21,11 +21,7 @@ export default function CVTimeline({ userId }: Props) {
     const [selectedVersion, setSelectedVersion] = useState<CVVersion | null>(null);
     const [compareVersion, setCompareVersion] = useState<CVVersion | null>(null);
 
-    useEffect(() => {
-        fetchVersions();
-    }, [userId]);
-
-    async function fetchVersions() {
+    const fetchVersions = useCallback(async () => {
         try {
             // In a real app we'd call the API. Here we mock for now until the route is ready.
             const response = await axios.get(`http://localhost:8000/api/cv-versions/${userId}`, {
@@ -37,7 +33,13 @@ export default function CVTimeline({ userId }: Props) {
         } finally {
             setLoading(false);
         }
-    }
+    }, [userId]);
+
+    useEffect(() => {
+        fetchVersions();
+    }, [fetchVersions]);
+
+    // The fetchVersions function is now defined inside useCallback above
 
     async function handleRestore(versionId: string) {
         if (!confirm("Are you sure you want to restore this version? This will retrigger the pipeline.")) return;

@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CareerAI - Expanded Pipeline Details</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#3c83f6",
+                        "background-light": "#f5f7f8",
+                        "background-dark": "#101722",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 antialiased">
+<div class="flex h-screen w-full overflow-hidden">
+<!-- Sidebar -->
+<div class="hidden w-64 flex-col border-r border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-800 md:flex">
+<div class="flex h-16 items-center gap-3 px-6 border-b border-slate-100 dark:border-slate-800">
+<div class="size-8 rounded-full bg-primary/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-xl">auto_graph</span>
+</div>
+<h1 class="text-lg font-bold tracking-tight text-slate-900 dark:text-white">CareerAI</h1>
+</div>
+<div class="flex flex-1 flex-col justify-between p-4">
+<nav class="flex flex-col gap-2">
+<a class="flex items-center gap-3 rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 rounded-lg bg-primary/10 px-3 py-2 text-primary dark:bg-primary/20" href="#">
+<span class="material-symbols-outlined">account_tree</span>
+<span class="font-medium">Pipeline</span>
+</a>
+<a class="flex items-center gap-3 rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100" href="#">
+<span class="material-symbols-outlined">description</span>
+<span class="font-medium">Resume Builder</span>
+</a>
+<a class="flex items-center gap-3 rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100" href="#">
+<span class="material-symbols-outlined">trending_up</span>
+<span class="font-medium">Market Insights</span>
+</a>
+</nav>
+<div class="flex flex-col gap-2 border-t border-slate-100 pt-4 dark:border-slate-800">
+<a class="flex items-center gap-3 rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-medium">Settings</span>
+</a>
+<div class="flex items-center gap-3 px-3 py-2 mt-2">
+<div class="size-8 rounded-full bg-slate-200 bg-cover bg-center" data-alt="User profile picture" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDF7b1BJi8eK3-P0aiuwZ0hoY395gF_HFfomKHxafp85e1l2KVGwrxOeYoY1WfKtW7hnsg--Y5KF9gFxBRUHNz2U8-nwP6VpKP8LvyvmHlaWja9bmbg6kvSvZM1hx9vT0sBp0uDZUmaIW8XnBzxmwTnL8io0AdDjDMLB3S0F4URoWatui2LZCMSeFHm_MhytClaEast-OIBieRai3ipyFgQCSrQP6EVJrXEUO0VQw8rK9xNoLxnWJ98r4Uw5RO_pa_9CDECYYj6Tag')"></div>
+<div class="flex flex-col">
+<p class="text-sm font-medium text-slate-900 dark:text-white">Alex Morgan</p>
+<p class="text-xs text-slate-500 dark:text-slate-400">Pro Plan</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Main Content -->
+<div class="flex flex-1 flex-col overflow-y-auto bg-background-light dark:bg-background-dark">
+<!-- Top Header -->
+<header class="sticky top-0 z-10 flex h-16 w-full items-center justify-between border-b border-slate-200 bg-white/80 px-6 backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
+<div class="flex items-center gap-4">
+<h2 class="text-xl font-bold text-slate-900 dark:text-white">Pipeline Analysis</h2>
+<span class="text-slate-300 dark:text-slate-700">|</span>
+<div class="relative">
+<select class="appearance-none rounded-lg border border-slate-200 bg-transparent py-1.5 pl-3 pr-10 text-sm font-medium text-slate-700 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-slate-700 dark:text-slate-300">
+<option>Senior Software Engineer at WSO2</option>
+<option>Product Manager at Stripe</option>
+<option>Frontend Lead at Vercel</option>
+</select>
+<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500">
+<span class="material-symbols-outlined text-sm">expand_more</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<button class="flex items-center justify-center rounded-lg border border-slate-200 p-2 text-slate-500 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-blue-600">
+<span class="material-symbols-outlined text-sm">download</span>
+                        Export Report
+                    </button>
+</div>
+</header>
+<main class="flex flex-col gap-6 p-6 md:p-8 max-w-7xl mx-auto w-full">
+<!-- Overview Stats -->
+<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+<div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+<div class="flex items-center justify-between">
+<p class="text-sm font-medium text-slate-500 dark:text-slate-400">Match Potential</p>
+<span class="material-symbols-outlined text-primary">analytics</span>
+</div>
+<div class="mt-2 flex items-baseline gap-2">
+<span class="text-3xl font-bold text-slate-900 dark:text-white">85%</span>
+<span class="text-sm font-medium text-green-500">+5%</span>
+</div>
+</div>
+<div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+<div class="flex items-center justify-between">
+<p class="text-sm font-medium text-slate-500 dark:text-slate-400">Keyword Hits</p>
+<span class="material-symbols-outlined text-purple-500">key</span>
+</div>
+<div class="mt-2 flex items-baseline gap-2">
+<span class="text-3xl font-bold text-slate-900 dark:text-white">24</span>
+<span class="text-sm font-medium text-slate-500">/ 28 Target</span>
+</div>
+</div>
+<div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+<div class="flex items-center justify-between">
+<p class="text-sm font-medium text-slate-500 dark:text-slate-400">Formatting</p>
+<span class="material-symbols-outlined text-orange-500">format_shapes</span>
+</div>
+<div class="mt-2 flex items-baseline gap-2">
+<span class="text-3xl font-bold text-slate-900 dark:text-white">92%</span>
+<span class="text-sm font-medium text-green-500">Excellent</span>
+</div>
+</div>
+<div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+<div class="flex items-center justify-between">
+<p class="text-sm font-medium text-slate-500 dark:text-slate-400">Word Count</p>
+<span class="material-symbols-outlined text-blue-400">text_fields</span>
+</div>
+<div class="mt-2 flex items-baseline gap-2">
+<span class="text-3xl font-bold text-slate-900 dark:text-white">640</span>
+<span class="text-sm font-medium text-slate-500">Optimal</span>
+</div>
+</div>
+</div>
+<!-- ATS Score Section -->
+<section class="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+<div class="flex items-center justify-between border-b border-slate-100 px-6 py-4 dark:border-slate-800">
+<h3 class="text-lg font-bold text-slate-900 dark:text-white">ATS Compatibility Score</h3>
+<button class="text-sm font-medium text-primary hover:text-blue-600">View Full Report</button>
+</div>
+<div class="flex flex-col lg:flex-row">
+<!-- Left: Radial Chart Area -->
+<div class="flex flex-1 flex-col items-center justify-center p-8 border-b lg:border-b-0 lg:border-r border-slate-100 dark:border-slate-800">
+<div class="relative flex size-64 items-center justify-center">
+<!-- Decorative SVG for Radial Chart -->
+<svg class="size-full -rotate-90 transform" viewbox="0 0 100 100">
+<circle class="text-slate-100 dark:text-slate-800" cx="50" cy="50" fill="transparent" r="40" stroke="currentColor" stroke-width="8"></circle>
+<circle class="text-primary" cx="50" cy="50" fill="transparent" r="40" stroke="currentColor" stroke-dasharray="220" stroke-dashoffset="33" stroke-linecap="round" stroke-width="8"></circle>
+</svg>
+<div class="absolute flex flex-col items-center">
+<span class="text-5xl font-extrabold text-slate-900 dark:text-white">85</span>
+<span class="text-sm font-medium text-slate-500 dark:text-slate-400">Total Score</span>
+</div>
+</div>
+<div class="mt-6 flex w-full max-w-xs justify-between text-center">
+<div>
+<p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Hard Skills</p>
+<p class="mt-1 text-lg font-bold text-slate-900 dark:text-white">90%</p>
+</div>
+<div class="h-10 w-px bg-slate-200 dark:bg-slate-700"></div>
+<div>
+<p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Soft Skills</p>
+<p class="mt-1 text-lg font-bold text-slate-900 dark:text-white">75%</p>
+</div>
+<div class="h-10 w-px bg-slate-200 dark:bg-slate-700"></div>
+<div>
+<p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Impact</p>
+<p class="mt-1 text-lg font-bold text-slate-900 dark:text-white">82%</p>
+</div>
+</div>
+</div>
+<!-- Right: Breakdowns -->
+<div class="flex flex-[1.5] flex-col gap-8 p-8">
+<!-- Keyword Match -->
+<div>
+<h4 class="mb-4 text-sm font-bold uppercase tracking-wider text-slate-500">Keyword Match Analysis</h4>
+<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+<div class="rounded-lg bg-green-50 p-4 dark:bg-green-900/20">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-green-600 dark:text-green-400 text-sm">check_circle</span>
+<p class="text-sm font-bold text-green-800 dark:text-green-300">Found Keywords</p>
+</div>
+<div class="flex flex-wrap gap-2">
+<span class="rounded-md bg-white px-2 py-1 text-xs font-medium text-green-700 shadow-sm dark:bg-green-900/40 dark:text-green-200">Java</span>
+<span class="rounded-md bg-white px-2 py-1 text-xs font-medium text-green-700 shadow-sm dark:bg-green-900/40 dark:text-green-200">Spring Boot</span>
+<span class="rounded-md bg-white px-2 py-1 text-xs font-medium text-green-700 shadow-sm dark:bg-green-900/40 dark:text-green-200">Microservices</span>
+<span class="rounded-md bg-white px-2 py-1 text-xs font-medium text-green-700 shadow-sm dark:bg-green-900/40 dark:text-green-200">AWS</span>
+<span class="rounded-md bg-white px-2 py-1 text-xs font-medium text-green-700 shadow-sm dark:bg-green-900/40 dark:text-green-200">Docker</span>
+<span class="rounded-md bg-white px-2 py-1 text-xs font-medium text-green-700 shadow-sm dark:bg-green-900/40 dark:text-green-200">SQL</span>
+</div>
+</div>
+<div class="rounded-lg bg-red-50 p-4 dark:bg-red-900/20">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-red-600 dark:text-red-400 text-sm">cancel</span>
+<p class="text-sm font-bold text-red-800 dark:text-red-300">Missing Keywords</p>
+</div>
+<div class="flex flex-wrap gap-2">
+<span class="rounded-md bg-white px-2 py-1 text-xs font-medium text-red-700 shadow-sm dark:bg-red-900/40 dark:text-red-200">Kubernetes</span>
+<span class="rounded-md bg-white px-2 py-1 text-xs font-medium text-red-700 shadow-sm dark:bg-red-900/40 dark:text-red-200">gRPC</span>
+<span class="rounded-md bg-white px-2 py-1 text-xs font-medium text-red-700 shadow-sm dark:bg-red-900/40 dark:text-red-200">System Design</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Formatting Breakdown -->
+<div>
+<h4 class="mb-4 text-sm font-bold uppercase tracking-wider text-slate-500">Formatting Checks</h4>
+<div class="space-y-3">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="rounded-full bg-green-100 p-1 dark:bg-green-900/30">
+<span class="material-symbols-outlined text-green-600 dark:text-green-400 text-sm">check</span>
+</div>
+<span class="text-sm font-medium text-slate-700 dark:text-slate-300">File Format (PDF)</span>
+</div>
+<span class="text-sm font-bold text-slate-900 dark:text-white">Pass</span>
+</div>
+<div class="h-px w-full bg-slate-100 dark:bg-slate-800"></div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="rounded-full bg-green-100 p-1 dark:bg-green-900/30">
+<span class="material-symbols-outlined text-green-600 dark:text-green-400 text-sm">check</span>
+</div>
+<span class="text-sm font-medium text-slate-700 dark:text-slate-300">Font Legibility</span>
+</div>
+<span class="text-sm font-bold text-slate-900 dark:text-white">Pass</span>
+</div>
+<div class="h-px w-full bg-slate-100 dark:bg-slate-800"></div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="rounded-full bg-yellow-100 p-1 dark:bg-yellow-900/30">
+<span class="material-symbols-outlined text-yellow-600 dark:text-yellow-400 text-sm">priority_high</span>
+</div>
+<span class="text-sm font-medium text-slate-700 dark:text-slate-300">Section Headings Clarity</span>
+</div>
+<span class="text-sm font-bold text-yellow-600 dark:text-yellow-400">Review</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- CV Optimisation Section -->
+<section class="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+<div class="flex items-center justify-between border-b border-slate-100 px-6 py-4 dark:border-slate-800">
+<div class="flex items-center gap-3">
+<h3 class="text-lg font-bold text-slate-900 dark:text-white">CV Optimisation</h3>
+<span class="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-bold text-primary dark:bg-primary/20">AI Suggestions</span>
+</div>
+<div class="flex gap-2">
+<button class="rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800">Discard All</button>
+<button class="rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-600">Apply All Changes</button>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x border-slate-200 dark:border-slate-800 dark:divide-slate-800">
+<!-- Original Column -->
+<div class="flex flex-col">
+<div class="bg-slate-50 px-6 py-3 text-xs font-bold uppercase tracking-wider text-slate-500 dark:bg-slate-800/50">
+                                Original Content
+                            </div>
+<div class="p-6 space-y-6">
+<div class="group relative rounded-lg border border-transparent p-3 hover:border-slate-200 hover:bg-slate-50 dark:hover:border-slate-700 dark:hover:bg-slate-800/50">
+<div class="mb-2 text-xs font-semibold text-slate-400">Professional Summary</div>
+<p class="text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+<span class="bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200 line-through decoration-red-500">Experienced developer</span> with 5 years in Java. Worked on various backend projects. Looking for a challenging role.
+                                    </p>
+</div>
+<div class="group relative rounded-lg border border-transparent p-3 hover:border-slate-200 hover:bg-slate-50 dark:hover:border-slate-700 dark:hover:bg-slate-800/50">
+<div class="mb-2 text-xs font-semibold text-slate-400">Work Experience - WSO2</div>
+<ul class="list-disc pl-4 space-y-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+<li>Developed microservices using Spring Boot.</li>
+<li>
+<span class="bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200 line-through decoration-red-500">Helped the team to fix bugs</span> in the payment gateway.
+                                        </li>
+<li>Used SQL databases for data storage.</li>
+</ul>
+</div>
+</div>
+</div>
+<!-- Optimised Column -->
+<div class="flex flex-col">
+<div class="bg-primary/5 px-6 py-3 text-xs font-bold uppercase tracking-wider text-primary dark:bg-primary/10">
+                                Optimised Content
+                            </div>
+<div class="p-6 space-y-6">
+<div class="group relative rounded-lg border border-green-100 bg-green-50/30 p-3 dark:border-green-900/30 dark:bg-green-900/10">
+<div class="flex justify-between items-start mb-2">
+<div class="text-xs font-semibold text-primary">Professional Summary</div>
+<button class="text-xs text-primary underline">Apply</button>
+</div>
+<p class="text-sm leading-relaxed text-slate-800 dark:text-slate-200">
+<span class="bg-green-200 text-green-900 dark:bg-green-800/60 dark:text-green-100 font-medium">Senior Software Engineer</span> with 5+ years specializing in <span class="bg-green-200 text-green-900 dark:bg-green-800/60 dark:text-green-100 font-medium">scalable Java microservices</span>. Proven track record in optimizing backend performance and driving architectural decisions.
+                                    </p>
+</div>
+<div class="group relative rounded-lg border border-green-100 bg-green-50/30 p-3 dark:border-green-900/30 dark:bg-green-900/10">
+<div class="flex justify-between items-start mb-2">
+<div class="text-xs font-semibold text-primary">Work Experience - WSO2</div>
+<button class="text-xs text-primary underline">Apply</button>
+</div>
+<ul class="list-disc pl-4 space-y-2 text-sm leading-relaxed text-slate-800 dark:text-slate-200">
+<li>Architected and deployed high-performance microservices using Spring Boot, reducing latency by 40%.</li>
+<li>
+<span class="bg-green-200 text-green-900 dark:bg-green-800/60 dark:text-green-100 font-medium">Led resolution of critical defects</span> in the high-volume payment gateway, ensuring 99.9% uptime.
+                                        </li>
+<li>Optimized SQL database queries improving data retrieval speeds by 25%.</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Footer Info -->
+<div class="flex justify-center py-4 text-xs text-slate-400">
+<p>Generated by CareerAI • Last updated 2 hours ago</p>
+</div>
+</main>
+</div>
+</div>
+</body></html>

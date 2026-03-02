@@ -22,7 +22,6 @@ export default function App() {
           path="/dashboard"
           element={
             <ProtectedRoute>
-              <Navbar />
               <DashboardPage />
             </ProtectedRoute>
           }

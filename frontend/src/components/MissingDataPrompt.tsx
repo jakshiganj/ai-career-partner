@@ -34,7 +34,7 @@ export default function MissingDataPrompt({ pipelineId, missingFields, onResumed
         setError(null);
         try {
             const token = localStorage.getItem('token');
-            const data: any = {};
+            const data: Record<string, unknown> = {};
             if (isMissing('job_description')) data.job_description = jobDescription;
             if (isMissing('cv_raw')) data.cv_raw = cvRaw;
             if (isMissing('skills') || skills.length > 0) data.skills = skills;
@@ -43,8 +43,9 @@ export default function MissingDataPrompt({ pipelineId, missingFields, onResumed
                 headers: { Authorization: `Bearer ${token}` }
             });
             onResumed();
-        } catch (e: any) {
-            setError(e?.response?.data?.detail || 'Failed to submit data');
+        } catch (e: unknown) {
+            const axiosError = e as { response?: { data?: { detail?: string } } };
+            setError(axiosError?.response?.data?.detail || 'Failed to submit data');
         } finally {
             setSubmitting(false);
         }

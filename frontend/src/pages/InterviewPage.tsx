@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
+import { Mic, Keyboard, MessageSquare, Lightbulb, Zap, Timer, Info, MicOff, MoreHorizontal } from 'lucide-react';
 
 interface Message {
     id: number;
@@ -209,124 +210,192 @@ export default function InterviewPage() {
     }, []);
 
     return (
-        <div className="page" style={{ paddingBottom: '4rem' }}>
-            <div className="container max-w-5xl mx-auto px-4 mt-8">
-                <div style={{ marginBottom: '1.5rem', textAlign: 'center' }}>
-                    <h1 className="text-3xl font-bold gradient-text pb-2">🎤 Live Voice Interview</h1>
-                    <p style={{ color: 'var(--text-muted)' }}>
-                        Practice speaking with the Gemini 2.0 Live Audio Agent
-                    </p>
+        <div className="flex-1 flex overflow-hidden p-4 gap-4 bg-[#F1F5F9]" style={{ height: 'calc(100vh - 64px)' }}>
+            {/* Left: Orb & Live Feedback */}
+            <div className="flex-[2] flex flex-col gap-4 min-w-0">
+                {/* Visualizer Container */}
+                <div className="relative flex-1 bg-white rounded-2xl border border-[#E2E8F0] overflow-hidden shadow-sm flex items-center justify-center">
+                    {/* Orb */}
+                    <div className="relative flex items-center justify-center w-full h-full bg-slate-50">
+                        {connected ? (
+                            audioMode ? (
+                                <div className="w-32 h-32 bg-blue-500 rounded-full animate-pulse shadow-[0_0_40px_rgba(59,130,246,0.5)]"></div>
+                            ) : (
+                                <div className="text-center">
+                                    <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-blue-500">
+                                        <Keyboard className="h-10 w-10 text-blue-600" />
+                                    </div>
+                                    <p className="text-slate-600 font-medium">Text Mode Active</p>
+                                </div>
+                            )
+                        ) : (
+                            <div className="text-center">
+                                <div className="w-24 h-24 bg-slate-200 rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-dashed border-slate-400">
+                                    <Mic className="h-10 w-10 text-slate-400 opacity-50" />
+                                </div>
+                                <p className="text-slate-500 font-medium tracking-tight">Agent Offline</p>
+                            </div>
+                        )}
+
+                        {/* Live Status Indicator */}
+                        {connected && (
+                            <div className="absolute top-4 left-4 flex items-center gap-2 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 shadow-sm">
+                                <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                                <span className="text-[10px] font-bold text-white tracking-widest uppercase">Live Session</span>
+                            </div>
+                        )}
+
+                        {/* Speech Pace Placeholder Overlays */}
+                        {connected && (
+                            <div className="absolute top-4 right-4 flex flex-col gap-3 w-48">
+                                <div className="bg-white/90 backdrop-blur border border-slate-200 p-3 rounded-xl shadow-sm">
+                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter mb-1">Sentiment</p>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-sm font-bold text-slate-900">Professional</span>
+                                        <span className="text-[10px] font-bold text-emerald-600 bg-emerald-100 px-1.5 rounded uppercase">Optimizing</span>
+                                    </div>
+                                    <div className="mt-2 h-1 w-full bg-slate-200 rounded-full overflow-hidden">
+                                        <div className="h-full bg-blue-500 w-3/4"></div>
+                                    </div>
+                                </div>
+                                <div className="bg-white/90 backdrop-blur border border-slate-200 p-3 rounded-xl shadow-sm">
+                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter mb-1">Session Mode</p>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-sm font-bold text-slate-900">{audioMode ? 'Voice / Audio' : 'Text Only'}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Bottom Controls */}
+                    <div className="absolute bottom-6 right-6 flex items-center gap-3">
+                        {!connected ? (
+                            <>
+                                <button className="px-6 h-11 flex items-center gap-2 justify-center rounded-xl bg-blue-600 text-white shadow-lg shadow-blue-600/20 hover:bg-blue-700 transition-all font-bold text-sm" onClick={() => connect(true)}>
+                                    <Mic className="h-4 w-4" /> Start Voice Call
+                                </button>
+                                <button className="px-6 h-11 flex items-center gap-2 justify-center rounded-xl bg-white text-slate-700 shadow-md border border-slate-200 hover:bg-slate-50 transition-all font-bold text-sm" onClick={() => connect(false)}>
+                                    <Keyboard className="h-4 w-4" /> Text Only
+                                </button>
+                            </>
+                        ) : (
+                            <button className="px-6 h-11 flex items-center justify-center rounded-xl bg-red-600 text-white shadow-lg shadow-red-600/20 hover:bg-red-700 transition-all font-bold text-sm" onClick={disconnect}>
+                                End Session
+                            </button>
+                        )}
+                    </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* Chat Panel */}
-                    <div className="card lg:col-span-2 flex flex-col pt-0 px-0" style={{ height: '600px' }}>
-                        {/* Header bar */}
-                        <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            padding: '1rem 1.5rem',
-                            borderBottom: '1px solid var(--border-subtle)',
-                        }}>
-                            <div className="flex items-center gap-2">
-                                <div style={{
-                                    width: 10, height: 10, borderRadius: '50%',
-                                    background: connected ? 'var(--accent-green)' : 'var(--text-muted)',
-                                    boxShadow: connected ? '0 0 8px var(--accent-green)' : 'none',
-                                    transition: 'all 0.3s',
-                                }} />
-                                <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>
-                                    {connected ? `Agent Connected (${audioMode ? 'Voice' : 'Text'})` : 'Offline'}
+                {/* Live Transcription Details */}
+                <div className="h-48 bg-white rounded-2xl border border-slate-200 p-5 overflow-hidden flex flex-col shadow-sm">
+                    <div className="flex items-center gap-2 mb-3">
+                        <MessageSquare className="h-4 w-4 text-blue-600" />
+                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Live Transcription</h3>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto space-y-4 pr-2">
+                        {messages.length === 0 && (
+                            <div className="text-center text-slate-400 text-sm mt-4 italic">Conversation transcripts will appear here...</div>
+                        )}
+                        {messages.map(msg => (
+                            <div key={msg.id} className="flex gap-4">
+                                <span className={`text-[10px] font-bold w-12 pt-1.5 shrink-0 ${msg.type === 'user' ? 'text-blue-600' : msg.type === 'system' ? 'text-slate-400' : 'text-slate-500'}`}>
+                                    {msg.type === 'user' ? 'YOU' : msg.type === 'system' ? 'SYS' : 'AGENT'}
                                 </span>
+                                <p className={`text-sm leading-relaxed ${msg.type === 'user' ? 'text-slate-900 font-medium' : msg.type === 'system' ? 'text-slate-400 italic' : 'text-slate-600'}`}>
+                                    {msg.text}
+                                </p>
                             </div>
-                            <div className="flex gap-2">
-                                {!connected ? (
-                                    <>
-                                        <button className="btn btn-primary" onClick={() => connect(true)}>
-                                            🎙️ Start Voice Call
-                                        </button>
-                                        <button className="btn" style={{ background: 'var(--bg-elevated)' }} onClick={() => connect(false)}>
-                                            ⌨️ Text Only
-                                        </button>
-                                    </>
-                                ) : (
-                                    <button className="btn btn-danger" onClick={disconnect}>
-                                        End Interview
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Messages */}
-                        <div className="overflow-y-auto p-4 flex-1 space-y-4" style={{ background: 'var(--bg-site)' }}>
-                            {messages.length === 0 && (
-                                <div style={{ textAlign: 'center', marginTop: '4rem', color: 'var(--text-muted)' }}>
-                                    <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🎙️</div>
-                                    <p className="text-sm">Click <strong>Start Voice Call</strong> to begin speaking with the agent.</p>
-                                </div>
-                            )}
-                            {messages.map(msg => (
-                                <div key={msg.id} className={`flex ${msg.type === 'user' ? 'justify-end' : msg.type === 'system' ? 'justify-center' : 'justify-start'}`}>
-                                    <div style={{
-                                        maxWidth: '80%', padding: '0.75rem 1rem', borderRadius: '1rem',
-                                        background: msg.type === 'user' ? 'var(--accent-blue)' : msg.type === 'system' ? 'transparent' : 'var(--bg-elevated)',
-                                        color: msg.type === 'user' ? 'white' : msg.type === 'system' ? 'var(--text-muted)' : 'var(--text-primary)',
-                                        fontSize: msg.type === 'system' ? '0.8rem' : '0.95rem',
-                                        border: msg.type === 'agent' ? '1px solid var(--border-subtle)' : 'none'
-                                    }}>
-                                        {msg.text}
-                                    </div>
-                                </div>
-                            ))}
-                            <div ref={messagesEndRef} />
-                        </div>
-
-                        {/* Input */}
-                        <div className="p-4 border-t" style={{ borderColor: 'var(--border-subtle)', background: 'var(--bg-card)' }}>
-                            <div className="flex gap-2">
-                                <input
-                                    className="form-input flex-1"
-                                    placeholder={connected ? (audioMode ? 'Speak, or type supplementary text...' : 'Type your answer...') : 'Connect first to start chatting'}
-                                    value={input}
-                                    onChange={e => setInput(e.target.value)}
-                                    onKeyDown={handleKeyDown}
-                                    disabled={!connected}
-                                />
-                                <button
-                                    className="btn btn-primary"
-                                    onClick={sendMessage}
-                                    disabled={!connected || !input.trim()}
-                                >
-                                    Send
-                                </button>
-                            </div>
-                        </div>
+                        ))}
+                        <div ref={messagesEndRef} />
                     </div>
 
-                    {/* Tips Card */}
-                    <div className="space-y-6">
-                        <div className="card">
-                            <h3 className="text-lg font-bold mb-4" style={{ color: 'var(--text-primary)' }}>💡 Interview Guidance</h3>
-                            <div className="space-y-3">
-                                {[
-                                    { icon: '🎯', tip: 'Use STAR method', desc: 'Situation, Task, Action, Result' },
-                                    { icon: '🎙️', tip: 'Voice Modality', desc: 'Interrupt the agent anytime by simply speaking.' },
-                                    { icon: '⏱️', tip: 'Keep answers concise', desc: 'Aim for 90–120 seconds maximum per answer.' }
-                                ].map(({ icon, tip, desc }) => (
-                                    <div key={tip} className="p-3 rounded-lg" style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)' }}>
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <span>{icon}</span>
-                                            <span className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>{tip}</span>
-                                        </div>
-                                        <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>{desc}</div>
-                                    </div>
-                                ))}
-                            </div>
+                    {connected && (
+                        <div className="mt-3 flex gap-2 pt-3 border-t border-slate-100">
+                            <input
+                                className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                placeholder={audioMode ? 'Type a supplementary message...' : 'Type your answer...'}
+                                value={input}
+                                onChange={e => setInput(e.target.value)}
+                                onKeyDown={handleKeyDown}
+                            />
+                            <button
+                                className="px-4 py-2 bg-slate-900 text-white rounded-lg text-sm font-medium hover:bg-slate-800 disabled:opacity-50 transition-colors"
+                                onClick={sendMessage}
+                                disabled={!input.trim()}
+                            >
+                                Send
+                            </button>
                         </div>
-                    </div>
+                    )}
                 </div>
             </div>
+
+            {/* Right Sidebar: Insights */}
+            <aside className="flex-1 min-w-[320px] max-w-md flex flex-col gap-4 overflow-y-auto">
+                {/* Interview Context Card */}
+                <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+                    <div className="flex items-center justify-between mb-4">
+                        <span className="px-2 py-1 bg-blue-50 text-blue-600 text-[10px] font-bold rounded uppercase">Active Mode</span>
+                        <MoreHorizontal className="h-5 w-5 text-slate-400" />
+                    </div>
+                    <h2 className="text-lg font-bold text-slate-900 mb-1">Interview Prep Session</h2>
+                    <p className="text-sm text-slate-500">Gemini 2.0 Live Voice Agent</p>
+                </div>
+
+                {/* AI Coach Recommendations Placeholder */}
+                <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex-1">
+                    <div className="flex items-center gap-2 mb-5">
+                        <Lightbulb className="h-5 w-5 text-amber-500" />
+                        <h3 className="text-sm font-bold text-slate-900">Coach Insights</h3>
+                    </div>
+
+                    <div className="space-y-6">
+                        <div className="space-y-3">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Recommended Talking Points</p>
+
+                            <div className="group cursor-pointer p-3 rounded-xl border border-slate-200 hover:border-blue-200 hover:bg-blue-50 transition-all">
+                                <div className="flex items-start justify-between">
+                                    <p className="text-sm font-semibold text-slate-800">The STAR Method</p>
+                                    <Zap className="h-4 w-4 text-blue-500" />
+                                </div>
+                                <p className="text-xs text-slate-500 mt-1">Structure answers focusing on Situation, Task, Action, and Result.</p>
+                            </div>
+
+                            <div className="group cursor-pointer p-3 rounded-xl border border-slate-200 hover:border-blue-200 hover:bg-blue-50 transition-all">
+                                <div className="flex items-start justify-between">
+                                    <p className="text-sm font-semibold text-slate-800">Keep it concise</p>
+                                    <Timer className="h-4 w-4 text-blue-500" />
+                                </div>
+                                <p className="text-xs text-slate-500 mt-1">Aim for 90-120 seconds maximum per answer to keep the agent engaged.</p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-3">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Real-time Feedback</p>
+
+                            {connected ? (
+                                <div className="flex items-start gap-3 p-3 rounded-xl bg-blue-50 border border-blue-100">
+                                    <Info className="h-5 w-5 text-blue-500 shrink-0" />
+                                    <div>
+                                        <p className="text-xs font-bold text-blue-800 uppercase tracking-tight">Listening Mode</p>
+                                        <p className="text-xs text-blue-700/80 mt-1">The agent will automatically process your voice. Speak naturally.</p>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200">
+                                    <MicOff className="h-5 w-5 text-slate-400 shrink-0" />
+                                    <div>
+                                        <p className="text-xs font-bold text-slate-600 uppercase tracking-tight">Offline</p>
+                                        <p className="text-xs text-slate-500 mt-1">Connect to the session to stream real-time insights.</p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </aside>
         </div>
     );
 }

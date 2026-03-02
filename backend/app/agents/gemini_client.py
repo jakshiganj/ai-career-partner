@@ -1,6 +1,9 @@
-from google import genai
 import os
 import json
+from google import genai
+from dotenv import load_dotenv
+
+load_dotenv()
 
 class GeminiClient:
     def __init__(self):

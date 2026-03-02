@@ -2,7 +2,7 @@ import { useState } from 'react';
 import axios from 'axios';
 
 interface Props {
-    onImportComplete?: (profileData: any) => void;
+    onImportComplete?: (profileData: unknown) => void;
 }
 
 export default function LinkedInImport({ onImportComplete }: Props) {
@@ -48,7 +48,7 @@ export default function LinkedInImport({ onImportComplete }: Props) {
                         });
                         setLoading(false);
                         onImportComplete?.(profileRes.data);
-                    } catch (e) {
+                    } catch {
                         setError('Failed to fetch profile after import');
                         setLoading(false);
                     }
@@ -64,8 +64,9 @@ export default function LinkedInImport({ onImportComplete }: Props) {
 
             window.addEventListener('message', handleMessage);
 
-        } catch (e: any) {
-            setError(e.message || 'An error occurred during LinkedIn connect');
+        } catch (e: unknown) {
+            const err = e as Error;
+            setError(err.message || 'An error occurred during LinkedIn connect');
             setLoading(false);
         }
     }

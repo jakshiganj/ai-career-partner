@@ -2,15 +2,18 @@
 Pipeline Router — Triggers the MasterOrchestratorAgent pipeline.
 
 Endpoints:
+  GET  /api/pipeline/runs        → List previous runs for sidebar
   POST /api/pipeline/start        → Start a new pipeline run
   GET  /api/pipeline/{id}/status  → Fetch current PipelineState status
   GET  /api/pipeline/{id}/result  → Fetch full PipelineState object
   POST /api/pipeline/{id}/resume  → Resume a stopped pipeline
 """
+import os
 import uuid
 from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlmodel import select, desc
 from pydantic import BaseModel
 
 from app.core.database import get_session
@@ -20,6 +23,47 @@ from app.models.pipeline import PipelineRun, PipelineState
 from app.orchestrator.master_orchestrator_agent import MasterOrchestratorAgent
 
 router = APIRouter()
+
+
+def _run_label_from_state(state_json: dict) -> str:
+    """Extract a short label for the run from state (e.g. job title or job description snippet)."""
+    jd = (state_json or {}).get("job_description") or ""
+    if not jd:
+        return "Untitled run"
+    # Use first line or first 50 chars
+    first_line = jd.strip().split("\n")[0].strip()
+    if len(first_line) > 50:
+        return first_line[:47] + "..."
+    return first_line or "Untitled run"
+
+
+@router.get("/runs")
+async def list_pipeline_runs(
+    limit: int = 8,
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+):
+    """List previous pipeline runs for the current user (for dashboard sidebar)."""
+    q = (
+        select(PipelineRun)
+        .where(PipelineRun.user_id == current_user.id)
+        .order_by(desc(PipelineRun.created_at))
+        .limit(limit)
+    )
+    res = await session.execute(q)
+    runs = res.scalars().all()
+    out = []
+    for r in runs:
+        state = r.state_json or {}
+        out.append({
+            "id": str(r.id),
+            "label": _run_label_from_state(state),
+            "created_at": r.created_at.isoformat() if r.created_at else None,
+            "ats_score": state.get("ats_score"),
+            "status": r.status,
+            "current_stage": r.current_stage,
+        })
+    return {"runs": out}
 
 class PipelineStartOptions(BaseModel):
     run_interview_prep: bool = True
@@ -39,16 +83,17 @@ async def start_pipeline(
     """
     Trigger a new Master Orchestrator pipeline run for the authenticated user.
     """
-    orchestrator = MasterOrchestratorAgent(session)
-    state = await orchestrator.start_pipeline(
-        user_id=current_user.id,
+    db_url = os.environ.get("LANGGRAPH_CHECKPOINT_URL", "postgresql://admin:password123@localhost:5432/career_db")
+    orchestrator = MasterOrchestratorAgent(session, db_url)
+    pipeline_id = await orchestrator.start_pipeline(
+        user_id=str(current_user.id),
         cv_raw=request.cv_text,
         job_description=request.job_description
     )
 
     return {
-        "pipeline_id": state.pipeline_id,
-        "status": state.status,
+        "pipeline_id": pipeline_id,
+        "status": "running",
     }
 
 @router.get("/{pipeline_id}/status")
@@ -62,13 +107,14 @@ async def get_pipeline_status(
     if not run or run.user_id != current_user.id:
         raise HTTPException(status_code=404, detail="Pipeline run not found")
 
-    state = PipelineState(**run.state_json)
+    state = run.state_json or {}
     
+    current_stage = state.get("current_stage", 1)
     return {
-        "status": state.status,
-        "current_stage": state.current_stage,
-        "completed_stages": list(range(1, state.current_stage)) if state.current_stage > 1 else [],
-        "error_log": state.error_log
+        "status": state.get("status", "running"),
+        "current_stage": current_stage,
+        "completed_stages": list(range(1, current_stage)) if current_stage > 1 else [],
+        "error_log": state.get("error_log", [])
     }
 
 @router.get("/{pipeline_id}/result")
@@ -86,27 +132,15 @@ async def get_pipeline_result(
 
 @router.post("/{pipeline_id}/resume")
 async def resume_pipeline(
-    pipeline_id: uuid.UUID,
+    pipeline_id: str,
     current_user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ):
     """Resume a halted pipeline."""
-    run = await session.get(PipelineRun, pipeline_id)
-    if not run or run.user_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Pipeline run not found")
-        
-    if run.status == "completed":
-        raise HTTPException(status_code=400, detail="Pipeline already completed")
-        
-    orchestrator = MasterOrchestratorAgent(session)
-    import asyncio
-    asyncio.create_task(orchestrator.run_pipeline_stages(run.id))
-    
-    return {
-        "pipeline_id": str(run.id),
-        "resumed_from_stage": run.current_stage,
-        "status": "running"
-    }
+    db_url = os.environ.get("LANGGRAPH_CHECKPOINT_URL", "postgresql://admin:password123@localhost:5432/career_db")
+    orchestrator = MasterOrchestratorAgent(session, db_url)
+    await orchestrator.resume_pipeline(pipeline_id)
+    return {"pipeline_id": pipeline_id, "status": "resumed"}
 
 class PipelineInputRequest(BaseModel):
     job_description: Optional[str] = None
@@ -125,34 +159,33 @@ async def provide_pipeline_input(
     if not run or run.user_id != current_user.id:
         raise HTTPException(status_code=404, detail="Pipeline run not found")
         
-    state = PipelineState(**run.state_json)
+    state = run.state_json or {}
+    status = state.get("status", "running")
     
-    if state.status != "waiting_for_input":
-        raise HTTPException(status_code=400, detail=f"Pipeline is not waiting for input (status: {state.status})")
+    if status != "waiting_for_input":
+        raise HTTPException(status_code=400, detail=f"Pipeline is not waiting for input (status: {status})")
         
     # Update provided data
     if request.job_description:
-        state.job_description = request.job_description
+        state["job_description"] = request.job_description
     if request.cv_raw:
-        state.cv_raw = request.cv_raw
+        state["cv_raw"] = request.cv_raw
     if request.skills:
-        # If they manually provided skills, store them somewhere or just append to raw CV text so parser picks them up later,
-        # Or store in missing_skills wait no, missing_skills is what they don't have. Let's just append to cv_raw for simplicity
-        # so the parser and agents see it.
-        state.cv_raw += f"\\n\\nSkills: {', '.join(request.skills)}"
+        cv_raw_val = state.get("cv_raw", "")
+        state["cv_raw"] = cv_raw_val + f"\n\nSkills: {', '.join(request.skills)}"
         
-    state.status = "running"
-    state.missing_fields = []
+    state["status"] = "running"
+    state["missing_fields"] = []
     
-    run.state_json = state.model_dump(mode="json")
+    run.state_json = state
     run.status = "running"
     session.add(run)
     await session.commit()
     
     # Resume orchestrator
-    orchestrator = MasterOrchestratorAgent(session)
-    import asyncio
-    asyncio.create_task(orchestrator.run_pipeline_stages(run.id))
+    db_url = os.environ.get("LANGGRAPH_CHECKPOINT_URL", "postgresql://admin:password123@localhost:5432/career_db")
+    orchestrator = MasterOrchestratorAgent(session, db_url)
+    await orchestrator.resume_pipeline(str(run.id))
     
     return {"status": "resumed"}
 

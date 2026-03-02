@@ -1,0 +1,163 @@
+DEBUG: send_text called with: Can you hear me?
+DEBUG: Cancelling current speaking turn...
+DEBUG: Awaiting self.session.send for text...
+DEBUG: self.session.send completed successfully.
+DEBUG: send_text called with: Can you hear me?
+DEBUG: send_text aborted - not connected or no session
+DEBUG: receive loop finished normally
+DEBUG: Live session cleanup called, disconnecting
+DEBUG: send_text called with: Can you hear me?
+DEBUG: send_text aborted - not connected or no session
+DEBUG: Gemini Live API error: received 1008 (policy violation) models/gemini-2.0-flash-exp is not found for API version v1beta, or is not supported for bidiGenerateContent. Call ListMode; then sent 1008 (policy violation) models/gemini-2.0-flash-exp is not found for API version v1beta, or is not supported for bidiGenerateContent. Call ListMode
+DEBUG: Live session cleanup called, disconnecting
+DEBUG: send_text called with: Can you hear me?
+DEBUG: send_text aborted - not connected or no session
+DEBUG: Gemini Live API error: received 1008 (policy violation) models/gemini-2.0-flash is not found for API version v1beta, or is not supported for bidiGenerateContent. Call ListModels t; then sent 1008 (policy violation) models/gemini-2.0-flash is not found for API version v1beta, or is not supported for bidiGenerateContent. Call ListModels t
+DEBUG: Live session cleanup called, disconnecting
+DEBUG: send_text called with: Can you hear me?
+DEBUG: send_text aborted - not connected or no session
+DEBUG: send_text called with: Can you hear me?
+DEBUG: Awaiting self.session.send for text...
+DEBUG: self.session.send completed successfully.
+DEBUG: Live session task cancelled
+DEBUG: Live session cleanup called, disconnecting
+DEBUG: send_text called with: Can you hear me?
+DEBUG: Awaiting self.session.send for text...
+DEBUG: self.session.send completed successfully.
+DEBUG: Live session task cancelled
+DEBUG: Live session cleanup called, disconnecting
+DEBUG: Gemini Live API error: received 1008 (policy violation) models/gemini-2.0-flash-exp is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ListMod; then sent 1008 (policy violation) models/gemini-2.0-flash-exp is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ListMod
+DEBUG: Live session cleanup called, disconnecting
+DEBUG: send_text called with: Can you hear me?
+DEBUG: send_text aborted - not connected or no session
+DEBUG: Gemini Live API error: received 1008 (policy violation) models/gemini-2.0-flash is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ListModels ; then sent 1008 (policy violation) models/gemini-2.0-flash is not found for API version v1alpha, or is not supported for bidiGenerateContent. Call ListModels 
+DEBUG: Live session cleanup called, disconnecting
+DEBUG: send_text called with: Can you hear me?
+DEBUG: send_text aborted - not connected or no session
+DEBUG: send_text called with: Can you hear me?
+DEBUG: Awaiting self.session.send for text...
+DEBUG: self.session.send completed successfully.
+DEBUG: receive loop finished normally
+DEBUG: Live session cleanup called, disconnecting
+DEBUG: send_text called with: Can you hear me?
+DEBUG: Awaiting self.session.send for text...
+DEBUG: self.session.send completed successfully.
+DEBUG: receive loop finished normally
+DEBUG: send_text called with: Can you hear me?
+DEBUG: Awaiting self.session.send for text...
+DEBUG: self.session.send completed successfully.
+DEBUG: receive loop finished normally
+DEBUG: send_text called with: Can you hear me?
+DEBUG: Awaiting self.session.send for text...
+Error sending text to Gemini: Unsupported input type "<class 'google.genai.types.Content'>" or input content "parts=[Part(
+  text='Can you hear me?'
+)] role='user'"
+DEBUG: receive loop finished normally
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: receive loop finished normally
+DEBUG: send_text called with: Can you hear me?
+DEBUG: Awaiting self.session.send for text...
+DEBUG: self.session.send completed successfully.
+DEBUG: receive loop finished normally
+DEBUG: Live session task cancelled

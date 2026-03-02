@@ -18,13 +18,16 @@ def scrape_topjobs_software_vacancies():
     try:
         response = requests.get(url, headers=headers, timeout=10)
         if response.status_code != 200:
+            print(f"TopJobs Scrape: HTTP {response.status_code}")
             return []
             
         soup = BeautifulSoup(response.text, 'html.parser')
         rows = soup.find_all('tr')
+        print(f"TopJobs Scrape: Found {len(rows)} rows.")
         
         # Skip header rows (approx first 9)
         if len(rows) < 10:
+            print("TopJobs Scrape: Too few rows found.")
             return []
             
         for row in rows[9:]:
@@ -44,6 +47,7 @@ def scrape_topjobs_software_vacancies():
                         "company": company,
                         "search_text": f"{title} {company}".lower()
                     })
+        print(f"TopJobs Scrape: Scraped {len(jobs)} jobs.")
                     
     except Exception as e:
         print(f"TopJobs Scrape Error: {e}")
@@ -52,16 +56,18 @@ def scrape_topjobs_software_vacancies():
 
 def get_jobs_for_skill(skill, all_jobs=None):
     """
-    Filters cached/fresh jobs for a specific skill.
+    Filters cached/fresh jobs for a specific skill (fuzzy match).
     """
     if all_jobs is None:
         all_jobs = scrape_topjobs_software_vacancies()
         
     skill_lower = skill.lower()
-    matches = [
-        f"{j['title']} at {j['company']}" 
-        for j in all_jobs 
-        if skill_lower in j['search_text']
-    ]
+    keywords = [k.strip() for k in skill_lower.split() if len(k.strip()) > 2]
     
+    matches = []
+    for j in all_jobs:
+        # Match if any keyword is in the search text
+        if any(kw in j['search_text'] for kw in keywords):
+            matches.append(f"{j['title']} at {j['company']}")
+            
     return matches

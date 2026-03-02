@@ -23,18 +23,15 @@ class LiveInterviewSession:
         self.is_speaking = False
         self.config = {
             "system_instruction": types.Content(
-                parts=[types.Part.from_text(text=f"""
-                You are a professional Technical Interviewer. 
-                Role: {job_description}
-                Candidate CV Summary: {cv_text}
-                
-                Conduct a spoken interview. Be concise. Ask one question at a time.
-                If the user interrupts, stop your current thought and address them.
-                
-                CRITICAL INSTRUCTION: You are speaking ALOUD directly to the candidate over a voice channel. 
-                NEVER output any internal monologue, stage directions, formatting, or markdown like "**Initiating the Interview**".
-                JUST SPEAK your response directly as the interviewer character.
-                """)]
+                parts=[types.Part.from_text(text=f"""You are a professional Technical Interviewer conducting a voice interview. 
+Role: {job_description}
+Candidate CV Summary: {cv_text}
+
+CRITICAL INSTRUCTIONS:
+1. Speak ALOUD directly to the candidate over a voice channel.
+2. NEVER output any internal monologue, stage directions, or markdown bold text like "**Initiating the Interview**". 
+3. JUST SPEAK the exact words you want the candidate to hear. Start immediately with a greeting and the first technical question based on their CV.
+4. Ask ONLY ONE question at a time. Keep your answers brief and conversational.""")]
             ),
             "response_modalities": ["AUDIO"],
             "speech_config": types.SpeechConfig(
@@ -47,6 +44,19 @@ class LiveInterviewSession:
     async def start(self):
         """Connects and starts background receive task"""
         self._connect_task = asyncio.create_task(self._run_session())
+        self._heartbeat_task = asyncio.create_task(self._heartbeat())
+
+    async def _heartbeat(self):
+        """Send silent audio chunks to prevent Gemini from terminating the connection due to inactivity."""
+        silent_chunk = b'\x00' * 3200  # Small silent chunk
+        while True:
+            await asyncio.sleep(4)
+            if not self.is_connected or not self.session:
+                break
+            try:
+                await self.session.send(input={"mime_type": "audio/pcm;rate=16000", "data": silent_chunk})
+            except Exception:
+                pass
 
     async def _run_session(self):
         try:
@@ -62,6 +72,10 @@ class LiveInterviewSession:
                 async for response in session.receive():
                     server_content = response.server_content
                     if server_content is not None:
+                        if server_content.turn_complete:
+                            self.is_speaking = False
+                            await self.frontend_ws.send_text(json.dumps({"type": "agent_turn_complete"}))
+                        
                         model_turn = server_content.model_turn
                         if model_turn is not None:
                             self.is_speaking = True
@@ -80,14 +94,13 @@ class LiveInterviewSession:
                                 if part.inline_data:
                                     # Send binary audio part to frontend
                                     await self.frontend_ws.send_bytes(part.inline_data.data)
-                        
-                        if server_content.turn_complete:
-                            self.is_speaking = False
-                            await self.frontend_ws.send_text(json.dumps({"type": "agent_turn_complete"}))
+                
+                with open("agent_debug.log", "a") as f:
+                    f.write("DEBUG: receive loop finished normally\n")
         except asyncio.CancelledError:
-            print("Live session task cancelled")
+            with open("agent_debug.log", "a") as f:
+                f.write("DEBUG: Live session task cancelled\n")
         except Exception as e:
-            print(f"Gemini Live API error: {e}")
             try:
                 await self.frontend_ws.send_text(json.dumps({"type": "system", "message": f"Connection error: {e}"}))
             except Exception:
@@ -95,25 +108,46 @@ class LiveInterviewSession:
         finally:
             self.is_connected = False
             self.session = None
+            try:
+                await self.frontend_ws.send_text(json.dumps({"type": "system", "message": "Audio Session completed or disconnected."}))
+                await self.frontend_ws.close()
+            except Exception:
+                pass
 
     async def send_audio(self, pcm_data: bytes):
+        with open("agent_debug.log", "a") as f:
+            f.write(f"DEBUG: send_audio called with {len(pcm_data)} bytes\n")
+            
         if not self.is_connected or not self.session:
+            with open("agent_debug.log", "a") as f:
+                f.write("DEBUG: send_audio aborted - not connected or no session\n")
             return
             
         try:
             # Handle user interruption.
             if self.is_speaking:
+                with open("agent_debug.log", "a") as f:
+                    f.write("DEBUG: Cancelling current speaking turn for audio interruption...\n")
                 if hasattr(self.session, 'cancel_response'):
-                    await self.session.cancel_response()
+                    try:
+                        await self.session.cancel_response()
+                    except Exception as e:
+                        pass
                 self.is_speaking = False
 
             # Send exactly 16kHz PCM audio
             await self.session.send(input={"mime_type": "audio/pcm;rate=16000", "data": pcm_data})
         except Exception as e:
-            print("Error sending audio to Gemini:", e)
+            with open("agent_debug.log", "a") as f:
+                f.write(f"Error sending audio to Gemini: {e}\n")
             
     async def send_text(self, text: str):
+        with open("agent_debug.log", "a") as f:
+            f.write(f"DEBUG: send_text called with: {text}\n")
+            
         if not self.is_connected or not self.session:
+            with open("agent_debug.log", "a") as f:
+                f.write("DEBUG: send_text aborted - not connected or no session\n")
             return
             
         self.transcript.append({
@@ -124,15 +158,32 @@ class LiveInterviewSession:
         
         try:
             if self.is_speaking:
+                with open("agent_debug.log", "a") as f:
+                    f.write("DEBUG: Cancelling current speaking turn...\n")
                 if hasattr(self.session, 'cancel_response'):
-                    await self.session.cancel_response()
+                    try:
+                        await self.session.cancel_response()
+                    except Exception as e:
+                        with open("agent_debug.log", "a") as f:
+                            f.write(f"DEBUG: err on cancel_response {e}\n")
                 self.is_speaking = False
                 
+            with open("agent_debug.log", "a") as f:
+                f.write("DEBUG: Awaiting self.session.send for text...\n")
+                
+            # Try passing the exact structure expected by google-genai
+            from google.genai import types
+            
             await self.session.send(input=text, end_of_turn=True)
+            with open("agent_debug.log", "a") as f:
+                f.write("DEBUG: self.session.send completed successfully.\n")
         except Exception as e:
-            print("Error sending text to Gemini:", e)
+            with open("agent_debug.log", "a") as f:
+                f.write(f"Error sending text to Gemini: {e}\n")
 
     def stop(self):
         if self._connect_task:
             self._connect_task.cancel()
+        if hasattr(self, '_heartbeat_task') and self._heartbeat_task:
+            self._heartbeat_task.cancel()
         self.is_connected = False

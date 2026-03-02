@@ -18,8 +18,9 @@ export default function LoginPage() {
             const data = await login({ username: email, password });
             localStorage.setItem('access_token', data.access_token);
             navigate('/dashboard');
-        } catch (err: any) {
-            setError(err?.response?.data?.detail ?? 'Login failed. Check your credentials.');
+        } catch (err: unknown) {
+            const axiosError = err as { response?: { data?: { detail?: string } } };
+            setError(axiosError?.response?.data?.detail ?? 'Login failed. Check your credentials.');
         } finally {
             setLoading(false);
         }

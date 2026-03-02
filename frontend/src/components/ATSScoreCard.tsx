@@ -1,16 +1,20 @@
 interface Props {
     score: number | null;
-    breakdown: any;
+    breakdown?: {
+        summary?: string;
+        matching_keywords?: string[];
+        missing_keywords?: string[];
+        formatting_issues?: string[];
+    };
 }
 
 export default function ATSScoreCard({ score, breakdown }: Props) {
     if (score === null) return null;
 
     let colorClass = "text-error";
-    let bgClass = "bg-error/10";
     let strokeColor = "#ef4444";
-    if (score >= 80) { colorClass = "text-success"; bgClass = "bg-success/10"; strokeColor = "#22c55e"; }
-    else if (score >= 50) { colorClass = "text-warning"; bgClass = "bg-warning/10"; strokeColor = "#f59e0b"; }
+    if (score >= 80) { colorClass = "text-success"; strokeColor = "#22c55e"; }
+    else if (score >= 50) { colorClass = "text-warning"; strokeColor = "#f59e0b"; }
 
     const radius = 38;
     const circumference = 2 * Math.PI * radius;

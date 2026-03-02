@@ -1,4 +1,5 @@
-// @ts-nocheck
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-ignore
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface TrendDataPoint {
@@ -59,7 +60,11 @@ export default function InterviewTrend({ data }: Props) {
                             contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                             labelStyle={{ color: '#374151', fontWeight: 'bold' }}
                             itemStyle={{ color: '#0ea5e9', fontWeight: 'bold' }}
-                            formatter={(value: number) => [`${value.toFixed(1)} / 10`, 'Score']}
+                            formatter={(value: number | string | Array<number | string> | undefined) => {
+                                if (value === undefined) return ['', 'Score'];
+                                const numValue = typeof value === 'number' ? value : Number(value);
+                                return [`${numValue.toFixed(1)} / 10`, 'Score'];
+                            }}
                         />
                         <Line
                             type="monotone"

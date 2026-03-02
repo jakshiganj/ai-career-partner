@@ -18,8 +18,9 @@ export default function SignupPage() {
         try {
             await signup({ email, full_name: fullName, password });
             navigate('/login');
-        } catch (err: any) {
-            setError(err?.response?.data?.detail ?? 'Signup failed.');
+        } catch (err: unknown) {
+            const axiosError = err as { response?: { data?: { detail?: string } } };
+            setError(axiosError?.response?.data?.detail ?? 'Signup failed.');
         } finally {
             setLoading(false);
         }

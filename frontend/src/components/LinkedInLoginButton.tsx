@@ -11,8 +11,9 @@ export default function LinkedInLoginButton() {
             const backendUrl = 'http://localhost:8000';
             // Start the OAuth flow via a standard top-level redirect
             window.location.href = `${backendUrl}/auth/linkedin/login`;
-        } catch (e: any) {
-            setError(e.message || 'An error occurred during LinkedIn connect');
+        } catch (e: unknown) {
+            const err = e as Error;
+            setError(err.message || 'An error occurred during LinkedIn connect');
             setLoading(false);
         }
     }

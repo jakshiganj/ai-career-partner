@@ -47,7 +47,7 @@ export default function EmailPreferences() {
             });
             setMsg('Preferences updated.');
             setTimeout(() => setMsg(null), 3000);
-        } catch (e) {
+        } catch {
             setMsg('Failed to update.');
             setPrefs(prefs);
         } finally {
