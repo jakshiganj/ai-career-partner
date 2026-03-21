@@ -1,8 +1,9 @@
-import asyncio
+import pytest
 import json
 from app.agents.graph_rag.agent import graph_rag_agent
 
-async def run_final_test():
+@pytest.mark.anyio
+async def test_graphrag_final():
     # Scenario: A candidate who knows basic web development (React, JS) 
     # applying for a Senior Frontend Software Engineer role that requires broader architecture skills.
     
@@ -41,5 +42,3 @@ async def run_final_test():
     print("\nNote: Some matching might have happened implicitly via ESCO 'broaderSkill' or 'RELATED_TO' nodes.")
     print("="*60)
 
-if __name__ == "__main__":
-    asyncio.run(run_final_test())

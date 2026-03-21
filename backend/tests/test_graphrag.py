@@ -1,7 +1,8 @@
-import asyncio
+import pytest
 from app.agents.graph_rag.agent import graph_rag_agent
 
-async def run_test():
+@pytest.mark.anyio
+async def test_graph_rag_agent():
     candidate_profile = {
         "headline": "Full Stack Developer",
         "skills": ["React", "Python", "SQL"]
@@ -23,5 +24,3 @@ async def run_test():
     print(f"Skill Match Score: {result.get('skill_match_score')}")
     print(f"Skill Gaps: {result.get('skill_gaps')}")
 
-if __name__ == "__main__":
-    asyncio.run(run_test())
