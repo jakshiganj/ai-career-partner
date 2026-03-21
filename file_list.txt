@@ -1,0 +1,21 @@
+ Volume in drive C is Windows-SSD
+ Volume Serial Number is CA48-6BBF
+
+ Directory of C:\Users\jaksh\ai-career-partner
+
+03/21/2026  06:34 PM    <DIR>          .
+03/15/2026  12:11 PM    <DIR>          ..
+03/21/2026  06:23 PM    <DIR>          .git
+02/04/2026  08:09 PM               258 .gitignore
+01/16/2026  03:30 PM           676,780 10953354_PID.pdf
+03/21/2026  06:30 PM    <DIR>          backend
+02/04/2026  08:03 PM             2,033 DEVELOPMENT_PLAN.md
+02/28/2026  09:04 AM             1,774 docker-compose.yml
+02/28/2026  09:04 AM            25,501 features.md
+03/21/2026  06:34 PM                 0 file_list.txt
+03/01/2026  03:11 PM    <DIR>          frontend
+03/02/2026  04:52 PM            31,726 lang.md
+02/04/2026  07:24 PM            29,665 pid_content.txt
+02/28/2026  09:04 AM             4,571 task.md
+               9 File(s)        772,308 bytes
+               5 Dir(s)  356,312,354,816 bytes free

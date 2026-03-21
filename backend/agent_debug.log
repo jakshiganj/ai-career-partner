@@ -161,3 +161,157 @@ DEBUG: Awaiting self.session.send for text...
 DEBUG: self.session.send completed successfully.
 DEBUG: receive loop finished normally
 DEBUG: Live session task cancelled
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: receive loop finished normally
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: Cancelling current speaking turn for audio interruption...
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: send_audio called with 8192 bytes
+DEBUG: receive loop finished normally

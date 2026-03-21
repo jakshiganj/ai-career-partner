@@ -21,7 +21,7 @@ export default function EmailPreferences() {
     async function fetchPrefs() {
         try {
             const res = await axios.get('http://localhost:8000/api/preferences', {
-                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+                headers: { Authorization: `Bearer ${localStorage.getItem('access_token') || localStorage.getItem('token')}` }
             });
             setPrefs({
                 email_digest_enabled: res.data.email_digest_enabled,
@@ -43,7 +43,7 @@ export default function EmailPreferences() {
         setMsg(null);
         try {
             await axios.put('http://localhost:8000/api/preferences', newPrefs, {
-                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+                headers: { Authorization: `Bearer ${localStorage.getItem('access_token') || localStorage.getItem('token')}` }
             });
             setMsg('Preferences updated.');
             setTimeout(() => setMsg(null), 3000);

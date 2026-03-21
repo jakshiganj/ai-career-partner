@@ -23,7 +23,7 @@ export default function LinkedInURLInput({ onScrapeComplete }: Props) {
         setScraped(false);
 
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('access_token') || localStorage.getItem('token');
             const res = await axios.post(
                 'http://localhost:8000/api/linkedin/scrape',
                 { url },

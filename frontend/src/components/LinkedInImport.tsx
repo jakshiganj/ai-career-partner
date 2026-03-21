@@ -44,7 +44,7 @@ export default function LinkedInImport({ onImportComplete }: Props) {
                     try {
                         // Fetch imported profile data using the token/session
                         const profileRes = await axios.get(`${backendUrl}/api/candidate-profile`, {
-                            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+                            headers: { Authorization: `Bearer ${localStorage.getItem('access_token') || localStorage.getItem('token')}` }
                         });
                         setLoading(false);
                         onImportComplete?.(profileRes.data);

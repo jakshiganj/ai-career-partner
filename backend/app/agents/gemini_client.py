@@ -7,11 +7,12 @@ load_dotenv()
 
 class GeminiClient:
     def __init__(self):
-        api_key = os.getenv("GEMINI_API_KEY")
-        if api_key:
-            self.client = genai.Client(api_key=api_key)
+        # Follow 2026 SDK standards: rely on auto-detection of GOOGLE_API_KEY or Vertex env vars
+        api_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
+        if api_key or os.getenv("GOOGLE_GENAI_USE_VERTEXAI") == "True":
+            self.client = genai.Client()
         else:
-            print("WARNING: GEMINI_API_KEY not set. Agents will use mock responses.")
+            print("WARNING: Gemini authentication not set. Agents will use mock responses.")
             self.client = None
 
     def generate_content(self, model: str, prompt: str, config: dict = None) -> str:

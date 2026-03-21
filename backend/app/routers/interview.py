@@ -13,7 +13,7 @@ import uuid
 
 router = APIRouter()
 
-@router.post("/api/interview/start")
+@router.post("/start")
 async def start_interview_session(
     current_user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_db_session)
@@ -44,7 +44,7 @@ async def start_interview_session(
         
     return {"session_id": session_id}
 
-@router.websocket("/ws/interview/{session_id}")
+@router.websocket("/ws/{session_id}")
 async def interview_websocket(websocket: WebSocket, session_id: str, db: AsyncSession = Depends(get_db_session)):
     session = get_session(session_id)
     if not session:
@@ -89,26 +89,30 @@ async def interview_websocket(websocket: WebSocket, session_id: str, db: AsyncSe
             
             # Incoming Binary Audio
             if "bytes" in message:
+                # print(f"DEBUG: Received {len(message['bytes'])} audio bytes from frontend")
                 await live_sess.send_audio(message["bytes"])
                 
             # Incoming Text (Control / Heartbeat)
             elif "text" in message:
                 try:
                     data = json.loads(message["text"])
-                    if data.get("type") == "ping":
+                    msg_type = data.get("type")
+                    # print(f"DEBUG: Received text message from frontend: {msg_type}")
+                    if msg_type == "ping":
                         await websocket.send_text(json.dumps({"type": "pong"}))
-                    elif data.get("type") == "candidate_transcript":
+                    elif msg_type == "candidate_transcript":
                         await live_sess.send_text(data.get("text"))
                 except json.JSONDecodeError:
                     pass
             
             elif message.get("type") == "websocket.disconnect":
+                print(f"DEBUG: WebSocket disconnect received from frontend (code: {message.get('code')})")
                 break
                 
     except WebSocketDisconnect:
         print(f"Client #{session_id} disconnected.")
     except Exception as e:
-        print(f"WebSocket Error: {e}")
+        print(f"WebSocket Router Error: {e}")
     finally:
         timeout_task.cancel()
         live_sess.stop()
@@ -145,7 +149,7 @@ async def interview_websocket(websocket: WebSocket, session_id: str, db: AsyncSe
             else:
                 print("Error scoring interview:", score_data.get('error'))
 
-@router.get("/api/interview/latest")
+@router.get("/latest")
 async def get_latest_interview(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db_session)
@@ -165,7 +169,7 @@ async def get_latest_interview(
         "transcript": "\n".join([f"{msg['role'].upper()}: {msg['content']}" for msg in session.answers.get('history', [])])
     }}
 
-@router.get("/api/interview/trend")
+@router.get("/trend")
 async def get_interview_trend(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db_session)

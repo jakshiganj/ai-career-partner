@@ -31,7 +31,7 @@ app.add_middleware(
 app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
 app.include_router(cv.router, prefix="/cv", tags=["CV Operations"])
 app.include_router(matcher.router, prefix="/jobs", tags=["Job Matcher"])
-app.include_router(interview.router, tags=["Interview Coach"])
+app.include_router(interview.router, prefix="/api/interview", tags=["Interview Coach"])
 
 from app.routers import agents
 app.include_router(agents.router, prefix="/agents", tags=["Agent API"])

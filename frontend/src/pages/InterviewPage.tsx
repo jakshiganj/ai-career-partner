@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import axios from 'axios';
+import client from '../api/client';
 import { Mic, Keyboard, MessageSquare, Lightbulb, Zap, Timer, Info, MicOff, MoreHorizontal } from 'lucide-react';
 
 interface Message {
@@ -26,6 +26,7 @@ export default function InterviewPage() {
     // Audio Playback State
     const playCtxRef = useRef<AudioContext | null>(null);
     const nextPlayTimeRef = useRef<number>(0);
+    const activeSourcesRef = useRef<AudioBufferSourceNode[]>([]);
 
     // Heartbeat State
     const pingIntervalRef = useRef<number | null>(null);
@@ -37,12 +38,11 @@ export default function InterviewPage() {
     async function connect(enableAudio: boolean = false) {
         setAudioMode(enableAudio);
         try {
-            const res = await axios.post('http://localhost:8000/api/interview/start', {}, {
-                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-            });
+            const res = await client.post('/interview/start', {});
             const newSessionId = res.data.session_id;
 
-            const wsUrl = `ws://${import.meta.env.VITE_WS_HOST ?? 'localhost:8000'}/ws/interview/${newSessionId}`;
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/api/interview/ws/${newSessionId}`;
             const ws = new WebSocket(wsUrl);
             ws.binaryType = "arraybuffer";
 
@@ -74,6 +74,9 @@ export default function InterviewPage() {
                             addMsg('system', data.message);
                         } else if (data.type === 'agent_transcript') {
                             addMsg('agent', data.text);
+                        } else if (data.type === 'agent_turn_complete') {
+                            // Turn complete can be used to update UI states (e.g., stop a specific animation)
+                            console.log("Agent turn complete signal received");
                         }
                     } catch { /* ignore */ }
                 }
@@ -112,6 +115,12 @@ export default function InterviewPage() {
                 // Get Float32 PCM
                 const inputData = e.inputBuffer.getChannelData(0);
 
+                // Barge-in logic: Check volume to interrupt AI
+                const volume = inputData.reduce((a, b) => a + Math.abs(b), 0) / inputData.length;
+                if (volume > 0.01) { // Simple VAD threshold
+                    stopAllPlayback();
+                }
+
                 // Convert to Int16 PCM
                 const int16Array = new Int16Array(inputData.length);
                 for (let i = 0; i < inputData.length; i++) {
@@ -149,6 +158,12 @@ export default function InterviewPage() {
         source.buffer = audioBuffer;
         source.connect(ctx.destination);
 
+        // Track source for interruption
+        activeSourcesRef.current.push(source);
+        source.onended = () => {
+            activeSourcesRef.current = activeSourcesRef.current.filter(s => s !== source);
+        };
+
         const currentTime = ctx.currentTime;
         if (nextPlayTimeRef.current < currentTime) {
             nextPlayTimeRef.current = currentTime; // Buffer underrun, catch up
@@ -156,6 +171,14 @@ export default function InterviewPage() {
 
         source.start(nextPlayTimeRef.current);
         nextPlayTimeRef.current += audioBuffer.duration;
+    }
+
+    function stopAllPlayback() {
+        activeSourcesRef.current.forEach(source => {
+            try { source.stop(); } catch (e) { /* ignore */ }
+        });
+        activeSourcesRef.current = [];
+        nextPlayTimeRef.current = 0;
     }
 
     function cleanupAudio() {

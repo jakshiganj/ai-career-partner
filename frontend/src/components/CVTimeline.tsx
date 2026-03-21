@@ -25,7 +25,7 @@ export default function CVTimeline({ userId }: Props) {
         try {
             // In a real app we'd call the API. Here we mock for now until the route is ready.
             const response = await axios.get(`http://localhost:8000/api/cv-versions/${userId}`, {
-                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+                headers: { Authorization: `Bearer ${localStorage.getItem('access_token') || localStorage.getItem('token')}` }
             });
             setVersions(response.data || []);
         } catch (e) {

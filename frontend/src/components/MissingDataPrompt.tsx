@@ -33,7 +33,7 @@ export default function MissingDataPrompt({ pipelineId, missingFields, onResumed
         setSubmitting(true);
         setError(null);
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('access_token') || localStorage.getItem('token');
             const data: Record<string, unknown> = {};
             if (isMissing('job_description')) data.job_description = jobDescription;
             if (isMissing('cv_raw')) data.cv_raw = cvRaw;

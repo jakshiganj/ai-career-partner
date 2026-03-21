@@ -1,0 +1,54 @@
+ Volume in drive C is Windows-SSD
+ Volume Serial Number is CA48-6BBF
+
+ Directory of C:\Users\jaksh\ai-career-partner\backend
+
+03/21/2026  06:36 PM    <DIR>          .
+03/21/2026  06:34 PM    <DIR>          ..
+03/02/2026  08:51 PM             1,228 .env
+02/04/2026  05:47 PM    <DIR>          .venv
+03/02/2026  07:30 PM            16,369 agent_debug.log
+02/28/2026  09:04 AM    <DIR>          alembic
+02/04/2026  03:31 PM             4,954 alembic.ini
+02/28/2026  09:04 AM             4,204 alembic_err.log
+02/28/2026  09:04 AM            15,904 alembic_err2.log
+02/28/2026  09:04 AM            30,828 alembic_err3.log
+02/28/2026  09:04 AM            15,431 alembic_err4.log
+02/28/2026  03:23 PM    <DIR>          app
+03/21/2026  06:36 PM                 0 backend_file_list.txt
+03/02/2026  05:01 PM               333 check_graph.py
+03/01/2026  03:59 PM               509 check_types.py
+03/02/2026  05:54 PM             1,367 debug.log
+02/04/2026  05:42 PM               698 Dockerfile
+02/28/2026  10:37 AM               631 drop_db.py
+02/06/2026  10:39 AM               580 dummy.pdf
+02/28/2026  10:30 AM             8,912 error.log
+02/04/2026  07:24 PM               359 extract_pdf_text.py
+03/02/2026  08:28 PM               989 list_live_models.py
+02/28/2026  09:04 AM             2,108 pytest_err.log
+02/28/2026  10:28 AM             1,095 requirements.txt
+02/28/2026  10:41 AM               302 result.txt
+02/28/2026  09:04 AM    <DIR>          scripts
+02/06/2026  09:31 AM    <DIR>          static
+02/28/2026  09:04 AM             4,916 tests_output.txt
+02/28/2026  09:04 AM             2,792 tests_output_utf8.txt
+02/06/2026  09:16 AM             1,007 test_agents_manual.py
+02/04/2026  06:15 PM               471 test_db.py
+02/06/2026  09:43 AM               526 test_ddg_debug.py
+02/04/2026  07:09 PM               678 test_genai_key.py
+03/02/2026  07:07 PM               149 test_import.py
+03/01/2026  04:05 PM             1,754 test_interview.py
+02/28/2026  10:41 AM             1,630 test_linkedin_db.py
+03/02/2026  08:39 PM             1,765 test_live_simple.py
+02/06/2026  10:38 AM             3,344 test_repro.py
+02/06/2026  09:50 AM             2,095 test_scraper.py
+02/06/2026  10:48 AM             1,575 test_signup_logic.py
+02/04/2026  06:23 PM             1,081 test_sqlalchemy.py
+03/02/2026  08:50 PM             2,666 test_vertex_live.py
+03/01/2026  03:58 PM         1,026,646 types_out.txt
+02/28/2026  10:35 AM             1,730 uvicorn.log
+02/28/2026  09:04 AM               802 _check.py
+02/28/2026  10:38 AM             2,450 _db_error.log
+03/02/2026  05:54 PM    <DIR>          __pycache__
+              39 File(s)      1,164,878 bytes
+               8 Dir(s)  356,290,994,176 bytes free
