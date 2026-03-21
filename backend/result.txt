@@ -1,0 +1,2 @@
+Success! URL: http://localhost:5173/dashboard?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0X2xpbmtlZGluQGV4YW1wbGUuY29tIiwiZXhwIjoxNzcyMjU2Mzc0fQ.g2YBwGVjXifNcU4wBaJi8XLhrNiIn8ttvXApPm3SqRs&user_id=f65e7834-3931-4846-a13d-5049e9278dac
+User ID type: <class 'asyncpg.pgproto.pgproto.UUID'>

@@ -1,6 +1,11 @@
+import sys
+import asyncio
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
+
+if sys.platform == 'win32':
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 load_dotenv()
 
@@ -10,8 +15,7 @@ from app.routers import matcher
 from app.routers import interview
 
 # Import models so SQLModel creates the tables
-from app.models import user, resume, job, profile  # noqa: F401
-from app.models import task_state  # noqa: F401
+from app.models import user, resume, job, profile, task_state, pipeline, cv_history, job_market, interview_roadmap, preference, esco  # noqa: F401
 
 app = FastAPI(title="AI Career Partner")
 
@@ -27,13 +31,25 @@ app.add_middleware(
 app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
 app.include_router(cv.router, prefix="/cv", tags=["CV Operations"])
 app.include_router(matcher.router, prefix="/jobs", tags=["Job Matcher"])
-app.include_router(interview.router, tags=["Interview Coach"])
+app.include_router(interview.router, prefix="/api/interview", tags=["Interview Coach"])
 
 from app.routers import agents
 app.include_router(agents.router, prefix="/agents", tags=["Agent API"])
 
 from app.routers import pipeline
-app.include_router(pipeline.router, prefix="/pipeline", tags=["Orchestrator Pipeline"])
+app.include_router(pipeline.router, prefix="/api/pipeline", tags=["Orchestrator Pipeline"])
+
+from app.routers import linkedin
+app.include_router(linkedin.router, prefix="/auth", tags=["LinkedIn OAuth"])
+
+from app.routers import scrape
+app.include_router(scrape.router, prefix="/api/linkedin", tags=["LinkedIn Scrape"])
+
+from app.routers import preferences
+app.include_router(preferences.router, prefix="/api/preferences", tags=["User Settings"])
+
+from app.routers import dashboard
+app.include_router(dashboard.router, prefix="/api/dashboard", tags=["Dashboard"])
 
 from fastapi.staticfiles import StaticFiles
 

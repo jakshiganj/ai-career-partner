@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { signup } from '../api/auth';
+import LinkedInLoginButton from '../components/LinkedInLoginButton';
 
 export default function SignupPage() {
     const navigate = useNavigate();
@@ -17,8 +18,9 @@ export default function SignupPage() {
         try {
             await signup({ email, full_name: fullName, password });
             navigate('/login');
-        } catch (err: any) {
-            setError(err?.response?.data?.detail ?? 'Signup failed.');
+        } catch (err: unknown) {
+            const axiosError = err as { response?: { data?: { detail?: string } } };
+            setError(axiosError?.response?.data?.detail ?? 'Signup failed.');
         } finally {
             setLoading(false);
         }
@@ -33,6 +35,16 @@ export default function SignupPage() {
                     <p className="text-sm text-muted" style={{ marginTop: '0.35rem' }}>
                         Start your AI-powered career journey
                     </p>
+                </div>
+
+                <div className="mb-6">
+                    <LinkedInLoginButton />
+                </div>
+
+                <div className="relative flex py-2 items-center mb-6">
+                    <div className="flex-grow border-t border-subtle"></div>
+                    <span className="flex-shrink-0 mx-4 text-muted text-xs">OR EMAIL SIGNUP</span>
+                    <div className="flex-grow border-t border-subtle"></div>
                 </div>
 
                 <form className="auth-form" onSubmit={handleSubmit} id="signup-form">

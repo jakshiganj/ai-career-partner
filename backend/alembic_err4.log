@@ -1,0 +1,725 @@
+alembic : INFO  [alembic
+.runtime.migration] 
+Context impl 
+PostgresqlImpl.
+At line:1 char:1
++ alembic upgrade head 
+2>&1 | Out-File 
+-Encoding ASCII 
+alembic_err4.log
++ ~~~~~~~~~~~~~~~~~~~~~~
+~~~
+    + CategoryInfo      
+        : NotSpecified  
+  : (INFO  [alembic..   
+ ..PostgresqlImpl.:S    
+tring) [], RemoteEx    
+ception
+    + FullyQualifiedErr 
+   orId : NativeComman  
+  dError
+ 
+INFO  [alembic.runtime.m
+igration] Will assume 
+transactional DDL.
+INFO  [alembic.runtime.m
+igration] Running 
+upgrade  -> 
+addbefcfa8d8, Initial 
+schema with UUIDs
+Traceback (most recent 
+call last):
+  File "C:\Users\jaksh\A
+ppData\Local\Programs\Py
+thon\Python313\Lib\site-
+packages\sqlalchemy\dial
+ects\postgresql\asyncpg.
+py", line 545, in 
+_prepare_and_execute
+    self._rows = 
+deque(await prepared_stm
+t.fetch(*parameters))
+                       ^
+^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^
+  File "C:\Users\jaksh\A
+ppData\Local\Programs\Py
+thon\Python313\Lib\site-
+packages\asyncpg\prepare
+d_stmt.py", line 177, 
+in fetch
+    data = await self.__
+bind_execute(args, 0, 
+timeout)
+           ^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^
+  File "C:\Users\jaksh\A
+ppData\Local\Programs\Py
+thon\Python313\Lib\site-
+packages\asyncpg\prepare
+d_stmt.py", line 268, 
+in __bind_execute
+    data, status, _ = 
+await self.__do_execute(
+                      
+^^^^^^^^^^^^^^^^^^^^^^^^
+        lambda 
+protocol: 
+protocol.bind_execute(
+        ^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^
+            
+self._state, args, '', 
+limit, True, timeout))
+            ^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^
+  File "C:\Users\jaksh\A
+ppData\Local\Programs\Py
+thon\Python313\Lib\site-
+packages\asyncpg\prepare
+d_stmt.py", line 257, 
+in __do_execute
+    return await 
+executor(protocol)
+           
+^^^^^^^^^^^^^^^^^^^^^^^^
+  File "asyncpg/protocol
+/protocol.pyx", line 
+205, in bind_execute
+asyncpg.exceptions.Undef
+inedObjectError: type 
+"vector" does not exist
+
+The above exception was 
+the direct cause of the 
+following exception:
+
+Traceback (most recent 
+call last):
+  File "C:\Users\jaksh\A
+ppData\Local\Programs\Py
+thon\Python313\Lib\site-
+packages\sqlalchemy\engi
+ne\base.py", line 1963, 
+in _exec_single_context
+    
+self.dialect.do_execute(
+    
+~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, 
+str_statement, 
+effective_parameters, 
+context
+        ^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\jaksh\A
+ppData\Local\Programs\Py
+thon\Python313\Lib\site-
+packages\sqlalchemy\engi
+ne\default.py", line 
+943, in do_execute
+    cursor.execute(state
+ment, parameters)
+    ~~~~~~~~~~~~~~^^^^^^
+^^^^^^^^^^^^^^^^^
+  File "C:\Users\jaksh\A
+ppData\Local\Programs\Py
+thon\Python313\Lib\site-
+packages\sqlalchemy\dial
+ects\postgresql\asyncpg.
+py", line 580, in 
+execute
+    self._adapt_connecti
+on.await_(
+    ~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~^
+        self._prepare_an
+d_execute(operation, 
+parameters)
+        ^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^
+    )
+    ^
+  File "C:\Users\jaksh\A
+ppData\Local\Programs\Py
+thon\Python313\Lib\site-
+packages\sqlalchemy\util
+\_concurrency_py3k.py", 
+line 132, in await_only
+    return current.paren
+t.switch(awaitable)  # 
+type: ignore[no-any-retu
+rn,attr-defined] # 
+noqa: E501
+           ~~~~~~~~~~~~~
+~~~~~~~~^^^^^^^^^^^
+  File "C:\Users\jaksh\A
+ppData\Local\Programs\Py
+thon\Python313\Lib\site-
+packages\sqlalchemy\util
+\_concurrency_py3k.py", 
+line 196, in 
+greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "C:\Users\jaksh\A
+ppData\Local\Programs\Py
+thon\Python313\Lib\site-
+packages\sqlalchemy\dial
+ects\postgresql\asyncpg.
+py", line 558, in 
+_prepare_and_execute
+    self._handle_excepti
+on(error)
+    ~~~~~~~~~~~~~~~~~~~~
+~~^^^^^^^
+  File "C:\Users\jaksh\A
+ppData\Local\Programs\Py
+thon\Python313\Lib\site-
+packages\sqlalchemy\dial
+ects\postgresql\asyncpg.
+py", line 508, in 
+_handle_exception
+    self._adapt_connecti
+on._handle_exception(err
+or)
+    ~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~^^^^
+^^^
+  File "C:\Users\jaksh\A
+ppData\Local\Programs\Py
+thon\Python313\Lib\site-
+packages\sqlalchemy\dial
+ects\postgresql\asyncpg.
+py", line 792, in 
+_handle_exception
+    raise 
+translated_error from 
+error
+sqlalchemy.dialects.post
+gresql.asyncpg.AsyncAdap
+t_asyncpg_dbapi.Programm
+ingError: <class 'asyncp
+g.exceptions.UndefinedOb
+jectError'>: type 
+"vector" does not exist
+
+The above exception was 
+the direct cause of the 
+following exception:
+
+Traceback (most recent 
+call last):
+  File "<frozen 
+runpy>", line 198, in 
+_run_module_as_main
+  File "<frozen 
+runpy>", line 88, in 
+_run_code
+  File "C:\Users\jaksh\A
+ppData\Local\Programs\Py
+thon\Python313\Scripts\a
+lembic.exe\__main__.py",
+ line 7, in <module>
+    sys.exit(main())
+             ~~~~^^
+  File "C:\Users\jaksh\A
+ppData\Local\Programs\Py
+thon\Python313\Lib\site-
+packages\alembic\config.
+py", line 1047, in main
+    CommandLine(prog=pro
+g).main(argv=argv)
+    ~~~~~~~~~~~~~~~~~~~~
+~~~~~~~^^^^^^^^^^^
+  File "C:\Users\jaksh\A
+ppData\Local\Programs\Py
+thon\Python313\Lib\site-
+packages\alembic\config.
+py", line 1037, in main
+    self.run_cmd(cfg, 
+options)
+    ~~~~~~~~~~~~^^^^^^^^
+^^^^^^
+  File "C:\Users\jaksh\A
+ppData\Local\Programs\Py
+thon\Python313\Lib\site-
+packages\alembic\config.
+py", line 971, in 
+run_cmd
+    fn(
+    ~~^
+        config,
+        ^^^^^^^
+        
+*[getattr(options, k, 
+None) for k in 
+positional],
+        ^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^
+        **{k: 
+getattr(options, k, 
+None) for k in kwarg},
+        ^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^
+    )
+    ^
+  File "C:\Users\jaksh\A
+ppData\Local\Programs\Py
+thon\Python313\Lib\site-
+packages\alembic\command
+.py", line 483, in 
+upgrade
+    script.run_env()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Users\jaksh\A
+ppData\Local\Programs\Py
+thon\Python313\Lib\site-
+packages\alembic\script\
+base.py", line 545, in 
+run_env
+    util.load_python_fil
+e(self.dir, "env.py")
+    ~~~~~~~~~~~~~~~~~~~~
+~^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\jaksh\A
+ppData\Local\Programs\Py
+thon\Python313\Lib\site-
+packages\alembic\util\py
+files.py", line 116, in 
+load_python_file
+    module = load_module
+_py(module_id, path)
+  File "C:\Users\jaksh\A
+ppData\Local\Programs\Py
+thon\Python313\Lib\site-
+packages\alembic\util\py
+files.py", line 136, in 
+load_module_py
+    spec.loader.exec_mod
+ule(module)  # type: 
+ignore
+    ~~~~~~~~~~~~~~~~~~~~
+~~~^^^^^^^^
+  File "<frozen importli
+b._bootstrap_external>",
+ line 1026, in 
+exec_module
+  File "<frozen 
+importlib._bootstrap>", 
+line 488, in _call_with_
+frames_removed
+  File "C:\Users\jaksh\a
+i-career-partner\backend
+\alembic\env.py", line 
+71, in <module>
+    run_migrations_onlin
+e_wrapper()
+    ~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~^^
+  File "C:\Users\jaksh\a
+i-career-partner\backend
+\alembic\env.py", line 
+66, in run_migrations_on
+line_wrapper
+    asyncio.run(run_migr
+ations_online())
+    ~~~~~~~~~~~^^^^^^^^^
+^^^^^^^^^^^^^^^^
+  File "C:\Users\jaksh\A
+ppData\Local\Programs\Py
+thon\Python313\Lib\async
+io\runners.py", line 
+195, in run
+    return 
+runner.run(main)
+           
+~~~~~~~~~~^^^^^^
+  File "C:\Users\jaksh\A
+ppData\Local\Programs\Py
+thon\Python313\Lib\async
+io\runners.py", line 
+118, in run
+    return self._loop.ru
+n_until_complete(task)
+           ~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\jaksh\A
+ppData\Local\Programs\Py
+thon\Python313\Lib\async
+io\base_events.py", 
+line 725, in 
+run_until_complete
+    return 
+future.result()
+           
+~~~~~~~~~~~~~^^
+  File "C:\Users\jaksh\a
+i-career-partner\backend
+\alembic\env.py", line 
+55, in 
+run_migrations_online
+    await connection.run
+_sync(do_run_migrations)
+  File "C:\Users\jaksh\A
+ppData\Local\Programs\Py
+thon\Python313\Lib\site-
+packages\sqlalchemy\ext\
+asyncio\engine.py", 
+line 887, in run_sync
+    return await 
+greenlet_spawn(
+           
+^^^^^^^^^^^^^^^^^^^^^
+        fn, 
+self._proxied, *arg, 
+_require_await=False, 
+**kw
+        ^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\jaksh\A
+ppData\Local\Programs\Py
+thon\Python313\Lib\site-
+packages\sqlalchemy\util
+\_concurrency_py3k.py", 
+line 203, in 
+greenlet_spawn
+    result = 
+context.switch(value)
+  File "C:\Users\jaksh\a
+i-career-partner\backend
+\alembic\env.py", line 
+62, in do_run_migrations
+    
+context.run_migrations()
+    
+~~~~~~~~~~~~~~~~~~~~~~^^
+  File "<string>", line 
+8, in run_migrations
+  File "C:\Users\jaksh\A
+ppData\Local\Programs\Py
+thon\Python313\Lib\site-
+packages\alembic\runtime
+\environment.py", line 
+969, in run_migrations
+    self.get_context().r
+un_migrations(**kw)
+    ~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\jaksh\A
+ppData\Local\Programs\Py
+thon\Python313\Lib\site-
+packages\alembic\runtime
+\migration.py", line 
+626, in run_migrations
+    
+step.migration_fn(**kw)
+    
+~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\jaksh\a
+i-career-partner\backend
+\alembic\versions\addbef
+cfa8d8_initial_schema_wi
+th_uuids.py", line 26, 
+in upgrade
+    op.create_table('esc
+o_skills',
+    ~~~~~~~~~~~~~~~^^^^^
+^^^^^^^^^^
+    sa.Column('name', sq
+lmodel.sql.sqltypes.Auto
+String(), 
+nullable=False),
+    ^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^
+^^
+    ...<4 lines>...
+    sa.PrimaryKeyConstra
+int('id')
+    ^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^
+    )
+    ^
+  File "<string>", line 
+8, in create_table
+  File "<string>", line 
+3, in create_table
+  File "C:\Users\jaksh\A
+ppData\Local\Programs\Py
+thon\Python313\Lib\site-
+packages\alembic\operati
+ons\ops.py", line 1331, 
+in create_table
+    return 
+operations.invoke(op)
+           
+~~~~~~~~~~~~~~~~~^^^^
+  File "C:\Users\jaksh\A
+ppData\Local\Programs\Py
+thon\Python313\Lib\site-
+packages\alembic\operati
+ons\base.py", line 452, 
+in invoke
+    return fn(self, 
+operation)
+  File "C:\Users\jaksh\A
+ppData\Local\Programs\Py
+thon\Python313\Lib\site-
+packages\alembic\operati
+ons\toimpl.py", line 
+140, in create_table
+    operations.impl.crea
+te_table(table, **kw)
+    ~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\jaksh\A
+ppData\Local\Programs\Py
+thon\Python313\Lib\site-
+packages\alembic\ddl\imp
+l.py", line 442, in 
+create_table
+    self._exec(schema.Cr
+eateTable(table, **kw))
+    ~~~~~~~~~~^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\jaksh\A
+ppData\Local\Programs\Py
+thon\Python313\Lib\site-
+packages\alembic\ddl\imp
+l.py", line 256, in 
+_exec
+    return 
+conn.execute(construct, 
+params)
+           ~~~~~~~~~~~~^
+^^^^^^^^^^^^^^^^^^
+  File "C:\Users\jaksh\A
+ppData\Local\Programs\Py
+thon\Python313\Lib\site-
+packages\sqlalchemy\engi
+ne\base.py", line 1415, 
+in execute
+    return meth(
+        self,
+        
+distilled_parameters,
+        
+execution_options or 
+NO_OPTIONS,
+    )
+  File "C:\Users\jaksh\A
+ppData\Local\Programs\Py
+thon\Python313\Lib\site-
+packages\sqlalchemy\sql\
+ddl.py", line 187, in 
+_execute_on_connection
+    return 
+connection._execute_ddl(
+           
+~~~~~~~~~~~~~~~~~~~~~~~^
+        self, 
+distilled_params, 
+execution_options
+        ^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^
+^
+    )
+    ^
+  File "C:\Users\jaksh\A
+ppData\Local\Programs\Py
+thon\Python313\Lib\site-
+packages\sqlalchemy\engi
+ne\base.py", line 1526, 
+in _execute_ddl
+    ret = 
+self._execute_context(
+        dialect,
+    ...<4 lines>...
+        compiled,
+    )
+  File "C:\Users\jaksh\A
+ppData\Local\Programs\Py
+thon\Python313\Lib\site-
+packages\sqlalchemy\engi
+ne\base.py", line 1842, 
+in _execute_context
+    return self._exec_si
+ngle_context(
+           ~~~~~~~~~~~~~
+~~~~~~~~~~~~^
+        dialect, 
+context, statement, 
+parameters
+        ^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\jaksh\A
+ppData\Local\Programs\Py
+thon\Python313\Lib\site-
+packages\sqlalchemy\engi
+ne\base.py", line 1982, 
+in _exec_single_context
+    self._handle_dbapi_e
+xception(
+    ~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~^
+        e, 
+str_statement, 
+effective_parameters, 
+cursor, context
+        ^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\jaksh\A
+ppData\Local\Programs\Py
+thon\Python313\Lib\site-
+packages\sqlalchemy\engi
+ne\base.py", line 2351, 
+in 
+_handle_dbapi_exception
+    raise sqlalchemy_exc
+eption.with_traceback(ex
+c_info[2]) from e
+  File "C:\Users\jaksh\A
+ppData\Local\Programs\Py
+thon\Python313\Lib\site-
+packages\sqlalchemy\engi
+ne\base.py", line 1963, 
+in _exec_single_context
+    
+self.dialect.do_execute(
+    
+~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, 
+str_statement, 
+effective_parameters, 
+context
+        ^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\jaksh\A
+ppData\Local\Programs\Py
+thon\Python313\Lib\site-
+packages\sqlalchemy\engi
+ne\default.py", line 
+943, in do_execute
+    cursor.execute(state
+ment, parameters)
+    ~~~~~~~~~~~~~~^^^^^^
+^^^^^^^^^^^^^^^^^
+  File "C:\Users\jaksh\A
+ppData\Local\Programs\Py
+thon\Python313\Lib\site-
+packages\sqlalchemy\dial
+ects\postgresql\asyncpg.
+py", line 580, in 
+execute
+    self._adapt_connecti
+on.await_(
+    ~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~^
+        self._prepare_an
+d_execute(operation, 
+parameters)
+        ^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^
+    )
+    ^
+  File "C:\Users\jaksh\A
+ppData\Local\Programs\Py
+thon\Python313\Lib\site-
+packages\sqlalchemy\util
+\_concurrency_py3k.py", 
+line 132, in await_only
+    return current.paren
+t.switch(awaitable)  # 
+type: ignore[no-any-retu
+rn,attr-defined] # 
+noqa: E501
+           ~~~~~~~~~~~~~
+~~~~~~~~^^^^^^^^^^^
+  File "C:\Users\jaksh\A
+ppData\Local\Programs\Py
+thon\Python313\Lib\site-
+packages\sqlalchemy\util
+\_concurrency_py3k.py", 
+line 196, in 
+greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "C:\Users\jaksh\A
+ppData\Local\Programs\Py
+thon\Python313\Lib\site-
+packages\sqlalchemy\dial
+ects\postgresql\asyncpg.
+py", line 558, in 
+_prepare_and_execute
+    self._handle_excepti
+on(error)
+    ~~~~~~~~~~~~~~~~~~~~
+~~^^^^^^^
+  File "C:\Users\jaksh\A
+ppData\Local\Programs\Py
+thon\Python313\Lib\site-
+packages\sqlalchemy\dial
+ects\postgresql\asyncpg.
+py", line 508, in 
+_handle_exception
+    self._adapt_connecti
+on._handle_exception(err
+or)
+    ~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~^^^^
+^^^
+  File "C:\Users\jaksh\A
+ppData\Local\Programs\Py
+thon\Python313\Lib\site-
+packages\sqlalchemy\dial
+ects\postgresql\asyncpg.
+py", line 792, in 
+_handle_exception
+    raise 
+translated_error from 
+error
+sqlalchemy.exc.Programmi
+ngError: (sqlalchemy.dia
+lects.postgresql.asyncpg
+.ProgrammingError) 
+<class 'asyncpg.exceptio
+ns.UndefinedObjectError'
+>: type "vector" does 
+not exist
+[SQL: 
+CREATE TABLE 
+esco_skills (
+	name VARCHAR NOT NULL, 
+	description VARCHAR, 
+	skill_type VARCHAR NOT 
+NULL, 
+	id UUID NOT NULL, 
+	embedding VECTOR(768), 
+	PRIMARY KEY (id)
+)
+
+]
+(Background on this 
+error at: https://sqlalc
+he.me/e/20/f405)

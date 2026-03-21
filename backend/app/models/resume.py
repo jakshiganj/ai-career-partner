@@ -1,13 +1,14 @@
 from sqlmodel import SQLModel, Field, Column
 from typing import Optional
 from datetime import datetime
+import uuid
 from pgvector.sqlalchemy import Vector  # Import for Semantic Matching later
 
 class Resume(SQLModel, table=True):
     __tablename__ = "resumes"
 
-    id: Optional[int] = Field(default=None, primary_key=True)
-    user_id: int = Field(foreign_key="users.id")
+    id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
+    user_id: uuid.UUID = Field(foreign_key="users.id")
     
     # We store the raw text here so the AI can read it later
     content_text: str 

@@ -1,0 +1,21 @@
+WARNING: GEMINI_API_KEY not set. Agents will use mock responses.
+EXCEPTION CAUGHT:
+Traceback (most recent call last):
+  File "C:\Users\jaksh\ai-career-partner\backend\debug_pipeline.py", line 23, in main
+    async with AsyncPostgresSaver.from_conn_string(db_url) as checkpointer:
+               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^
+  File "C:\Users\jaksh\AppData\Roaming\uv\python\cpython-3.13.11-windows-x86_64-none\Lib\contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\jaksh\ai-career-partner\.venv\Lib\site-packages\langgraph\checkpoint\postgres\aio.py", line 73, in from_conn_string
+    async with await AsyncConnection.connect(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        conn_string, autocommit=True, prepare_threshold=0, row_factory=dict_row
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ) as conn:
+    ^
+  File "C:\Users\jaksh\ai-career-partner\.venv\Lib\site-packages\psycopg\connection_async.py", line 107, in connect
+    raise e.InterfaceError(
+    ...<3 lines>...
+    )
+psycopg.InterfaceError: Psycopg cannot use the 'ProactorEventLoop' to run in async mode. Please use a compatible event loop, for instance by running 'asyncio.run(..., loop_factory=asyncio.SelectorEventLoop(selectors.SelectSelector()))'

@@ -12,6 +12,11 @@ from app.models.resume import Resume
 from app.models.job import Job
 from app.models.task_state import TaskState, DecisionAudit
 from app.models.esco import EscoSkill, EscoRelation
+from app.models.pipeline import PipelineRun
+from app.models.cv_history import CVVersion
+from app.models.job_market import JobMatch, SalaryBenchmark
+from app.models.interview_roadmap import InterviewSession, SkillRoadmap
+from app.models.preference import UserPreference
 
 # 2. CONFIG SETUP
 config = context.config

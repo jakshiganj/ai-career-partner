@@ -1,53 +1,48 @@
 from langgraph.graph import StateGraph, END
+from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from app.graph.state import AgentState
-from app.agents.cv_critique.agent import analyze_cv_with_gemini
-from app.agents.cv_creator.agent import cv_creator_agent
-from app.agents.market_trends.agent import market_trends_agent
-from app.agents.interview_prep.agent import interview_prep_agent
-from app.agents.graph_rag.agent import graph_rag_agent
+from app.graph.nodes import (
+    ingest_node,
+    analyse_node,
+    optimise_node,
+    classify_node,
+    roadmap_node,
+    interview_prep_node,
+    persist_node,
+    route_after_ingest,
+    route_after_classify,
+)
 
-def cv_critic_node(state: AgentState):
-    cv_text = state['candidate_profile'].get('raw_cv', '')
-    critique = analyze_cv_with_gemini(cv_text)
-    # Update the state with the full critique for other nodes to use
-    return {"critique": critique, "messages": [f"CV Score: {critique.get('score')}"]}
-
-def graph_rag_node(state: AgentState):
-    skills = state['candidate_profile'].get('skills', [])
-    insights = graph_rag_agent(skills)
-    return {"messages": [f"Suggested Skills: {insights.get('related_skills')}"]}
-
-def market_trends_node(state: AgentState):
-    skills = state['candidate_profile'].get('skills', [])
-    trends = market_trends_agent(skills)
-    return {"messages": [f"Market Trends: {trends.get('market_analysis')}"]}
-
-def cv_creator_node(state: AgentState):
-    # This would typically use the critique from the state, simpler for now
-    return {"messages": ["CV Creator: Generating CV..."]}
-
-def build_graph():
+def build_graph(checkpointer=None):
     workflow = StateGraph(AgentState)
 
-    # Add Nodes
-    workflow.add_node("cv_critic", cv_critic_node)
-    workflow.add_node("graph_rag", graph_rag_node)
-    workflow.add_node("market_trends", market_trends_node)
-    workflow.add_node("cv_creator", cv_creator_node)
+    # Register all nodes
+    workflow.add_node("ingest",         ingest_node)
+    workflow.add_node("analyse",        analyse_node)
+    workflow.add_node("optimise",       optimise_node)
+    workflow.add_node("classify",       classify_node)
+    workflow.add_node("roadmap",        roadmap_node)
+    workflow.add_node("interview_prep", interview_prep_node)
+    workflow.add_node("persist",        persist_node)
 
-    # Define Edges
-    workflow.set_entry_point("cv_critic")
-    
-    # Parallelize market research and skill analysis after critique
-    workflow.add_edge("cv_critic", "graph_rag")
-    workflow.add_edge("cv_critic", "market_trends")
-    
-    # Converge on Creator
-    workflow.add_edge("graph_rag", "cv_creator")
-    workflow.add_edge("market_trends", "cv_creator")
-    
-    workflow.add_edge("cv_creator", END)
+    # Entry point
+    workflow.set_entry_point("ingest")
 
-    return workflow.compile()
+    # Edges with conditional routing
+    workflow.add_conditional_edges(
+        "ingest",
+        route_after_ingest,
+        {"analyse": "analyse", END: END}
+    )
+    workflow.add_edge("analyse",        "optimise")
+    workflow.add_edge("optimise",       "classify")
+    workflow.add_conditional_edges(
+        "classify",
+        route_after_classify,
+        {"roadmap": "roadmap", "interview_prep": "interview_prep"}
+    )
+    workflow.add_edge("roadmap",        "interview_prep")
+    workflow.add_edge("interview_prep", "persist")
+    workflow.add_edge("persist",        END)
 
-app_graph = build_graph()
+    return workflow.compile(checkpointer=checkpointer)

@@ -1,0 +1,50 @@
+﻿============================= test session starts =============================
+platform win32 -- Python 3.13.5, pytest-9.0.2, pluggy-1.6.0 -- C:\Users\jaksh\AppData\Local\Programs\Python\Python313\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\jaksh\ai-career-partner\backend
+plugins: anyio-4.9.0, langsmith-0.7.6
+collecting ... collected 5 items
+
+app/tests/test_agents.py::test_market_trends_agent PASSED                [ 20%]
+app/tests/test_agents.py::test_graph_rag_agent FAILED                    [ 40%]
+app/tests/test_agents.py::test_interview_prep_agent PASSED               [ 60%]
+app/tests/test_structure.py::test_imports PASSED                         [ 80%]
+app/tests/test_structure.py::test_graph_compilation PASSED               [100%]
+
+================================== FAILURES ===================================
+____________________________ test_graph_rag_agent _____________________________
+
+mock_driver = <MagicMock name='driver' id='2449476442432'>
+
+    @patch('app.agents.graph_rag.agent.GraphDatabase.driver')
+    def test_graph_rag_agent(mock_driver):
+        # Mock Neo4j to avoid DNS resolution error in CI/Tests
+        class MockSession:
+            def run(self, query, **kwargs):
+                class MockRecord:
+                    def __init__(self, data):
+                        self._data = data
+                    def data(self):
+                        return self._data
+                return [MockRecord({"relatedSkill": "Django"}), MockRecord({"relatedSkill": "PostgreSQL"})]
+            def __enter__(self): return self
+            def __exit__(self, *args): pass
+    
+        mock_driver.return_value.session.return_value = MockSession()
+    
+        result = graph_rag_agent(["Python"])
+>       assert "Django" in result["related_skills"]
+E       AssertionError: assert 'Django' in []
+
+app\tests\test_agents.py:36: AssertionError
+---------------------------- Captured stdout call -----------------------------
+Error querying Neo4j for skill 'Python': Failed to DNS resolve address neo4j:7687: [Errno 11001] getaddrinfo failed
+============================== warnings summary ===============================
+app/tests/test_agents.py::test_market_trends_agent
+  c:\Users\jaksh\ai-career-partner\backend\app\agents\market_trends\agent.py:26: RuntimeWarning: This package (`duckduckgo_search`) has been renamed to `ddgs`! Use `pip install ddgs` instead.
+    with DDGS() as ddgs:
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED app/tests/test_agents.py::test_graph_rag_agent - AssertionError: asser...
+=================== 1 failed, 4 passed, 1 warning in 9.22s ====================

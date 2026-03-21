@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { login } from '../api/auth';
+import LinkedInLoginButton from '../components/LinkedInLoginButton';
 
 export default function LoginPage() {
     const navigate = useNavigate();
@@ -17,8 +18,9 @@ export default function LoginPage() {
             const data = await login({ username: email, password });
             localStorage.setItem('access_token', data.access_token);
             navigate('/dashboard');
-        } catch (err: any) {
-            setError(err?.response?.data?.detail ?? 'Login failed. Check your credentials.');
+        } catch (err: unknown) {
+            const axiosError = err as { response?: { data?: { detail?: string } } };
+            setError(axiosError?.response?.data?.detail ?? 'Login failed. Check your credentials.');
         } finally {
             setLoading(false);
         }
@@ -33,6 +35,16 @@ export default function LoginPage() {
                     <p className="text-sm text-muted" style={{ marginTop: '0.35rem' }}>
                         Sign in to your account
                     </p>
+                </div>
+
+                <div className="mb-6">
+                    <LinkedInLoginButton />
+                </div>
+
+                <div className="relative flex py-2 items-center mb-6">
+                    <div className="flex-grow border-t border-subtle"></div>
+                    <span className="flex-shrink-0 mx-4 text-muted text-xs">OR EMAIL</span>
+                    <div className="flex-grow border-t border-subtle"></div>
                 </div>
 
                 <form className="auth-form" onSubmit={handleSubmit} id="login-form">

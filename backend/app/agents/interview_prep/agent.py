@@ -38,6 +38,32 @@ def interview_prep_agent(job_description: str, resume_summary: str, mode: str = 
         "websocket_url": f"/ws/interview/{session_id}" if mode == "native-audio" else None
     }
 
+async def generate_interview_questions(job_description: str, cv_text: str, tier: str) -> list[str]:
+    """Generates a bank of practice questions tailored to the candidate and role tier."""
+    prompt = f"""
+    You are an expert technical interviewer. Generate exactly 3 highly relevant interview questions for:
+    Role: {job_description}
+    Difficulty Tier: {tier} (e.g. Reach, Stretch, Realistic)
+    Candidate Background: {cv_text}
+    
+    Structure the response as a JSON array of strings:
+    ["Question 1", "Question 2", "Question 3"]
+    """
+    try:
+        response_text = gemini_client.generate_content(model='gemini-2.5-flash', prompt=prompt)
+        clean_text = response_text.replace("```json", "").replace("```", "").strip()
+        questions = json.loads(clean_text)
+        if isinstance(questions, list):
+            return questions
+    except Exception as e:
+        print(f"Error generating interview questions: {e}")
+    
+    return [
+        f"Tell me about a time you used your skills for this {tier} role.",
+        "How would you approach the challenges mentioned in the job description?",
+        "What is your biggest weakness technically?"
+    ]
+
 async def process_interview_message(session_id: str, user_message: str) -> str:
     """
     Process a user message in an interview session, calling Gemini to generate the coach's response.

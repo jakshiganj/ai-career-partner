@@ -1,9 +1,15 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import wasm from "vite-plugin-wasm";
+import topLevelAwait from "vite-plugin-top-level-await";
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    wasm(),
+    topLevelAwait()
+  ],
   server: {
     proxy: {
       '/auth': 'http://localhost:8000',
@@ -13,6 +19,12 @@ export default defineConfig({
       '/static': 'http://localhost:8000',
       '/docs': 'http://localhost:8000',
       '/openapi.json': 'http://localhost:8000',
+      '/api/interview': 'http://localhost:8000',
+      '/api/interview/ws': {
+        target: 'ws://localhost:8000',
+        ws: true
+      }
     },
   },
 })
+
