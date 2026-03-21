@@ -37,10 +37,15 @@ async def start_interview_session(
         mode="text"
     )
     
-    # Update our in-memory session object to store user_id
+    # Update our in-memory session object to store user_id and pipeline_id
     active_session = get_session(session_id)
     if active_session:
         active_session['user_id'] = current_user.id
+        from app.models.pipeline import PipelineRun
+        run_res = await session.execute(select(PipelineRun).where(PipelineRun.user_id == current_user.id).order_by(desc(PipelineRun.created_at)).limit(1))
+        latest_run = run_res.scalar_one_or_none()
+        if latest_run:
+            active_session['pipeline_id'] = latest_run.id
         
     return {"session_id": session_id}
 
@@ -138,7 +143,12 @@ async def interview_websocket(websocket: WebSocket, session_id: str, db: AsyncSe
                 
                 db_session = InterviewSession(
                     user_id=user_id,
-                    answers={"history": history, "feedback": score_data.get("constructive_feedback")},
+                    pipeline_id=session.get('pipeline_id'),
+                    answers={
+                        "history": history, 
+                        "feedback": score_data.get("constructive_feedback"),
+                        "tips": score_data.get("tips", {})
+                    },
                     scores=scores,
                     overall_score=overall,
                     completed_at=__import__("datetime").datetime.utcnow()
@@ -162,10 +172,12 @@ async def get_latest_interview(
         
     return {"report": {
         "overall_score": session.overall_score,
-        "communication": session.scores.get("communication", 0),
-        "technical_depth": session.scores.get("technical_depth", 0),
-        "star_method": session.scores.get("problem_solving", 0), # mapping problem solving to star method for the UI
+        "relevance": session.scores.get("relevance", 0),
+        "clarity": session.scores.get("clarity", 0),
+        "depth": session.scores.get("depth", 0),
+        "star_compliance": session.scores.get("star_compliance", 0),
         "feedback": session.answers.get("feedback", "No feedback available"),
+        "tips": session.answers.get("tips", {}),
         "transcript": "\n".join([f"{msg['role'].upper()}: {msg['content']}" for msg in session.answers.get('history', [])])
     }}
 

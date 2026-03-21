@@ -1,0 +1,36 @@
+Connecting...
+Traceback (most recent call last):
+  File "C:\Users\jaksh\ai-career-partner\backend\.venv\Lib\site-packages\google\genai\live.py", line 1105, in connect
+    raw_response = await ws.recv(decode=False)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\jaksh\ai-career-partner\backend\.venv\Lib\site-packages\websockets\asyncio\connection.py", line 322, in recv
+    raise self.protocol.close_exc from self.recv_exc
+websockets.exceptions.ConnectionClosedError: received 1007 (invalid frame payload data) At most one response modality can be specified in the setup request. To enable simultaneous transcription and audio output,; then sent 1007 (invalid frame payload data) At most one response modality can be specified in the setup request. To enable simultaneous transcription and audio output,
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\jaksh\ai-career-partner\backend\test_live_transcription.py", line 37, in <module>
+    asyncio.run(main())
+    ~~~~~~~~~~~^^^^^^^^
+  File "C:\Users\jaksh\AppData\Roaming\uv\python\cpython-3.13.11-windows-x86_64-none\Lib\asyncio\runners.py", line 195, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "C:\Users\jaksh\AppData\Roaming\uv\python\cpython-3.13.11-windows-x86_64-none\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\jaksh\AppData\Roaming\uv\python\cpython-3.13.11-windows-x86_64-none\Lib\asyncio\base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "C:\Users\jaksh\ai-career-partner\backend\test_live_transcription.py", line 21, in main
+    async with client.aio.live.connect(model="gemini-2.0-flash-live-preview-04-09", config=config) as session:
+               ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\jaksh\AppData\Roaming\uv\python\cpython-3.13.11-windows-x86_64-none\Lib\contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\jaksh\ai-career-partner\backend\.venv\Lib\site-packages\google\genai\live.py", line 1115, in connect
+    errors.APIError.raise_error(code, reason, None)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\jaksh\ai-career-partner\backend\.venv\Lib\site-packages\google\genai\errors.py", line 163, in raise_error
+    raise cls(status_code, response_json, response)
+google.genai.errors.APIError: 1007 None. At most one response modality can be specified in the setup request. To enable simultaneous transcription and audio output,

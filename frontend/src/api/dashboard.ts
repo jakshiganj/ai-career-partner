@@ -41,10 +41,12 @@ export interface DashboardSummary {
         last_score?: number | null;
         report?: {
             overall_score?: number;
-            communication?: number;
-            technical_depth?: number;
-            problem_solving?: number;
+            relevance?: number;
+            clarity?: number;
+            depth?: number;
+            star_compliance?: number;
             feedback?: string;
+            tips?: Record<string, string>;
             transcript?: string;
         } | null;
         trend?: Array<{ date: string; score: number }>;

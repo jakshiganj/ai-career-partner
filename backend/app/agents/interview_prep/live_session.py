@@ -61,6 +61,10 @@ class LiveInterviewSession:
     async def _run_session(self):
         try:
             print(f"DEBUG: Connecting to {self.model} (Official SDK Pattern)...")
+            
+            current_model_text = ""
+            current_user_text = ""
+            
             async with self.client.aio.live.connect(model=self.model, config=self.config) as session:
                 self.session = session
                 self.is_connected = True
@@ -82,30 +86,57 @@ class LiveInterviewSession:
                                         if part.inline_data:
                                             # Stream 24kHz PCM directly to frontend
                                             await self.frontend_ws.send_bytes(part.inline_data.data)
-                                        
-                                        if part.text:
-                                            # Handle text transcripts (from model turn)
-                                            print(f"AI Transcript Part: {part.text[:50]}...")
-                                            self.transcript.append({
-                                                "role": "interviewer",
-                                                "content": part.text,
-                                                "timestamp": datetime.utcnow().isoformat()
-                                            })
-                                            await self.frontend_ws.send_text(json.dumps({
-                                                "type": "agent_transcript",
-                                                "text": part.text
-                                            }))
-                                
-                                # Handle explicitly returned text (e.g. from text modality)
-                                # Avoid .text property to prevent SDK 'non-text parts' warning/breakage
-                                # Check turn_complete as a sibling in server_content
+                                            
+                                # 2. Handle Text Transcriptions explicitly from transcript fields, not model_turn.parts
+                                out_tx = getattr(message.server_content, "output_transcription", None)
+                                if out_tx and getattr(out_tx, "text", None):
+                                    current_model_text += out_tx.text
+                                    
+                                in_tx = getattr(message.server_content, "input_transcription", None)
+                                if in_tx and getattr(in_tx, "text", None):
+                                    current_user_text += in_tx.text
+                                    
+                                # Flush User Text on model_turn OR turn_complete
+                                if current_user_text.strip() and (model_turn or message.server_content.turn_complete):
+                                    self.transcript.append({
+                                        "role": "candidate",
+                                        "content": current_user_text.strip(),
+                                        "timestamp": datetime.utcnow().isoformat()
+                                    })
+                                    # Echo back candidate transcript if needed. (Optional as frontend tracks its own text, but audio doesn't)
+                                    current_user_text = ""
+
+                                # 3. Turn Complete
                                 if message.server_content.turn_complete:
                                     print("DEBUG: Gemini signaled TURN_COMPLETE.")
+                                    if current_model_text.strip():
+                                        self.transcript.append({
+                                            "role": "interviewer",
+                                            "content": current_model_text.strip(),
+                                            "timestamp": datetime.utcnow().isoformat()
+                                        })
+                                        await self.frontend_ws.send_text(json.dumps({
+                                            "type": "agent_transcript",
+                                            "text": current_model_text.strip()
+                                        }))
+                                        current_model_text = ""
+                                        
                                     await self.frontend_ws.send_text(json.dumps({"type": "agent_turn_complete"}))
                                     
-                                # 3. Interrupted
+                                # 4. Interrupted
                                 if message.server_content.interrupted:
                                     print("DEBUG: Gemini signaled INTERRUPTED.")
+                                    if current_model_text.strip():
+                                        self.transcript.append({
+                                            "role": "interviewer",
+                                            "content": current_model_text.strip() + " [Interrupted]",
+                                            "timestamp": datetime.utcnow().isoformat()
+                                        })
+                                        await self.frontend_ws.send_text(json.dumps({
+                                            "type": "agent_transcript",
+                                            "text": current_model_text.strip() + "..."
+                                        }))
+                                        current_model_text = ""
                     except asyncio.CancelledError:
                         break
                     except Exception as e:

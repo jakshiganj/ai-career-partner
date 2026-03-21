@@ -36,6 +36,7 @@ interface InterviewReadinessCardProps {
     status?: CardStatus;
     onStartInterview?: () => void;
     onRetake?: () => void;
+    onViewReport?: () => void;
 }
 
 const RADAR_DIMS: Array<{ label: string; getValue: (s: InterviewScores) => number }> = [
@@ -60,6 +61,7 @@ export default function InterviewReadinessCard({
     status = 'Not Run',
     onStartInterview,
     onRetake,
+    onViewReport,
 }: InterviewReadinessCardProps) {
     const hasScores = scores != null && (scores.overall != null || scores.relevance != null || scores.communication != null);
     const radarData = hasScores ? mapScoresToRadar(scores) : [];
@@ -164,7 +166,7 @@ export default function InterviewReadinessCard({
                     <button
                         type="button"
                         onClick={onStartInterview}
-                        className="flex-1 rounded-lg border border-[#E2E8F0] bg-white py-2 text-sm font-medium text-[#3B82F6] hover:bg-[#EFF6FF]"
+                        className="flex-1 rounded-lg border border-[#E2E8F0] bg-[#3B82F6] py-2 text-sm font-medium text-white hover:bg-[#2563EB]"
                     >
                         Start Interview
                     </button>
@@ -175,7 +177,16 @@ export default function InterviewReadinessCard({
                         onClick={onRetake}
                         className="flex-1 rounded-lg border border-[#E2E8F0] bg-white py-2 text-sm font-medium text-[#475569] hover:bg-[#F1F5F9]"
                     >
-                        Retake Interview
+                        Retake
+                    </button>
+                )}
+                {onViewReport && (
+                    <button
+                        type="button"
+                        onClick={onViewReport}
+                        className="flex-1 rounded-lg border border-[#E2E8F0] bg-white py-2 text-sm font-medium text-[#3B82F6] hover:bg-[#EFF6FF]"
+                    >
+                        View Full Report
                     </button>
                 )}
             </div>

@@ -220,10 +220,12 @@ async def get_dashboard_summary(
             "last_score": latest_interview.overall_score if latest_interview else None,
             "report": {
                 "overall_score": latest_interview.overall_score,
-                "communication": latest_interview.scores.get("communication", 0) if latest_interview.scores else 0,
-                "technical_depth": latest_interview.scores.get("technical_depth", 0) if latest_interview.scores else 0,
-                "star_method": latest_interview.scores.get("problem_solving", 0) if latest_interview.scores else 0,
+                "relevance": latest_interview.scores.get("relevance", 0) if latest_interview.scores else 0,
+                "clarity": latest_interview.scores.get("clarity", 0) if latest_interview.scores else 0,
+                "depth": latest_interview.scores.get("depth", 0) if latest_interview.scores else 0,
+                "star_compliance": latest_interview.scores.get("star_compliance", 0) if latest_interview.scores else 0,
                 "feedback": latest_interview.answers.get("feedback", "No feedback available") if (latest_interview.answers and isinstance(latest_interview.answers, dict)) else "No feedback available",
+                "tips": latest_interview.answers.get("tips", {}) if (latest_interview.answers and isinstance(latest_interview.answers, dict)) else {},
                 "transcript": "\n".join([f"{msg.get('role', 'unknown').upper()}: {msg.get('content', '')}" for msg in latest_interview.answers.get('history', [])]) if (latest_interview.answers and isinstance(latest_interview.answers, dict)) else ""
             } if latest_interview else None,
             "trend": trend_data,

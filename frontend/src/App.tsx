@@ -6,6 +6,7 @@ import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import DashboardPage from './pages/DashboardPage';
 import InterviewPage from './pages/InterviewPage';
+import InterviewReportPage from './pages/InterviewReportPage';
 import LandingPage from './pages/LandingPage';
 
 export default function App() {
@@ -32,6 +33,15 @@ export default function App() {
             <ProtectedRoute>
               <Navbar />
               <InterviewPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/interview/report"
+          element={
+            <ProtectedRoute>
+              <Navbar />
+              <InterviewReportPage />
             </ProtectedRoute>
           }
         />

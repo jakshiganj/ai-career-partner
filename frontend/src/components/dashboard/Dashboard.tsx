@@ -337,15 +337,19 @@ export default function Dashboard() {
                                             dashboardSummary?.interview_readiness?.report
                                                 ? {
                                                     overall: dashboardSummary.interview_readiness.report.overall_score,
-                                                    communication: dashboardSummary.interview_readiness.report.communication,
-                                                    technical_depth: dashboardSummary.interview_readiness.report.technical_depth,
-                                                    problem_solving: dashboardSummary.interview_readiness.report.problem_solving,
+                                                    relevance: dashboardSummary.interview_readiness.report.relevance,
+                                                    clarity: dashboardSummary.interview_readiness.report.clarity,
+                                                    depth: dashboardSummary.interview_readiness.report.depth,
+                                                    star_compliance: dashboardSummary.interview_readiness.report.star_compliance,
                                                 }
                                                 : null
                                         }
+                                        tips={dashboardSummary?.interview_readiness?.report?.tips}
                                         questionCount={dashboardSummary?.interview_readiness?.question_bank?.length ?? data?.interview_question_bank?.length ?? 0}
                                         status={dashboardSummary?.interview_readiness?.last_score != null ? 'Complete' : 'Not Run'}
-                                        onStartInterview={() => navigate('/interview')}
+                                        onStartInterview={dashboardSummary?.interview_readiness?.last_score == null ? () => navigate('/interview') : undefined}
+                                        onRetake={dashboardSummary?.interview_readiness?.last_score != null ? () => navigate('/interview') : undefined}
+                                        onViewReport={dashboardSummary?.interview_readiness?.last_score != null ? () => navigate('/interview/report') : undefined}
                                     />
                                 </div>
                             </div>

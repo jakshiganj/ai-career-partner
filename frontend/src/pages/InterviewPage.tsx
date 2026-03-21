@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import client from '../api/client';
 import { Mic, Keyboard, MessageSquare, Lightbulb, Zap, Timer, Info, MicOff, MoreHorizontal } from 'lucide-react';
 
@@ -13,6 +14,9 @@ export default function InterviewPage() {
     const [input, setInput] = useState('');
     const [connected, setConnected] = useState(false);
     const [audioMode, setAudioMode] = useState(false);
+    const [sessionEnded, setSessionEnded] = useState(false);
+    
+    const navigate = useNavigate();
 
     const wsRef = useRef<WebSocket | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -37,6 +41,7 @@ export default function InterviewPage() {
 
     async function connect(enableAudio: boolean = false) {
         setAudioMode(enableAudio);
+        setSessionEnded(false);
         try {
             const res = await client.post('/interview/start', {});
             const newSessionId = res.data.session_id;
@@ -84,7 +89,8 @@ export default function InterviewPage() {
 
             ws.onclose = () => {
                 setConnected(false);
-                addMsg('system', 'Session ended. Click Connect to start a new session. Your results are being scored and will appear in the dashboard.');
+                setSessionEnded(true);
+                addMsg('system', 'Session ended. Your results are being scored. Please head back to the Dashboard to review your performance.');
                 cleanupAudio();
                 if (pingIntervalRef.current) clearInterval(pingIntervalRef.current);
                 wsRef.current = null;
@@ -301,6 +307,11 @@ export default function InterviewPage() {
                                 <button className="px-6 h-11 flex items-center gap-2 justify-center rounded-xl bg-white text-slate-700 shadow-md border border-slate-200 hover:bg-slate-50 transition-all font-bold text-sm" onClick={() => connect(false)}>
                                     <Keyboard className="h-4 w-4" /> Text Only
                                 </button>
+                                {sessionEnded && (
+                                    <button className="px-6 h-11 flex items-center gap-2 justify-center rounded-xl bg-emerald-600 text-white shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 transition-all font-bold text-sm ml-4" onClick={() => navigate('/dashboard')}>
+                                        View Results on Dashboard
+                                    </button>
+                                )}
                             </>
                         ) : (
                             <button className="px-6 h-11 flex items-center justify-center rounded-xl bg-red-600 text-white shadow-lg shadow-red-600/20 hover:bg-red-700 transition-all font-bold text-sm" onClick={disconnect}>
