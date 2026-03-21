@@ -4,9 +4,10 @@ import client from '../api/client';
 import InterviewReport from '../components/InterviewReport';
 import { ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
+import type { InterviewReportData } from '../components/InterviewReport';
 
 export default function InterviewReportPage() {
-    const [report, setReport] = useState<any>(null);
+    const [report, setReport] = useState<InterviewReportData | null>(null);
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 

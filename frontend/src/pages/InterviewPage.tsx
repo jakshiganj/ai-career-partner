@@ -181,7 +181,7 @@ export default function InterviewPage() {
 
     function stopAllPlayback() {
         activeSourcesRef.current.forEach(source => {
-            try { source.stop(); } catch (e) { /* ignore */ }
+            try { source.stop(); } catch { /* ignore */ }
         });
         activeSourcesRef.current = [];
         nextPlayTimeRef.current = 0;

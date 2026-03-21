@@ -2,17 +2,19 @@ import { motion } from 'framer-motion';
 import { Target, MessageSquare, Brain, Award, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
 import { useState } from 'react';
 
+export interface InterviewReportData {
+    overall_score: number;
+    relevance: number;
+    clarity: number;
+    depth: number;
+    star_compliance: number;
+    feedback: string;
+    tips?: Record<string, string>;
+    transcript?: string;
+}
+
 interface Props {
-    report: {
-        overall_score: number;
-        relevance: number;
-        clarity: number;
-        depth: number;
-        star_compliance: number;
-        feedback: string;
-        tips?: Record<string, string>;
-        transcript?: string;
-    } | null;
+    report: InterviewReportData | null;
 }
 
 export default function InterviewReport({ report }: Props) {
