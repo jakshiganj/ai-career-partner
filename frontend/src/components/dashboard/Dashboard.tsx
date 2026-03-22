@@ -1,196 +1,55 @@
-import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Play, User } from 'lucide-react';
+import { 
+    Play, 
+    ArrowRight, 
+    LayoutDashboard, 
+    Target, 
+    Zap, 
+    Clock, 
+    Briefcase,
+    Activity
+} from 'lucide-react';
 import { motion } from 'framer-motion';
-import Sidebar, { SIDEBAR_WIDTH } from './Sidebar';
+import Sidebar from './Sidebar';
 import PipelineTracker from './PipelineTracker';
-import PipelineRunningBanner from './PipelineRunningBanner';
-import ATSScoreCard from './ATSScoreCard';
-import CVOptimisationCard from './CVOptimisationCard';
-import CoverLetterCard from './CoverLetterCard';
-import JobMatchesCard, { type JobMatchItem } from './JobMatchesCard';
-import SkillRoadmapCard, { type RoadmapStep } from './SkillRoadmapCard';
-import InterviewReadinessCard from './InterviewReadinessCard';
-import SalaryInsightsCard from './SalaryInsightsCard';
+import { useDashboardData } from '../../hooks/useDashboardData';
 import EmptyState from './EmptyState';
-import OverviewStats from './OverviewStats';
+import { runPipeline } from '../../api/pipeline';
 import CVUpload from '../CVUpload';
-import {
-    getPipelineRuns,
-    getPipelineResult,
-    getPipelineStatus,
-    runPipeline,
-    type PipelineRunSummary,
-    type PipelineResultState,
-} from '../../api/pipeline';
-import { getDashboardSummary, type DashboardSummary } from '../../api/dashboard';
-
-const POLL_INTERVAL_MS = 2000;
-
-function buildJobMatchesFromState(state: PipelineResultState): JobMatchItem[] {
-    const market = state.market_analysis?.market_analysis;
-    if (!market || typeof market !== 'object') return [];
-    const jobs: JobMatchItem[] = [];
-    const seen = new Set<string>();
-    for (const [, info] of Object.entries(market)) {
-        if (!info || typeof info !== 'object') continue;
-        const snippets = (info as { snippets?: string[] }).snippets ?? [];
-        for (const snippet of snippets) {
-            const parts = snippet.split(' at ');
-            const title = parts[0]?.trim() ?? snippet.trim();
-            const company = parts[1]?.trim() ?? 'Sri Lanka';
-            const key = `${title.toLowerCase()}|${company}`;
-            if (seen.has(key)) continue;
-            seen.add(key);
-            let match = 0.5;
-            if (state.skill_match_score != null) match = state.skill_match_score;
-            const tier = match >= 0.8 ? 'Realistic' : match >= 0.5 ? 'Stretch' : 'Reach';
-            jobs.push({
-                id: key.slice(0, 10),
-                title,
-                company,
-                match_score: match,
-                tier,
-                missing_skills: state.missing_skills ?? [],
-            });
-        }
-    }
-    return jobs.slice(0, 10);
-}
-
-function buildRoadmapSteps(state: PipelineResultState): RoadmapStep[] {
-    const raw = state.skill_roadmap;
-    if (!Array.isArray(raw)) return [];
-    return raw.map((item) => {
-        if (typeof item === 'string') return { skill: item, weeks: 0, completed: false };
-        const r = item as Record<string, unknown>;
-        return {
-            skill: r.skill as string | undefined,
-            focus: (r.focus as string | undefined) ?? (r.phase_name as string | undefined),
-            weeks: (r.weeks as number) ?? (r.duration_weeks as number) ?? (r.estimated_weeks as number),
-            completed: r.completed as boolean | undefined,
-        };
-    });
-}
+import { useState } from 'react';
 
 export default function Dashboard() {
     const navigate = useNavigate();
-    const [runs, setRuns] = useState<PipelineRunSummary[]>([]);
-    const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
-    const [runResult, setRunResult] = useState<PipelineResultState | null>(null);
-    const [dashboardSummary, setDashboardSummary] = useState<DashboardSummary | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [runningPipelineId, setRunningPipelineId] = useState<string | null>(null);
-    const [runStatus, setRunStatus] = useState<{ current_stage: number; status: string } | null>(null);
+    const { 
+        runs, 
+        selectedRunId, 
+        setSelectedRunId, 
+        runResult, 
+        dashboardSummary, 
+        loading, 
+        runStatus, 
+        refresh
+    } = useDashboardData();
+
     const [showNewRunModal, setShowNewRunModal] = useState(false);
     const [uploadMode, setUploadMode] = useState<'text' | 'file'>('file');
     const [newRunCv, setNewRunCv] = useState('');
     const [newRunJob, setNewRunJob] = useState('');
     const [startError, setStartError] = useState<string | null>(null);
 
-    const fetchRuns = useCallback(async () => {
-        try {
-            const { runs: list } = await getPipelineRuns(12);
-            setRuns(list);
-            if (list.length > 0 && !selectedRunId) {
-                setSelectedRunId(list[0].id);
-                setRunResult(null);
-                setRunStatus(null);
-            }
-        } catch (e) {
-            console.error('Failed to fetch runs', e);
-        }
-    }, [selectedRunId]);
-
-    const fetchDashboard = useCallback(async () => {
-        try {
-            const data = await getDashboardSummary();
-            setDashboardSummary(data);
-            if (data.pipeline_status?.is_running && data.pipeline_status?.pipeline_id) {
-                setRunningPipelineId(data.pipeline_status.pipeline_id);
-                if (!selectedRunId) {
-                    setSelectedRunId(data.pipeline_status.pipeline_id);
-                    setRunResult(null);
-                    setRunStatus(null);
-                }
-            }
-        } catch (e) {
-            console.error('Failed to fetch dashboard', e);
-        }
-    }, [selectedRunId]);
-
-    const fetchResult = useCallback(async (id: string) => {
-        try {
-            const result = await getPipelineResult(id);
-            setRunResult(result);
-        } catch (e) {
-            console.error('Failed to fetch run result', e);
-            setRunResult(null);
-        }
-    }, []);
-
-    const fetchStatus = useCallback(async (id: string) => {
-        try {
-            const status = await getPipelineStatus(id);
-            setRunStatus({ current_stage: status.current_stage, status: status.status });
-            if (status.status === 'completed' || status.status === 'failed') {
-                setRunningPipelineId((prev) => (prev === id ? null : prev));
-                await fetchResult(id);
-                await fetchRuns();
-            }
-        } catch {
-            setRunStatus(null);
-        }
-    }, [fetchResult, fetchRuns]);
-
-    useEffect(() => {
-        (async () => {
-            setLoading(true);
-            await Promise.all([fetchRuns(), fetchDashboard()]);
-            setLoading(false);
-        })();
-    }, [fetchRuns, fetchDashboard]);
-
-    useEffect(() => {
-        if (!selectedRunId) {
-            return;
-        }
-        const load = async () => {
-            await fetchResult(selectedRunId);
-            await fetchStatus(selectedRunId);
-        };
-        load();
-    }, [selectedRunId, fetchResult, fetchStatus]);
-
-    useEffect(() => {
-        if (!runningPipelineId) return;
-        const t = setInterval(() => fetchStatus(runningPipelineId), POLL_INTERVAL_MS);
-        return () => clearInterval(t);
-    }, [runningPipelineId, fetchStatus]);
+    if (loading) {
+        return (
+            <div className="flex min-h-screen items-center justify-center bg-[#F1F5F9]">
+                <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#E2E8F0] border-t-[#3B82F6]" />
+            </div>
+        );
+    }
 
     const selectedRun = runs.find((r) => r.id === selectedRunId);
-    const runLabel = selectedRun?.label ?? 'Dashboard';
     const isRunning = runStatus?.status === 'running' || runStatus?.status === 'waiting_for_input';
     const currentStage = runStatus?.current_stage ?? runResult?.current_stage ?? 0;
     const status = runStatus?.status ?? runResult?.status ?? '';
-
     const data = runResult ?? (dashboardSummary ? mapDashboardToResult(dashboardSummary) : null);
-    const jobMatches: JobMatchItem[] = data
-        ? runResult
-            ? buildJobMatchesFromState(runResult)
-            : ((dashboardSummary?.job_matches ?? []) as Array<{ id: string; title: string; company: string; match_score: number; tier: string; missing_skills?: string[]; salary_min?: number; salary_max?: number; url?: string }>).map((j) => ({
-                id: j.id,
-                title: j.title,
-                company: j.company,
-                match_score: j.match_score,
-                tier: j.tier,
-                missing_skills: j.missing_skills,
-                salary_min: j.salary_min,
-                salary_max: j.salary_max,
-                url: j.url,
-            }))
-        : [];
-    const roadmapSteps = data ? buildRoadmapSteps(runResult ?? mapDashboardToResult(dashboardSummary!) ?? {}) : [];
 
     async function handleNewPipelineRun() {
         if (!newRunCv.trim() || !newRunJob.trim()) {
@@ -208,70 +67,42 @@ export default function Dashboard() {
             setUploadMode('file');
             setNewRunCv('');
             setNewRunJob('');
-            setRunningPipelineId(pipeline_id);
-            setSelectedRunId(pipeline_id);
-            await fetchRuns();
-            await fetchStatus(pipeline_id);
+            refresh();
+            navigate(`/dashboard?runId=${pipeline_id}`);
         } catch (e: unknown) {
             setStartError((e as { response?: { data?: { detail?: string } } })?.response?.data?.detail ?? 'Failed to start pipeline');
         }
     }
 
-    if (loading) {
-        return (
-            <div className="flex min-h-screen items-center justify-center bg-[#F1F5F9]">
-                <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#E2E8F0] border-t-[#3B82F6]" />
-            </div>
-        );
-    }
-
     return (
-        <div className="min-h-screen bg-[#F1F5F9]" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-            <Sidebar
-                runs={runs}
-                selectedRunId={selectedRunId}
-                onSelectRun={setSelectedRunId}
-                hasMoreRuns={runs.length >= 8}
-            />
+        <div className="min-h-screen bg-[#F8FAFC]" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+            <Sidebar />
 
-            <main
-                className="min-h-screen flex-1 bg-white"
-                style={{ marginLeft: SIDEBAR_WIDTH }}
-            >
-                {/* Top nav */}
-                <header className="sticky top-0 z-20 flex h-16 w-full items-center justify-between border-b border-[#E2E8F0] bg-white/80 px-6 backdrop-blur">
+            <main className="min-h-screen flex-1 bg-white ml-[280px]">
+                {/* Header */}
+                <header className="sticky top-0 z-20 flex h-20 w-full items-center justify-between border-b border-[#F1F5F9] bg-white/80 px-8 backdrop-blur-md">
                     <div className="flex items-center gap-4">
-                        <h2 className="text-xl font-bold text-[#0F172A]">Pipeline Analysis</h2>
-                        <span className="text-[#E2E8F0]">|</span>
-                        <div className="relative">
-                            <select className="appearance-none rounded-lg border border-[#E2E8F0] bg-transparent py-1.5 pl-3 pr-8 text-sm font-medium text-[#475569] focus:border-[#3B82F6] focus:outline-none focus:ring-1 focus:ring-[#3B82F6]">
-                                <option>{runLabel}</option>
-                            </select>
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                            <LayoutDashboard className="h-6 w-6" />
+                        </div>
+                        <div>
+                            <h2 className="text-xl font-bold text-[#0F172A]">Overview</h2>
+                            <p className="text-xs text-[#64748B]">Your career status at a glance.</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
                         <button
                             type="button"
                             onClick={() => setShowNewRunModal(true)}
-                            className="inline-flex items-center gap-2 rounded-lg border border-[#E2E8F0] px-3 py-2 text-sm font-semibold text-[#64748B] hover:bg-[#F8FAFC]"
+                            className="inline-flex items-center gap-2 rounded-xl bg-[#3B82F6] px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-blue-500/10 hover:bg-[#2563EB] transition-all"
                         >
-                            <Play className="h-4 w-4" />
-                            New Run
+                            <Play className="h-4 w-4 fill-current" />
+                            New Analysis
                         </button>
-                        <button
-                            type="button"
-                            className="flex items-center gap-2 rounded-lg bg-[#3B82F6] px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-[#2563EB]"
-                        >
-                            <span className="material-symbols-outlined text-sm">download</span>
-                            Export Report
-                        </button>
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#E2E8F0] text-[#64748B]">
-                            <User className="h-4 w-4" />
-                        </div>
                     </div>
                 </header>
 
-                <div className="p-6">
+                <div className="p-8 max-w-6xl mx-auto space-y-10">
                     {runs.length === 0 ? (
                         <EmptyState
                             onRunPipeline={() => setShowNewRunModal(true)}
@@ -279,167 +110,156 @@ export default function Dashboard() {
                         />
                     ) : (
                         <>
-                            <PipelineTracker
-                                currentStage={Math.max(1, currentStage)}
-                                status={(status as 'running' | 'completed' | 'failed' | 'partial') || 'completed'}
-                                totalStages={7}
-                            />
-
-                            {isRunning && (
-                                <div className="mt-4">
-                                    <PipelineRunningBanner
-                                        currentStage={Math.max(1, currentStage)}
-                                        totalStages={7}
-                                        startedAt={selectedRun?.created_at ?? null}
-                                    />
-                                </div>
+                            {/* Compact Pipeline Status */}
+                            {(isRunning || status === 'completed') && (
+                                <section className="flex items-center justify-between rounded-2xl border border-blue-100 bg-blue-50/50 p-6">
+                                    <div className="flex items-center gap-4">
+                                        <div className={`flex h-12 w-12 items-center justify-center rounded-full ${isRunning ? 'bg-blue-600 text-white animate-pulse' : 'bg-green-600 text-white'}`}>
+                                            <Activity className="h-6 w-6" />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-bold uppercase tracking-wider text-blue-600 mb-0.5">{status}</p>
+                                            <h3 className="text-lg font-bold text-[#1E3A8A]">
+                                                {selectedRun?.label || 'Active Analysis'}
+                                            </h3>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-8">
+                                         <PipelineTracker
+                                            currentStage={Math.max(1, currentStage)}
+                                            status={(status as 'running' | 'completed' | 'failed' | 'partial' | 'waiting_for_input') || 'completed'}
+                                            totalStages={7}
+                                        />
+                                        <div className="h-10 w-[1px] bg-blue-200" />
+                                        <button 
+                                            onClick={() => navigate('/dashboard/cv-analysis')}
+                                            className="text-sm font-bold text-blue-600 hover:underline"
+                                        >
+                                            See Details
+                                        </button>
+                                    </div>
+                                </section>
                             )}
 
-                            <div className="mt-8 space-y-6 max-w-7xl mx-auto w-full">
-                                <OverviewStats data={data} dashboardSummary={dashboardSummary} />
-
-                                <ATSScoreCard
-                                    score={data?.ats_score ?? null}
-                                    breakdown={data?.ats_breakdown ?? undefined}
-                                    status={data?.ats_score != null ? 'Complete' : 'Not Run'}
+                            {/* Streamlined Quick Links */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <QuickMetricCard 
+                                    title="CV Score" 
+                                    icon={Target}
+                                    color="blue"
+                                    onClick={() => navigate('/dashboard/cv-analysis')}
+                                    value={data?.ats_score?.toString() ?? '--'}
+                                    subText="ATS Match Score"
                                 />
-                                <CVOptimisationCard
-                                    originalText={data?.cv_raw ?? null}
-                                    optimisedText={
-                                        typeof data?.optimised_cv === 'string'
-                                            ? data.optimised_cv
-                                            : (data?.optimised_cv as unknown as { cv_markdown?: string })?.cv_markdown ?? null
-                                    }
-                                    critique={data?.critique ?? null}
-                                    versionNumber={dashboardSummary?.cv_health?.version}
-                                    matchScoreImprovement={null}
-                                    status={data?.optimised_cv ? 'Complete' : 'Not Run'}
+                                <QuickMetricCard 
+                                    title="Job Matches" 
+                                    icon={Briefcase}
+                                    color="purple"
+                                    onClick={() => navigate('/dashboard/job-search')}
+                                    value="12"
+                                    subText="Tailored for you"
                                 />
-
-                                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                                    <CoverLetterCard
-                                        preview={data?.cover_letter ?? null}
-                                        tone="Formal"
-                                        wordCount={data?.cover_letter ? data.cover_letter.split(/\s+/).length : null}
-                                        status={data?.cover_letter ? 'Complete' : 'Not Run'}
-                                        onCopy={() => {
-                                            if (data?.cover_letter) {
-                                                navigator.clipboard.writeText(data.cover_letter);
-                                            }
-                                        }}
-                                    />
-                                    <JobMatchesCard
-                                        jobs={jobMatches as JobMatchItem[]}
-                                        status={jobMatches.length ? 'Complete' : 'Not Run'}
-                                    />
-                                    <SalaryInsightsCard
-                                        benchmarks={data?.salary_benchmarks}
-                                        status={data?.salary_benchmarks && Object.keys(data.salary_benchmarks).length > 0 ? 'Complete' : 'Not Run'}
-                                    />
-                                    <SkillRoadmapCard
-                                        steps={roadmapSteps}
-                                        completedCount={roadmapSteps.filter((s) => s.completed).length}
-                                        totalCount={roadmapSteps.length}
-                                        implicitSkills={data?.implicit_skills ?? undefined}
-                                        status={roadmapSteps.length ? 'Complete' : 'Not Run'}
-                                    />
-                                    <InterviewReadinessCard
-                                        scores={
-                                            dashboardSummary?.interview_readiness?.report
-                                                ? {
-                                                    overall: dashboardSummary.interview_readiness.report.overall_score,
-                                                    relevance: dashboardSummary.interview_readiness.report.relevance,
-                                                    clarity: dashboardSummary.interview_readiness.report.clarity,
-                                                    depth: dashboardSummary.interview_readiness.report.depth,
-                                                    star_compliance: dashboardSummary.interview_readiness.report.star_compliance,
-                                                }
-                                                : null
-                                        }
-                                        tips={dashboardSummary?.interview_readiness?.report?.tips}
-                                        questionCount={dashboardSummary?.interview_readiness?.question_bank?.length ?? data?.interview_question_bank?.length ?? 0}
-                                        status={dashboardSummary?.interview_readiness?.last_score != null ? 'Complete' : 'Not Run'}
-                                        onStartInterview={dashboardSummary?.interview_readiness?.last_score == null ? () => navigate('/interview') : undefined}
-                                        onRetake={dashboardSummary?.interview_readiness?.last_score != null ? () => navigate('/interview') : undefined}
-                                        onViewReport={dashboardSummary?.interview_readiness?.last_score != null ? () => navigate('/interview/report') : undefined}
-                                    />
-                                </div>
+                                <QuickMetricCard 
+                                    title="Roadmap" 
+                                    icon={Zap}
+                                    color="orange"
+                                    onClick={() => navigate('/dashboard/skills')}
+                                    value="4/10"
+                                    subText="Steps complete"
+                                />
                             </div>
+
+                            {/* Recent Runs - Simplified */}
+                            <section className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <h4 className="text-lg font-bold text-[#0F172A]">Recent Activity</h4>
+                                    <button onClick={() => navigate('/dashboard/pipeline-runs')} className="text-sm font-bold text-[#64748B] hover:text-blue-600 transition-colors">View Timeline</button>
+                                </div>
+                                <div className="grid grid-cols-1 gap-3">
+                                    {runs.slice(0, 3).map((run) => (
+                                        <button 
+                                            key={run.id}
+                                            onClick={() => setSelectedRunId(run.id)}
+                                            className={`flex items-center justify-between w-full p-4 rounded-2xl transition-all border ${run.id === selectedRunId ? 'bg-white border-blue-200 shadow-lg shadow-blue-500/5' : 'bg-transparent border-transparent hover:bg-[#F8FAFC]'}`}
+                                        >
+                                            <div className="flex items-center gap-4 text-left">
+                                                <div className={`h-10 w-10 flex items-center justify-center rounded-xl ${run.id === selectedRunId ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20' : 'bg-gray-100 text-gray-400'}`}>
+                                                    <Clock className="h-5 w-5" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-bold text-[#0F172A]">{run.label || 'Career Analysis'}</p>
+                                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{run.created_at ? new Date(run.created_at).toLocaleDateString() : 'RECENT'}</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                {run.ats_score && (
+                                                    <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded-md">{run.ats_score}%</span>
+                                                )}
+                                                <ArrowRight className={`h-4 w-4 transition-transform ${run.id === selectedRunId ? 'text-blue-600' : 'text-gray-300'}`} />
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+                            </section>
                         </>
                     )}
                 </div>
             </main>
 
+            {/* Reuse Modal logic */}
             {showNewRunModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
                     <motion.div
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        className="w-full max-w-lg rounded-xl border border-[#E2E8F0] bg-white p-6 shadow-lg"
+                        initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        className="w-full max-w-xl rounded-[32px] border border-[#E2E8F0] bg-white p-10 shadow-2xl"
                     >
-                        <h3 className="text-lg font-semibold text-[#0F172A]">New Pipeline Run</h3>
-                        <p className="mt-1 text-sm text-[#64748B]">Provide your CV and target job description.</p>
+                        <h3 className="text-2xl font-bold text-[#0F172A] mb-2">New Analysis</h3>
+                        <p className="text-sm text-[#64748B] mb-8">Launch our AI to optimize your application.</p>
 
-                        {/* Input Mode Toggle */}
-                        <div className="mt-4 flex rounded-lg border border-[#E2E8F0] p-1 bg-[#F8FAFC]">
-                            <button
-                                type="button"
-                                onClick={() => setUploadMode('file')}
-                                className={`flex-1 rounded-md py-1.5 text-sm font-medium transition-colors ${uploadMode === 'file' ? 'bg-white text-[#0F172A] shadow-sm' : 'text-[#64748B] hover:text-[#0F172A]'}`}
-                            >
-                                Upload PDF
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setUploadMode('text')}
-                                className={`flex-1 rounded-md py-1.5 text-sm font-medium transition-colors ${uploadMode === 'text' ? 'bg-white text-[#0F172A] shadow-sm' : 'text-[#64748B] hover:text-[#0F172A]'}`}
-                            >
-                                Paste Text
-                            </button>
-                        </div>
-
-                        <div className="mt-4 space-y-4">
+                        <div className="space-y-6">
                             <div>
-                                <label className="block text-xs font-semibold uppercase tracking-wider text-[#64748B] mb-2">1. Your CV</label>
+                                <label className="block text-xs font-bold uppercase tracking-widest text-[#94A3B8] mb-3">CV Data</label>
                                 {uploadMode === 'file' ? (
-                                    <div className="rounded-xl border-2 border-dashed border-[#E2E8F0] bg-[#F8FAFC] p-4 transition-colors hover:border-[#3B82F6] hover:bg-blue-50/50">
+                                    <div className="rounded-2xl border-2 border-dashed border-[#E2E8F0] bg-[#F8FAFC] p-6 hover:border-[#3B82F6] transition-all">
                                         <CVUpload onResult={(_id, _fb, redactedText) => setNewRunCv(redactedText)} />
                                     </div>
                                 ) : (
                                     <textarea
                                         value={newRunCv}
                                         onChange={(e) => setNewRunCv(e.target.value)}
-                                        placeholder="Paste or type your CV content..."
-                                        className="w-full rounded-lg border border-[#E2E8F0] bg-white p-3 text-sm text-[#0F172A] placeholder:text-[#94A3B8] focus:border-[#3B82F6] focus:outline-none focus:ring-1 focus:ring-[#3B82F6]"
-                                        rows={5}
+                                        placeholder="Paste your CV content..."
+                                        className="w-full rounded-2xl border border-[#E2E8F0] bg-white p-4 text-sm text-[#0F172A] focus:border-[#3B82F6] transition-all outline-none"
+                                        rows={4}
                                     />
                                 )}
                             </div>
                             <div>
-                                <label className="block text-xs font-semibold uppercase tracking-wider text-[#64748B] mb-2">2. Target Job Role</label>
+                                <label className="block text-xs font-bold uppercase tracking-widest text-[#94A3B8] mb-3">Target Role</label>
                                 <textarea
                                     value={newRunJob}
                                     onChange={(e) => setNewRunJob(e.target.value)}
-                                    placeholder="Paste the job description or target role..."
-                                    className="w-full rounded-lg border border-[#E2E8F0] bg-white p-3 text-sm text-[#0F172A] placeholder:text-[#94A3B8] focus:border-[#3B82F6] focus:outline-none focus:ring-1 focus:ring-[#3B82F6]"
-                                    rows={4}
+                                    placeholder="e.g. Frontend Developer at Vercel"
+                                    className="w-full rounded-2xl border border-[#E2E8F0] bg-white p-4 text-sm text-[#0F172A] focus:border-[#3B82F6] transition-all outline-none"
+                                    rows={3}
                                 />
                             </div>
                         </div>
-                        {startError && <p className="mt-2 text-sm text-red-600">{startError}</p>}
-                        <div className="mt-6 flex justify-end gap-2">
+                        {startError && <p className="mt-4 text-sm font-bold text-red-500">{startError}</p>}
+                        <div className="mt-10 flex gap-4">
                             <button
                                 type="button"
-                                onClick={() => { setShowNewRunModal(false); setStartError(null); }}
-                                className="rounded-lg border border-[#E2E8F0] px-4 py-2 text-sm font-medium text-[#475569] hover:bg-[#F1F5F9]"
+                                onClick={() => setShowNewRunModal(false)}
+                                className="flex-1 rounded-2xl border border-[#E2E8F0] py-4 text-sm font-bold text-[#475569] hover:bg-[#F8FAFC]"
                             >
                                 Cancel
                             </button>
                             <button
                                 type="button"
                                 onClick={handleNewPipelineRun}
-                                className="rounded-lg bg-[#3B82F6] px-4 py-2 text-sm font-semibold text-white hover:bg-[#2563EB]"
+                                className="flex-[2] rounded-2xl bg-[#0F172A] py-4 text-sm font-extrabold text-white hover:shadow-xl transition-all"
                             >
-                                Start pipeline
+                                Start AI Agent
                             </button>
                         </div>
                     </motion.div>
@@ -449,18 +269,64 @@ export default function Dashboard() {
     );
 }
 
-function mapDashboardToResult(d: DashboardSummary): PipelineResultState | null {
+interface QuickMetricCardProps {
+    title: string;
+    icon: React.ElementType;
+    color: 'blue' | 'purple' | 'orange';
+    onClick: () => void;
+    value: string;
+    subText: string;
+}
+
+function QuickMetricCard({ title, icon: Icon, color, onClick, value, subText }: QuickMetricCardProps) {
+    const colorMap: Record<'blue' | 'purple' | 'orange', string> = {
+        blue: 'text-blue-600 bg-blue-50',
+        purple: 'text-purple-600 bg-purple-50',
+        orange: 'text-orange-600 bg-orange-50',
+    };
+    
+    return (
+        <button 
+            onClick={onClick}
+            className="group flex items-center gap-5 rounded-2xl border border-[#F1F5F9] bg-white p-5 text-left transition-all hover:shadow-xl hover:shadow-blue-500/5"
+        >
+            <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl transition-all group-hover:scale-110 ${colorMap[color]}`}>
+                <Icon className="h-6 w-6" />
+            </div>
+            <div>
+                <h4 className="text-xs font-bold uppercase tracking-widest text-[#94A3B8] mb-0.5">{title}</h4>
+                <div className="flex items-center gap-2">
+                    <span className="text-xl font-extrabold text-[#0F172A]">{value}</span>
+                    <span className="text-[10px] font-bold text-[#64748B]">{subText}</span>
+                </div>
+            </div>
+        </button>
+    );
+}
+
+import { type PipelineResultState } from '../../api/pipeline';
+
+function mapDashboardToResult(d: unknown): PipelineResultState | null {
     if (!d) return null;
+    interface DResult {
+        cv_health?: { ats_score?: number; feedback?: unknown; cover_letter?: string };
+        cv_raw?: string;
+        goal?: string;
+        skill_roadmap?: unknown;
+        interview_readiness?: { question_bank?: unknown };
+        pipeline_status?: { current_stage?: number; is_running?: boolean };
+    }
+    const val = d as DResult;
     return {
-        ats_score: d.cv_health?.ats_score ?? undefined,
-        ats_breakdown: d.cv_health?.feedback ?? undefined,
-        cv_raw: d.cv_raw,
-        job_description: d.goal,
-        cover_letter: d.cv_health?.cover_letter ?? undefined,
+        ats_score: val.cv_health?.ats_score ?? undefined,
+        ats_breakdown: val.cv_health?.feedback as Record<string, unknown> | null | undefined,
+        cv_raw: val.cv_raw,
+        job_description: val.goal,
+        cover_letter: val.cv_health?.cover_letter ?? undefined,
         optimised_cv: undefined,
-        skill_roadmap: Array.isArray(d.skill_roadmap) ? d.skill_roadmap as PipelineResultState['skill_roadmap'] : undefined,
-        interview_question_bank: d.interview_readiness?.question_bank,
-        current_stage: d.pipeline_status?.current_stage ?? 0,
-        status: d.pipeline_status?.is_running ? 'running' : 'completed',
+        skill_roadmap: Array.isArray(val.skill_roadmap) ? (val.skill_roadmap as PipelineResultState['skill_roadmap']) : undefined,
+        interview_question_bank: val.interview_readiness?.question_bank as string[] | null | undefined,
+        current_stage: val.pipeline_status?.current_stage ?? 0,
+        status: val.pipeline_status?.is_running ? 'running' : 'completed',
     };
 }

@@ -1,6 +1,5 @@
 import './index.css';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
@@ -28,10 +27,41 @@ export default function App() {
           }
         />
         <Route
+          path="/dashboard/pipeline-runs"
+          element={
+            <ProtectedRoute>
+              <DashboardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/cv-analysis"
+          element={
+            <ProtectedRoute>
+              <DashboardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/job-search"
+          element={
+            <ProtectedRoute>
+              <DashboardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/skills"
+          element={
+            <ProtectedRoute>
+              <DashboardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/interview"
           element={
             <ProtectedRoute>
-              <Navbar />
               <InterviewPage />
             </ProtectedRoute>
           }
@@ -40,7 +70,6 @@ export default function App() {
           path="/interview/report"
           element={
             <ProtectedRoute>
-              <Navbar />
               <InterviewReportPage />
             </ProtectedRoute>
           }
