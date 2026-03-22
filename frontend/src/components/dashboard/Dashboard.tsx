@@ -11,6 +11,7 @@ import CoverLetterCard from './CoverLetterCard';
 import JobMatchesCard, { type JobMatchItem } from './JobMatchesCard';
 import SkillRoadmapCard, { type RoadmapStep } from './SkillRoadmapCard';
 import InterviewReadinessCard from './InterviewReadinessCard';
+import SalaryInsightsCard from './SalaryInsightsCard';
 import EmptyState from './EmptyState';
 import OverviewStats from './OverviewStats';
 import CVUpload from '../CVUpload';
@@ -65,8 +66,8 @@ function buildRoadmapSteps(state: PipelineResultState): RoadmapStep[] {
         const r = item as Record<string, unknown>;
         return {
             skill: r.skill as string | undefined,
-            focus: r.focus as string | undefined,
-            weeks: (r.weeks as number) ?? (r.duration_weeks as number),
+            focus: (r.focus as string | undefined) ?? (r.phase_name as string | undefined),
+            weeks: (r.weeks as number) ?? (r.duration_weeks as number) ?? (r.estimated_weeks as number),
             completed: r.completed as boolean | undefined,
         };
     });
@@ -304,7 +305,12 @@ export default function Dashboard() {
                                 />
                                 <CVOptimisationCard
                                     originalText={data?.cv_raw ?? null}
-                                    optimisedText={data?.optimised_cv ?? null}
+                                    optimisedText={
+                                        typeof data?.optimised_cv === 'string'
+                                            ? data.optimised_cv
+                                            : (data?.optimised_cv as unknown as { cv_markdown?: string })?.cv_markdown ?? null
+                                    }
+                                    critique={data?.critique ?? null}
                                     versionNumber={dashboardSummary?.cv_health?.version}
                                     matchScoreImprovement={null}
                                     status={data?.optimised_cv ? 'Complete' : 'Not Run'}
@@ -326,10 +332,15 @@ export default function Dashboard() {
                                         jobs={jobMatches as JobMatchItem[]}
                                         status={jobMatches.length ? 'Complete' : 'Not Run'}
                                     />
+                                    <SalaryInsightsCard
+                                        benchmarks={data?.salary_benchmarks}
+                                        status={data?.salary_benchmarks && Object.keys(data.salary_benchmarks).length > 0 ? 'Complete' : 'Not Run'}
+                                    />
                                     <SkillRoadmapCard
                                         steps={roadmapSteps}
                                         completedCount={roadmapSteps.filter((s) => s.completed).length}
                                         totalCount={roadmapSteps.length}
+                                        implicitSkills={data?.implicit_skills ?? undefined}
                                         status={roadmapSteps.length ? 'Complete' : 'Not Run'}
                                     />
                                     <InterviewReadinessCard

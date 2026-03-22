@@ -56,9 +56,10 @@ async def analyse_node(state: AgentState) -> dict:
     job_description = state.get("job_description", "")
     error_log = list(state.get("error_log", []))
     
+    
     # Run all three concurrently
     ats_task = _run_ats(cv_raw, job_description)
-    graphrag_task = _run_graphrag(cv_raw, job_description)
+    graphrag_task = _run_graphrag(state.get("candidate_profile", {}), job_description)
     market_task = _run_market(job_description)
     
     ats_result, graphrag_result, market_result = await asyncio.gather(
@@ -86,10 +87,10 @@ async def analyse_node(state: AgentState) -> dict:
         updates["error_log"].append(f"Stage 2 GraphRAGAgent failed: {graphrag_result}")
         updates["messages"].append("Stage 2: GraphRAG failed — continuing")
     else:
-        updates["skill_match_score"] = graphrag_result.get("final_score")
+        updates["skill_match_score"] = graphrag_result.get("skill_match_score")
         updates["skill_gaps"] = graphrag_result.get("skill_gaps", [])
         updates["implicit_skills"] = graphrag_result.get("implicit_skills", [])
-        updates["messages"].append(f"Stage 2: Skill Match Score = {graphrag_result.get('final_score')}")
+        updates["messages"].append(f"Stage 2: Skill Match Score = {graphrag_result.get('skill_match_score')}")
     
     # Market result
     if isinstance(market_result, Exception):
@@ -109,9 +110,8 @@ async def _run_ats(cv_raw: str, job_description: str) -> dict:
     agent = ATSScorerAgent()
     return await agent.run(cv_raw, job_description)
 
-async def _run_graphrag(cv_raw: str, job_description: str) -> dict:
-    # graph_rag_agent may be sync — wrap if needed
-    return await asyncio.to_thread(graph_rag_agent, cv_raw, job_description)
+async def _run_graphrag(candidate_profile: dict, job_description: str) -> dict:
+    return await graph_rag_agent(candidate_profile, job_description)
 
 async def _run_market(job_description: str) -> dict:
     agent = MarketConnectorAgent()
@@ -137,7 +137,7 @@ async def optimise_node(state: AgentState) -> dict:
     # Step 1: CV Critique
     critique = None
     try:
-        critique = await asyncio.to_thread(analyze_cv_with_gemini, cv_raw)
+        critique = await analyze_cv_with_gemini(cv_raw)
         updates["critique"] = critique
         updates["messages"].append(f"Stage 3: CV critique complete — score={critique.get('score')}")
     except Exception as e:

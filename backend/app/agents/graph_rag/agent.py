@@ -101,9 +101,12 @@ class GraphRAGAgent:
         else:
             score = 0.0
             
+        implicit_skills = list(candidate_expanded_skills - set(s.lower() for s in candidate_skills))
+        
         return {
             "skill_gaps": gaps,
-            "skill_match_score": score
+            "skill_match_score": score,
+            "implicit_skills": implicit_skills
         }
 
 graph_agent_instance = GraphRAGAgent()

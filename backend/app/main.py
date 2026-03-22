@@ -39,6 +39,9 @@ app.include_router(agents.router, prefix="/agents", tags=["Agent API"])
 from app.routers import pipeline
 app.include_router(pipeline.router, prefix="/api/pipeline", tags=["Orchestrator Pipeline"])
 
+from app.routers import cv_versions
+app.include_router(cv_versions.router, prefix="/api/cv-versions", tags=["CV Versions"])
+
 from app.routers import linkedin
 app.include_router(linkedin.router, prefix="/auth", tags=["LinkedIn OAuth"])
 

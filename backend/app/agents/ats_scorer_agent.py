@@ -13,15 +13,23 @@ class ATSScorerAgent:
         Analyze the provided CV against the Job Description. 
         
         Calculate an 'ATS Match Score' out of 100 based on:
-        1. Keyword match density
-        2. Experience alignment
-        3. Skills overlap
+        1. Keyword match density (score 0-100)
+        2. Experience alignment (score 0-100)
+        3. Skills overlap (score 0-100)
+        4. Formatting issues (score 0-100)
         
         Provide constructive feedback on what is missing or could be improved to increase the score.
+        For each category scoring below 70, return one specific actionable fix.
         
         Return ONLY valid JSON in this exact format:
         {
             "ats_score": 75,
+            "ats_breakdown": {
+                "keyword_match": 80,
+                "experience": 65,
+                "skills": 90,
+                "formatting": 65
+            },
             "summary": "Good match for core skills but lacks cloud deployment experience.",
             "missing_keywords": ["Docker", "AWS", "CI/CD"],
             "matching_keywords": ["Python", "FastAPI", "PostgreSQL"],

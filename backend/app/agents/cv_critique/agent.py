@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.agents.gemini_client import gemini_client
 from app.retrieval.graph_rag import fetch_skill_context
 
-async def analyze_cv_with_gemini(cv_text: str, session: AsyncSession) -> dict:
+async def analyze_cv_with_gemini(cv_text: str, session: AsyncSession = None) -> dict:
     """
     1. Quick keyword extraction
     2. Fetch GraphRAG context for those keywords
@@ -18,7 +18,12 @@ async def analyze_cv_with_gemini(cv_text: str, session: AsyncSession) -> dict:
         keywords_str = "Python, React, SQL"
         
     # 2. Fetch Graph Context from ESCO
-    context = await fetch_skill_context(keywords_str, session, limit=5)
+    if session:
+        context = await fetch_skill_context(keywords_str, session, limit=5)
+    else:
+        from app.core.database import async_session
+        async with async_session() as temp_session:
+            context = await fetch_skill_context(keywords_str, temp_session, limit=5)
     
     # 3. Final Gap Analysis Prompt
     system_instruction = f"""

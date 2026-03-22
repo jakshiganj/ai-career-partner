@@ -18,18 +18,14 @@ def get_session(session_id: str):
 from app.agents.gemini_client import gemini_client
 import json
 
-def interview_prep_agent(job_description: str, resume_summary: str, mode: str = "text") -> dict:
+async def interview_prep_agent(job_description: str, resume_summary: str, tier: str = "Stretch", mode: str = "text") -> dict:
     """
-    Initializes an interview session and generates initial questions.
+    Initializes an interview session and generates initial questions dynamically via Gemini.
     """
     session_id = create_interview_session(job_description, resume_summary, mode)
     
-    # Generate initial questions (Mock for now, normally would use Gemini)
-    questions = [
-        "Tell me about a project where you used the skills mentioned in your resume.",
-        "What is your biggest weakness?",
-        "How do you handle conflict in a team?"
-    ]
+    # Generate initial questions dynamically
+    questions = await generate_interview_questions(job_description, resume_summary, tier)
     
     return {
         "session_id": session_id,

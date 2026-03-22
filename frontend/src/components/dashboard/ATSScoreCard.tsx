@@ -45,12 +45,12 @@ export default function ATSScoreCard({
     const matchingKeywords: string[] = Array.isArray(b.matching_keywords) ? b.matching_keywords : [];
     const missingKeywords: string[] = Array.isArray(b.missing_keywords) ? b.missing_keywords : [];
 
-    // Mock sub-scores since these aren't returned perfectly by the API yet
-    const hardSkillsScore = typeof b.keyword_match === 'number' ? b.keyword_match : (score > 0 ? Math.min(100, score + 5) : 0);
-    const softSkillsScore = score > 0 ? Math.max(0, score - 10) : 0;
-    const impactScore = score > 0 ? Math.min(100, score + 2) : 0;
+    const atsBreakdown = (b.ats_breakdown as Record<string, number>) || {};
+    const hardSkillsScore = atsBreakdown.keyword_match ?? (typeof b.keyword_match === 'number' ? b.keyword_match : (score > 0 ? Math.min(100, score + 5) : 0));
+    const softSkillsScore = atsBreakdown.skills ?? (score > 0 ? Math.max(0, score - 10) : 0);
+    const impactScore = atsBreakdown.experience ?? (score > 0 ? Math.min(100, score + 2) : 0);
 
-    const formattingScore = typeof b.formatting === 'number' ? b.formatting : score;
+    const formattingScore = atsBreakdown.formatting ?? (typeof b.formatting === 'number' ? b.formatting : score);
 
     return (
         <section className="rounded-2xl border border-[#E2E8F0] bg-white shadow-sm mb-6 overflow-hidden">

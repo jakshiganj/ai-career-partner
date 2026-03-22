@@ -23,7 +23,6 @@ export default function CVTimeline({ userId }: Props) {
 
     const fetchVersions = useCallback(async () => {
         try {
-            // In a real app we'd call the API. Here we mock for now until the route is ready.
             const response = await axios.get(`http://localhost:8000/api/cv-versions/${userId}`, {
                 headers: { Authorization: `Bearer ${localStorage.getItem('access_token') || localStorage.getItem('token')}` }
             });
@@ -43,8 +42,17 @@ export default function CVTimeline({ userId }: Props) {
 
     async function handleRestore(versionId: string) {
         if (!confirm("Are you sure you want to restore this version? This will retrigger the pipeline.")) return;
-        // Trigger API restore endpoint here
-        alert(`Restored version ${versionId}`);
+        
+        try {
+            const response = await axios.post(`http://localhost:8000/api/cv-versions/restore/${versionId}`, {}, {
+                headers: { Authorization: `Bearer ${localStorage.getItem('access_token') || localStorage.getItem('token')}` }
+            });
+            alert(response.data.message || `Restored version ${versionId}`);
+            // Optionally, refresh or navigate if needed
+        } catch (error) {
+            console.error("Failed to restore CV version", error);
+            alert("Failed to restore CV version. Please try again.");
+        }
     }
 
     if (loading) return <div className="spinner" />;
