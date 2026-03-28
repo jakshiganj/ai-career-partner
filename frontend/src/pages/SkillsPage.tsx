@@ -1,22 +1,6 @@
-import { type PipelineResultState } from '../api/pipeline';
 import { useDashboardData } from '../hooks/useDashboardData';
 import Sidebar, { SIDEBAR_WIDTH } from '../components/dashboard/Sidebar';
-import SkillRoadmapCard, { type RoadmapStep } from '../components/dashboard/SkillRoadmapCard';
-
-function buildRoadmapSteps(state: PipelineResultState | null): RoadmapStep[] {
-    const raw = state?.skill_roadmap;
-    if (!Array.isArray(raw)) return [];
-    return raw.map((item) => {
-        if (typeof item === 'string') return { skill: item, weeks: 0, completed: false };
-        const r = item as Record<string, unknown>;
-        return {
-            skill: r.skill as string | undefined,
-            focus: (r.focus as string | undefined) ?? (r.phase_name as string | undefined),
-            weeks: (r.weeks as number) ?? (r.duration_weeks as number) ?? (r.estimated_weeks as number),
-            completed: r.completed as boolean | undefined,
-        };
-    });
-}
+import InteractiveRoadmap from '../components/InteractiveRoadmap';
 
 export default function SkillsPage() {
     const { runResult, loading } = useDashboardData();
@@ -30,7 +14,6 @@ export default function SkillsPage() {
     }
 
     const data = runResult ?? null;
-    const roadmapSteps = buildRoadmapSteps(runResult);
 
     return (
         <div className="min-h-screen bg-[#F8FAFC]" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
@@ -45,12 +28,8 @@ export default function SkillsPage() {
                 </header>
 
                 <div className="p-8 max-w-7xl mx-auto w-full space-y-8">
-                    <SkillRoadmapCard
-                        steps={roadmapSteps}
-                        completedCount={roadmapSteps.filter((s) => s.completed).length}
-                        totalCount={roadmapSteps.length}
+                    <InteractiveRoadmap
                         implicitSkills={data?.implicit_skills ?? undefined}
-                        status={roadmapSteps.length ? 'Complete' : 'Not Run'}
                     />
                 </div>
             </main>

@@ -8,14 +8,16 @@ class RoadmapAgent:
     identified between the CV and target Job Description.
     """
     
-    async def run(self, missing_skills: list[str], target_role: str, user_level: str = "intermediate") -> dict:
+    async def run(self, missing_skills: list[str], target_role: str, user_level: str = "intermediate", constraint: str = None) -> dict:
         """
         Returns a structured JSON timeline of how to acquire the missing skills.
         """
-        system_instruction = """
+        constraint_block = f"\nCRITICAL CONSTRAINT FROM USER: {constraint}\n" if constraint else ""
+
+        system_instruction = f"""
         You are an elite Career Coach and Senior Staff Engineer.
         The user wants to become a "{target_role}" but is missing certain key skills.
-        
+        {constraint_block}
         Create a practical, step-by-step learning roadmap to acquire these missing skills.
         Organize it chronologically (e.g., Phase 1, Phase 2, etc.).
         For each missing skill, provide:

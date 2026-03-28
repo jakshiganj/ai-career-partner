@@ -169,10 +169,8 @@ async def get_dashboard_summary(
     market_data = state_json.get("market_analysis", {})
     hot_skills = market_data.get("hot_skills", []) if isinstance(market_data, dict) else []
 
-    # Roadmap: prefer state_json (live), fall back to DB
-    roadmap_data = state_json.get("skill_roadmap", [])
-    if not roadmap_data and db_roadmap:
-        roadmap_data = db_roadmap.roadmap or []
+    # Roadmap: prefer DB (since it's mutable), fall back to state_json
+    roadmap_data = db_roadmap.roadmap if db_roadmap and db_roadmap.roadmap else state_json.get("skill_roadmap", [])
 
     dashboard_data = {
         "cv_raw": state_json.get("cv_raw", latest_cv.cv_text if latest_cv else ""),
