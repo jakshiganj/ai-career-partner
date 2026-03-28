@@ -43,19 +43,19 @@ class RoadmapAgent:
         
         prompt = f"Target Role: {target_role}\nUser Level: {user_level}\nMissing Skills to Cover: {', '.join(missing_skills)}"
         
-        response_text = gemini_client.generate_content(
-            model='gemini-2.5-flash', 
-            prompt=prompt,
-            config={"system_instruction": system_instruction.replace("{target_role}", target_role)}
-        )
-
-        try:
-            clean_text = response_text.replace("```json", "").replace("```", "").strip()
-            data = json.loads(clean_text)
-            return data
-        except Exception as e:
-            return {
-                "error": "Failed to generate roadmap",
-                "details": str(e),
-                "raw": response_text
-            }
+        for attempt in range(3):
+            try:
+                response_text = gemini_client.generate_content(
+                    model='gemini-2.5-flash', 
+                    prompt=prompt,
+                    config={"system_instruction": system_instruction.replace("{target_role}", target_role)}
+                )
+                clean_text = response_text.replace("```json", "").replace("```", "").strip()
+                data = json.loads(clean_text)
+                return data
+            except Exception as e:
+                if attempt == 2:
+                    return {
+                        "error": "Failed to generate roadmap",
+                        "details": str(e)
+                    }

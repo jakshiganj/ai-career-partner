@@ -23,10 +23,12 @@ class CoverLetterAgent:
         
         prompt = f"--- Candidate CV ---\n{cv_text}\n\n--- Target Job Description ---\n{job_description}"
         
-        response_text = gemini_client.generate_content(
-            model='gemini-2.5-flash', 
-            prompt=prompt,
-            config={"system_instruction": system_instruction}
-        )
-
-        return response_text.strip()
+        try:
+            response_text = gemini_client.generate_content(
+                model='gemini-2.5-flash', 
+                prompt=prompt,
+                config={"system_instruction": system_instruction}
+            )
+            return response_text.strip()
+        except Exception as e:
+            return f"[Error: Failed to generate cover letter - {str(e)}]"

@@ -28,19 +28,20 @@ class JobClassifierAgent:
         
         prompt = f"--- Candidate CV ---\n{cv_text}\n\n--- Target Job Description ---\n{job_description}"
         
-        response_text = gemini_client.generate_content(
-            model='gemini-2.5-flash', 
-            prompt=prompt,
-            config={"system_instruction": system_instruction}
-        )
-
-        try:
-            clean_text = response_text.replace("```json", "").replace("```", "").strip()
-            data = json.loads(clean_text)
-            return data
-        except Exception as e:
-            return {
-                "error": "Failed to classify job", 
-                "tier": "Unknown",
-                "details": str(e)
-            }
+        for attempt in range(3):
+            try:
+                response_text = gemini_client.generate_content(
+                    model='gemini-2.5-flash', 
+                    prompt=prompt,
+                    config={"system_instruction": system_instruction}
+                )
+                clean_text = response_text.replace("```json", "").replace("```", "").strip()
+                data = json.loads(clean_text)
+                return data
+            except Exception as e:
+                if attempt == 2:
+                    return {
+                        "error": "Failed to classify job", 
+                        "tier": "Unknown",
+                        "details": str(e)
+                    }

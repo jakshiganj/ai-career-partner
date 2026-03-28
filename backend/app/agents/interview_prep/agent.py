@@ -45,14 +45,17 @@ async def generate_interview_questions(job_description: str, cv_text: str, tier:
     Structure the response as a JSON array of strings:
     ["Question 1", "Question 2", "Question 3"]
     """
-    try:
-        response_text = gemini_client.generate_content(model='gemini-2.5-flash', prompt=prompt)
-        clean_text = response_text.replace("```json", "").replace("```", "").strip()
-        questions = json.loads(clean_text)
-        if isinstance(questions, list):
-            return questions
-    except Exception as e:
-        print(f"Error generating interview questions: {e}")
+    for attempt in range(3):
+        try:
+            response_text = gemini_client.generate_content(model='gemini-2.5-flash', prompt=prompt)
+            clean_text = response_text.replace("```json", "").replace("```", "").strip()
+            questions = json.loads(clean_text)
+            if isinstance(questions, list):
+                return questions
+            raise ValueError("Response is not a valid JSON list")
+        except Exception as e:
+            if attempt == 2:
+                print(f"Error generating interview questions: {e}")
     
     return [
         f"Tell me about a time you used your skills for this {tier} role.",

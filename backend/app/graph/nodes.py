@@ -185,7 +185,7 @@ async def classify_node(state: AgentState) -> dict:
         tier = result.get("tier", "Stretch")
         
         # Validate tier value
-        if tier not in ["Realistic", "Stretch", "Reach"]:
+        if tier not in ["Safety", "Realistic", "Reach"]:
             tier = "Stretch"
         
         return {

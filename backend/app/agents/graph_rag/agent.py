@@ -23,18 +23,19 @@ class GraphRAGAgent:
         Do not include markdown or code block tags.
         '''
         prompt = f"--- Job Description ---\n{job_description}"
-        response_text = gemini_client.generate_content(
-            model='gemini-2.5-flash',
-            prompt=prompt,
-            config={"system_instruction": system_instruction}
-        )
-        
-        try:
-            clean_text = response_text.replace("```json", "").replace("```", "").strip()
-            return json.loads(clean_text)
-        except Exception as e:
-            print(f"Error extracting JD skills: {e}")
-            return []
+        for attempt in range(3):
+            try:
+                response_text = gemini_client.generate_content(
+                    model='gemini-2.5-flash',
+                    prompt=prompt,
+                    config={"system_instruction": system_instruction}
+                )
+                clean_text = response_text.replace("```json", "").replace("```", "").strip()
+                return json.loads(clean_text)
+            except Exception as e:
+                if attempt == 2:
+                    print(f"Error extracting JD skills: {e}")
+                    return []
 
     def get_expanded_skills(self, skills: list[str]) -> set[str]:
         """
