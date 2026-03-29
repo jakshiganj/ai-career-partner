@@ -61,11 +61,6 @@ def scrape_topjobs_software_vacancies():
     return jobs
 
 def scrape_linkedin_jobs_via_apify(keyword):
-    """
-    Scrapes LinkedIn jobs using Apify given a keyword.
-    Actor: curious_coder/linkedin-jobs-scraper
-    Returns a list of dicts: {'title': str, 'company': str}
-    """
     import urllib.parse
     token = os.getenv("APIFY_API_TOKEN")
     if not token:
@@ -74,19 +69,22 @@ def scrape_linkedin_jobs_via_apify(keyword):
     
     client = ApifyClient(token)
     
-    # We use curious_coder/linkedin-jobs-scraper
     encoded_keyword = urllib.parse.quote(keyword)
-    search_url = f"https://www.linkedin.com/jobs/search/?keywords={encoded_keyword}&location=Worldwide"
+    search_url = f"https://www.linkedin.com/jobs/search/?keywords={encoded_keyword}&location=Sri%20Lanka&f_TPR=r604800"
     
     run_input = {
-        "urls": [{"url": search_url}],
-        "amount": 5, 
+        "urls": [search_url],
+        "amount": 5,
     }
     
     jobs = []
     try:
-        print(f"Apify Scrape: Starting Actor curious_coder/linkedin-jobs-scraper for '{keyword}'")
-        run = client.actor("curious_coder/linkedin-jobs-scraper").call(run_input=run_input)
+        print(f"Apify Scrape: Starting for '{keyword}'")
+        run = client.actor("curious_coder/linkedin-jobs-scraper").call(
+            run_input=run_input,
+            timeout_secs=30,
+            memory_mbytes=256
+        )
         
         for item in client.dataset(run["defaultDatasetId"]).iterate_items():
             title = item.get("title", "") or item.get("jobTitle", "")
@@ -100,7 +98,7 @@ def scrape_linkedin_jobs_via_apify(keyword):
                     "source": "LinkedIn"
                 })
                 
-        print(f"Apify Scrape: Scraped {len(jobs)} jobs via LinkedIn.")
+        print(f"Apify Scrape: Scraped {len(jobs)} LinkedIn jobs.")
     except Exception as e:
         print(f"Apify Scrape Error: {e}")
         
