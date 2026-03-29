@@ -1,15 +1,16 @@
 import json
 from app.agents.gemini_client import gemini_client
 
-def cv_creator_agent(candidate_profile: dict, critique_feedback: dict) -> dict:
+def cv_creator_agent(cv_text: str, critique: dict, skill_gaps: list) -> dict:
     """
     Generates an improved CV based on the detailed critique and profile.
     """
     prompt = f"""
     You are an expert CV Writer.
     
-    Candidate Profile: {json.dumps(candidate_profile)}
-    Critique Feedback: {json.dumps(critique_feedback)}
+    Candidate CV Text: {cv_text}
+    Critique Feedback: {json.dumps(critique)}
+    Skill Gaps to Address: {json.dumps(skill_gaps)}
     
     Rewrite the CV content to address the specific feedback provided. 
     

@@ -1,6 +1,11 @@
 import requests
 from bs4 import BeautifulSoup
 import re
+import os
+from apify_client import ApifyClient
+from dotenv import load_dotenv
+
+load_dotenv()
 
 def scrape_topjobs_software_vacancies():
     """
@@ -45,7 +50,8 @@ def scrape_topjobs_software_vacancies():
                     jobs.append({
                         "title": title,
                         "company": company,
-                        "search_text": f"{title} {company}".lower()
+                        "search_text": f"{title} {company}".lower(),
+                        "source": "TopJobs"
                     })
         print(f"TopJobs Scrape: Scraped {len(jobs)} jobs.")
                     
@@ -54,9 +60,54 @@ def scrape_topjobs_software_vacancies():
         
     return jobs
 
+def scrape_linkedin_jobs_via_apify(keyword):
+    import urllib.parse
+    token = os.getenv("APIFY_API_TOKEN")
+    if not token:
+        print("Apify Scrape: No APIFY_API_TOKEN found.")
+        return []
+    
+    client = ApifyClient(token)
+    
+    encoded_keyword = urllib.parse.quote(keyword)
+    search_url = f"https://www.linkedin.com/jobs/search/?keywords={encoded_keyword}&location=Sri%20Lanka&f_TPR=r604800"
+    
+    run_input = {
+        "urls": [search_url],
+        "amount": 5,
+    }
+    
+    jobs = []
+    try:
+        print(f"Apify Scrape: Starting for '{keyword}'")
+        run = client.actor("curious_coder/linkedin-jobs-scraper").call(
+            run_input=run_input,
+            timeout_secs=30,
+            memory_mbytes=256
+        )
+        
+        for item in client.dataset(run["defaultDatasetId"]).iterate_items():
+            title = item.get("title", "") or item.get("jobTitle", "")
+            company = item.get("companyName", "") or item.get("company", "")
+            
+            if title and company:
+                jobs.append({
+                    "title": title,
+                    "company": company,
+                    "search_text": f"{title} {company}".lower(),
+                    "source": "LinkedIn"
+                })
+                
+        print(f"Apify Scrape: Scraped {len(jobs)} LinkedIn jobs.")
+    except Exception as e:
+        print(f"Apify Scrape Error: {e}")
+        
+    return jobs
+
 def get_jobs_for_skill(skill, all_jobs=None):
     """
     Filters cached/fresh jobs for a specific skill (fuzzy match).
+    Combines TopJobs and Apify LinkedIn results.
     """
     if all_jobs is None:
         all_jobs = scrape_topjobs_software_vacancies()
@@ -68,6 +119,12 @@ def get_jobs_for_skill(skill, all_jobs=None):
     for j in all_jobs:
         # Match if any keyword is in the search text
         if any(kw in j['search_text'] for kw in keywords):
-            matches.append(f"{j['title']} at {j['company']}")
+            source_tag = j.get('source', 'Job Board')
+            matches.append(f"{j['title']} at {j['company']} [{source_tag}]")
+            
+    # Also scrape LinkedIn via Apify specifically for this skill
+    linkedin_jobs = scrape_linkedin_jobs_via_apify(skill)
+    for j in linkedin_jobs:
+        matches.append(f"{j['title']} at {j['company']} [{j.get('source', 'LinkedIn')}]")
             
     return matches

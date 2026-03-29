@@ -111,7 +111,7 @@ async def get_pipeline_status(
     
     current_stage = state.get("current_stage", 1)
     return {
-        "status": state.get("status", "running"),
+        "status": run.status,
         "current_stage": current_stage,
         "completed_stages": list(range(1, current_stage)) if current_stage > 1 else [],
         "error_log": state.get("error_log", [])

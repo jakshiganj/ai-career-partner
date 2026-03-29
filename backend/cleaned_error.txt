@@ -1,0 +1,141 @@
+﻿..\.venv\Scripts\python
+ : C:\Users\jaksh\ai-ca
+reer-partner\backend\te
+st_sync.py:21: 
+DeprecationWarning: 
+At line:1 char:1
++ ..\.venv\Scripts\pyth
+on test_sync.py 2> 
+stderr2.log > 
+stdout2.log
++ ~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: (C:\Users\jaks   
+ h\...cationWarning    
+: :String) [], Rem    
+oteException
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 
+        \U0001f6a8 You 
+probably want to use 
+`session.exec()` 
+instead of 
+`session.execute()`.
+
+        This is the 
+original SQLAlchemy 
+`session.execute()` 
+method that returns 
+objects
+        of type `Row`, 
+and that you have to 
+call `scalars()` to 
+get the model objects.
+
+        For example:
+
+        ```Python
+        heroes = await 
+session.execute(select(
+Hero)).scalars().all()
+        ```
+
+        instead you 
+could use `exec()`:
+
+        ```Python
+        heroes = await 
+session.exec(select(Her
+o)).all()
+        ```
+        
+  user_res = await sess
+ion.execute(select(User
+).limit(1))
+Traceback (most recent 
+call last):
+  File "C:\Users\jaksh\
+ai-career-partner\backe
+nd\app\orchestrator\mas
+ter_orchestrator_agent.
+py", line 215, in 
+_persist_to_tables
+    print(f"[PERSIST] 
+\u2705 All tables 
+saved for pipeline 
+{pipeline_id}")
+    ~~~~~^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^
+^
+  File "C:\Users\jaksh\
+AppData\Roaming\uv\pyth
+on\cpython-3.13.11-wind
+ows-x86_64-none\Lib\enc
+odings\cp1252.py", 
+line 19, in encode
+    return codecs.charm
+ap_encode(input,self.er
+rors,encoding_table)[0]
+           ~~~~~~~~~~~~
+~~~~~~~~~^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 
+'charmap' codec can't 
+encode character 
+'\u2705' in position 
+10: character maps to 
+<undefined>
+
+During handling of the 
+above exception, 
+another exception 
+occurred:
+
+Traceback (most recent 
+call last):
+  File "C:\Users\jaksh\
+ai-career-partner\backe
+nd\app\orchestrator\mas
+ter_orchestrator_agent.
+py", line 102, in 
+_run_graph
+    await self._persist
+_to_tables(run, final, 
+session)
+  File "C:\Users\jaksh\
+ai-career-partner\backe
+nd\app\orchestrator\mas
+ter_orchestrator_agent.
+py", line 218, in 
+_persist_to_tables
+    print(f"[PERSIST] 
+\u26a0\ufe0f Non-fatal 
+persistence error: 
+{e}")
+    ~~~~~^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^
+  File "C:\Users\jaksh\
+AppData\Roaming\uv\pyth
+on\cpython-3.13.11-wind
+ows-x86_64-none\Lib\enc
+odings\cp1252.py", 
+line 19, in encode
+    return codecs.charm
+ap_encode(input,self.er
+rors,encoding_table)[0]
+           ~~~~~~~~~~~~
+~~~~~~~~~^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 
+'charmap' codec can't 
+encode characters in 
+position 10-11: 
+character maps to 
+<undefined>

@@ -2,9 +2,17 @@ import { Sparkles, ArrowRight } from 'lucide-react';
 
 type CardStatus = 'Complete' | 'In Progress' | 'Not Run' | 'Failed';
 
+interface CVCritique {
+    summary?: string;
+    matching_skills?: string[];
+    transferable_skills?: string[];
+    missing_critical_skills?: string[];
+}
+
 interface CVOptimisationCardProps {
     originalText: string | null;
     optimisedText: string | null;
+    critique?: CVCritique | null;
     versionNumber?: number;
     matchScoreImprovement?: number | null;
     status?: CardStatus;
@@ -18,6 +26,7 @@ const PREVIEW_LINES = 10; // Show a bit more text
 export default function CVOptimisationCard({
     originalText,
     optimisedText,
+    critique,
     versionNumber,
     matchScoreImprovement,
     status = 'Not Run',
@@ -87,6 +96,39 @@ export default function CVOptimisationCard({
                     )}
                 </div>
             </div>
+
+            {critique && (
+                <div className="bg-[#F8FAFC] border-t border-[#F1F5F9] p-6 text-sm text-[#475569] shadow-inner inset-0">
+                    <h4 className="font-bold text-[#0F172A] mb-3 flex items-center gap-2"><Sparkles className="h-4 w-4 text-[#3B82F6]" /> Strategic Feedback</h4>
+                    <p className="mb-5 leading-relaxed">{critique.summary}</p>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {critique.matching_skills && critique.matching_skills.length > 0 && (
+                            <div>
+                                <h5 className="font-bold text-[#16A34A] mb-2 uppercase tracking-wider text-[10px]">Matching Skills</h5>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {critique.matching_skills.map(s => <span key={s} className="bg-[#DCFCE7] border border-[#BBF7D0] text-[#166534] px-2 py-0.5 rounded shadow-sm text-xs font-semibold">{s}</span>)}
+                                </div>
+                            </div>
+                        )}
+                        {critique.transferable_skills && critique.transferable_skills.length > 0 && (
+                            <div>
+                                <h5 className="font-bold text-[#3B82F6] mb-2 uppercase tracking-wider text-[10px]">Transferable</h5>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {critique.transferable_skills.map(s => <span key={s} className="bg-[#DBEAFE] border border-[#BFDBFE] text-[#1E40AF] px-2 py-0.5 rounded shadow-sm text-xs font-semibold">{s}</span>)}
+                                </div>
+                            </div>
+                        )}
+                        {critique.missing_critical_skills && critique.missing_critical_skills.length > 0 && (
+                            <div>
+                                <h5 className="font-bold text-[#DC2626] mb-2 uppercase tracking-wider text-[10px]">Missing / Critical</h5>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {critique.missing_critical_skills.map(s => <span key={s} className="bg-[#FEE2E2] border border-[#FECACA] text-[#991B1B] px-2 py-0.5 rounded shadow-sm text-xs font-semibold">{s}</span>)}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-[#F1F5F9] border-t border-[#F1F5F9]">
                 {/* Original Column */}

@@ -1,0 +1,12 @@
+Testing job scrape for skill: Python Automation
+TopJobs Scrape: Found 251 rows.
+TopJobs Scrape: Scraped 237 jobs.
+Apify Scrape: Starting Actor curious_coder/linkedin-jobs-scraper for 'Python Automation'
+Apify Scrape: Scraped 0 jobs via LinkedIn.
+Found jobs:
+Full-Stack Tech Lead (Bubble.io, Python, AWS, AI/ML Experience a Plus) at Efficient Frontiers International [TopJobs]
+Junior Full-Stack Developer (Bubble.io, Python, AWS, AI) at Efficient Frontiers International [TopJobs]
+AI Specialist For Workflow Automation  (1) at Nawaloka Hospitals PLC [TopJobs]
+Automation Engineer ? Cybersecurity (1) at Mobizz Elite (Pvt) Ltd [TopJobs]
+Technical Lead (Python) (1) at Mobizz Elite (Pvt) Ltd [TopJobs]
+QA Automation Engineer (6 Month Contract) at Company Name Withheld [TopJobs]
