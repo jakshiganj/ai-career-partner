@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { 
     getPipelineRuns, 
     getPipelineResult, 
@@ -11,25 +12,35 @@ import { getDashboardSummary, type DashboardSummary } from '../api/dashboard';
 const POLL_INTERVAL_MS = 2000;
 
 export function useDashboardData(initialSelectedRunId: string | null = null) {
+    const [searchParams] = useSearchParams();
+    const urlRunId = searchParams.get('runId');
+
     const [runs, setRuns] = useState<PipelineRunSummary[]>([]);
-    const [selectedRunId, setSelectedRunId] = useState<string | null>(initialSelectedRunId);
+    const [selectedRunId, setSelectedRunId] = useState<string | null>(initialSelectedRunId || urlRunId);
     const [runResult, setRunResult] = useState<PipelineResultState | null>(null);
     const [dashboardSummary, setDashboardSummary] = useState<DashboardSummary | null>(null);
     const [loading, setLoading] = useState(true);
     const [runningPipelineId, setRunningPipelineId] = useState<string | null>(null);
     const [runStatus, setRunStatus] = useState<{ current_stage: number; status: string } | null>(null);
 
+    // Sync with URL param when it changes
+    useEffect(() => {
+        if (urlRunId && urlRunId !== selectedRunId) {
+            setSelectedRunId(urlRunId);
+        }
+    }, [urlRunId]); // eslint-disable-line react-hooks/exhaustive-deps
+
     const fetchRuns = useCallback(async () => {
         try {
-            const { runs: list } = await getPipelineRuns(20); // Fetch more for the table
+            const { runs: list } = await getPipelineRuns(20);
             setRuns(list);
-            if (list.length > 0 && !selectedRunId) {
+            if (list.length > 0 && !selectedRunId && !urlRunId) {
                 setSelectedRunId(list[0].id);
             }
         } catch (e) {
             console.error('Failed to fetch runs', e);
         }
-    }, [selectedRunId]);
+    }, [selectedRunId, urlRunId]);
 
     const fetchDashboard = useCallback(async () => {
         try {
@@ -37,14 +48,14 @@ export function useDashboardData(initialSelectedRunId: string | null = null) {
             setDashboardSummary(data);
             if (data.pipeline_status?.is_running && data.pipeline_status?.pipeline_id) {
                 setRunningPipelineId(data.pipeline_status.pipeline_id);
-                if (!selectedRunId) {
+                if (!selectedRunId && !urlRunId) {
                     setSelectedRunId(data.pipeline_status.pipeline_id);
                 }
             }
         } catch (e) {
             console.error('Failed to fetch dashboard', e);
         }
-    }, [selectedRunId]);
+    }, [selectedRunId, urlRunId]);
 
     const fetchResult = useCallback(async (id: string) => {
         try {

@@ -132,7 +132,7 @@ export default function Dashboard() {
                                         />
                                         <div className="h-10 w-[1px] bg-blue-200" />
                                         <button 
-                                            onClick={() => navigate('/dashboard/cv-analysis')}
+                                            onClick={() => navigate(`/dashboard/cv-analysis?runId=${selectedRunId}`)}
                                             className="text-sm font-bold text-blue-600 hover:underline"
                                         >
                                             See Details
@@ -147,7 +147,7 @@ export default function Dashboard() {
                                     title="CV Score" 
                                     icon={Target}
                                     color="blue"
-                                    onClick={() => navigate('/dashboard/cv-analysis')}
+                                    onClick={() => navigate(`/dashboard/cv-analysis${selectedRunId ? `?runId=${selectedRunId}` : ''}`)}
                                     value={data?.ats_score?.toString() ?? '--'}
                                     subText="ATS Match Score"
                                 />
@@ -155,7 +155,7 @@ export default function Dashboard() {
                                     title="Job Matches" 
                                     icon={Briefcase}
                                     color="purple"
-                                    onClick={() => navigate('/dashboard/job-search')}
+                                    onClick={() => navigate(`/dashboard/job-search${selectedRunId ? `?runId=${selectedRunId}` : ''}`)}
                                     value="12"
                                     subText="Tailored for you"
                                 />
@@ -163,7 +163,7 @@ export default function Dashboard() {
                                     title="Roadmap" 
                                     icon={Zap}
                                     color="orange"
-                                    onClick={() => navigate('/dashboard/skills')}
+                                    onClick={() => navigate(`/dashboard/skills${selectedRunId ? `?runId=${selectedRunId}` : ''}`)}
                                     value="4/10"
                                     subText="Steps complete"
                                 />
@@ -179,7 +179,10 @@ export default function Dashboard() {
                                     {runs.slice(0, 3).map((run) => (
                                         <button 
                                             key={run.id}
-                                            onClick={() => setSelectedRunId(run.id)}
+                                            onClick={() => {
+                                                setSelectedRunId(run.id);
+                                                navigate(`/dashboard?runId=${run.id}`);
+                                            }}
                                             className={`flex items-center justify-between w-full p-4 rounded-2xl transition-all border ${run.id === selectedRunId ? 'bg-white border-blue-200 shadow-lg shadow-blue-500/5' : 'bg-transparent border-transparent hover:bg-[#F8FAFC]'}`}
                                         >
                                             <div className="flex items-center gap-4 text-left">

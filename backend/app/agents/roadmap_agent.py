@@ -26,10 +26,10 @@ class RoadmapAgent:
         3. Estimated time to proficiency.
         
         Return ONLY valid JSON in this exact format:
-        {
+        {{
             "target_role": "Backend Engineer",
             "phases": [
-                {
+                {{
                     "phase_name": "Phase 1: Foundations",
                     "estimated_weeks": 4,
                     "skills_covered": ["Docker", "Linux Basics"],
@@ -37,10 +37,10 @@ class RoadmapAgent:
                         "Containerize a simple Python app",
                         "Complete 'Docker for Beginners' on YouTube"
                     ]
-                }
+                }}
             ],
             "overall_advice": "Focus on deploying real projects rather than just tutorials."
-        }
+        }}
         """
         
         prompt = f"Target Role: {target_role}\nUser Level: {user_level}\nMissing Skills to Cover: {', '.join(missing_skills)}"
@@ -50,7 +50,7 @@ class RoadmapAgent:
                 response_text = gemini_client.generate_content(
                     model='gemini-2.5-flash', 
                     prompt=prompt,
-                    config={"system_instruction": system_instruction.replace("{target_role}", target_role)}
+                    config={"system_instruction": system_instruction}
                 )
                 clean_text = response_text.replace("```json", "").replace("```", "").strip()
                 data = json.loads(clean_text)

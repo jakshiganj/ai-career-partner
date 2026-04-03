@@ -1,9 +1,11 @@
+import { useNavigate } from 'react-router-dom';
 import { useDashboardData } from '../hooks/useDashboardData';
 import Sidebar, { SIDEBAR_WIDTH } from '../components/dashboard/Sidebar';
 import { CheckCircle2, Clock, AlertCircle, Play } from 'lucide-react';
 
 export default function PipelineRunsPage() {
-    const { runs, loading, setSelectedRunId } = useDashboardData();
+    const navigate = useNavigate();
+    const { runs, loading } = useDashboardData();
     
     if (loading) {
         return (
@@ -77,7 +79,7 @@ export default function PipelineRunsPage() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <button 
-                                                onClick={() => setSelectedRunId(run.id)}
+                                                onClick={() => navigate(`/dashboard/cv-analysis?runId=${run.id}`)}
                                                 className="text-sm font-bold text-[#3B82F6] hover:text-[#2563EB] hover:underline"
                                             >
                                                 View Details

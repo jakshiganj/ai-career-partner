@@ -2,9 +2,14 @@ import { useState, useEffect } from 'react';
 import { CheckCircle2, Circle, Clock, Target, Check, ChevronDown, ChevronUp, Sparkles, Loader2, MessageSquare, Send } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { getCurrentRoadmap, updateRoadmap, pivotRoadmap, chatRoadmap } from '../api/roadmap';
-import type { ActionItem, SkillRoadmapResponse } from '../api/roadmap';
+import type { ActionItem, SkillRoadmapResponse, RoadmapPhase } from '../api/roadmap';
 
-export default function InteractiveRoadmap({ implicitSkills }: { implicitSkills?: string[] }) {
+interface InteractiveRoadmapProps {
+    implicitSkills?: string[];
+    pipelineRoadmap?: RoadmapPhase[];
+}
+
+export default function InteractiveRoadmap({ implicitSkills, pipelineRoadmap }: InteractiveRoadmapProps) {
     const [dbRoadmap, setDbRoadmap] = useState<SkillRoadmapResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [pivoting, setPivoting] = useState(false);
@@ -15,9 +20,22 @@ export default function InteractiveRoadmap({ implicitSkills }: { implicitSkills?
     const [expandedPhase, setExpandedPhase] = useState<number>(0);
 
     useEffect(() => {
+        // If we got a pipeline-specific roadmap, use that instead of fetching from DB
+        if (pipelineRoadmap && pipelineRoadmap.length > 0) {
+            const migratedRoadmap = pipelineRoadmap.map(phase => ({
+                ...phase,
+                action_items: phase.action_items?.map(item => {
+                    if (typeof item === 'string') return { task: item, completed: false };
+                    return item;
+                }) || phase.milestones?.map(item => ({ task: item, completed: false })) || []
+            }));
+            setDbRoadmap({ id: 'pipeline-run', user_id: '', pipeline_id: '', roadmap: migratedRoadmap, target_role: '' });
+            setLoading(false);
+            return;
+        }
+
         getCurrentRoadmap()
             .then(data => {
-                // Ensure action_items are objects with 'completed' flag
                 const migratedRoadmap = data.roadmap.map(phase => ({
                     ...phase,
                     action_items: phase.action_items?.map(item => {
@@ -32,7 +50,7 @@ export default function InteractiveRoadmap({ implicitSkills }: { implicitSkills?
                 console.error("Failed to load roadmap", err);
                 setLoading(false);
             });
-    }, []);
+    }, [pipelineRoadmap]);
 
     const renderTaskWithLinks = (text: string) => {
         const urlRegex = /(https?:\/\/[^\s]+)/g;

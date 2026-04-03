@@ -39,48 +39,107 @@ class GraphRAGAgent:
 
     def get_expanded_skills(self, skills: list[str]) -> set[str]:
         """
-        Query Neo4j to find related or implied skills.
-        If the candidate has 'React', they implicitly know 'JavaScript'.
+        Hybrid Search:
+        1. Graph expansion via RELATED_TO/broaderSkill.
+        2. Vector search via Neo4j Vector Index on skill embeddings.
+        3. Reciprocal Rank Fusion (RRF) to merge and rank results.
         """
         expanded = set(s.lower() for s in skills)
-        
+        if not skills:
+            return expanded
+            
         try:
+            # Fetch embeddings in a single batch API call
+            embeddings = gemini_client.embed_content_batch('text-embedding-004', skills)
+            
             with self.driver.session() as session:
-                for skill in skills:
-                    # ESCO Relationships: 
-                    # 1. Skill -> RELATED_TO -> Skill
-                    # 2. Skill -> broaderSkill -> Skill (Implied from the hierarchy)
-                    query = """
+                for idx, skill in enumerate(skills):
+                    # 1. Graph matches
+                    graph_query = """
                     MATCH (s:Skill)-[:RELATED_TO|broaderSkill*1..2]->(r:Skill)
                     WHERE toLower(s.name) = toLower($skill)
-                    RETURN DISTINCT r.name AS related_skill
+                    RETURN DISTINCT r.name AS name
                     LIMIT 20
                     """
-                    result = session.run(query, skill=skill)
-                    for record in result:
-                        expanded.add(record["related_skill"].lower())
+                    graph_res = [record["name"] for record in session.run(graph_query, skill=skill)]
+                    
+                    # 2. Vector matches (Semantic)
+                    embedding = embeddings[idx] if idx < len(embeddings) else []
+                    vector_res = []
+                    if embedding and not all(v == 0.0 for v in embedding):
+                        vector_query = """
+                        CALL db.index.vector.queryNodes('skill_embeddings', 20, $embedding) 
+                        YIELD node, score
+                        RETURN node.name AS name
+                        """
+                        try:
+                            vector_res = [record["name"] for record in session.run(vector_query, embedding=embedding)]
+                        except Exception as ve:
+                            print(f"Vector search warning: {ve}")
+                    
+                    # 3. Reciprocal Rank Fusion (RRF)
+                    K = 60
+                    rrf_scores = {}
+                    
+                    for i, name in enumerate(graph_res):
+                        name_lower = name.lower()
+                        rrf_scores[name_lower] = rrf_scores.get(name_lower, 0) + 1.0 / (K + i + 1)
+                        
+                    for i, name in enumerate(vector_res):
+                        name_lower = name.lower()
+                        rrf_scores[name_lower] = rrf_scores.get(name_lower, 0) + 1.0 / (K + i + 1)
+                        
+                    # Top 20 combined
+                    sorted_skills = sorted(rrf_scores.items(), key=lambda x: x[1], reverse=True)
+                    for name_lower, _ in sorted_skills[:20]:
+                        expanded.add(name_lower)
+                        
         except Exception as e:
-            print(f"Warning: Neo4j not reachable. Graph expansion skipped. (Error: {e})")
+            print(f"Warning: Neo4j not reachable or error in query. Graph expansion skipped. (Error: {e})")
 
         return expanded
 
-    async def run(self, candidate_profile: dict, job_description: str) -> dict:
+    def extract_candidate_skills(self, cv_text: str) -> list[str]:
+        """Extract candidate skills from their raw CV if profile is missing."""
+        system_instruction = '''
+        You are an expert IT recruiter. Extract a JSON list of technical skills from the candidate's CV.
+        Only include hard skills, programming languages, frameworks, and tools already present in the text.
+        Return ONLY a JSON array of strings (e.g., ["Python", "React", "AWS"]).
+        Do not include markdown or code block tags.
+        '''
+        prompt = f"--- Candidate CV ---\n{cv_text[:3000]}"
+        try:
+            response_text = gemini_client.generate_content(
+                model='gemini-2.5-flash',
+                prompt=prompt,
+                config={"system_instruction": system_instruction}
+            )
+            clean_text = response_text.replace("```json", "").replace("```", "").strip()
+            return json.loads(clean_text)
+        except Exception as e:
+            print(f"Error extracting candidate skills: {e}")
+            return []
+
+    async def run(self, candidate_profile: dict, job_description: str, cv_raw: str = None) -> dict:
         """
         Main pipeline method:
         1. Extract skills from JD.
-        2. Expand candidate skills using Neo4j.
-        3. Compare and compute score/gaps.
+        2. Ensure candidate skills are available (extract from cv_raw if profile is empty).
+        3. Expand candidate skills using Neo4j.
+        4. Compare and compute score/gaps.
         """
-        if not candidate_profile:
-            candidate_profile = {}
+        candidate_skills = []
+        if candidate_profile and candidate_profile.get("skills"):
+            candidate_skills = candidate_profile["skills"]
+        elif cv_raw:
+            candidate_skills = self.extract_candidate_skills(cv_raw)
             
-        candidate_skills = candidate_profile.get("skills", [])
         if not isinstance(candidate_skills, list):
             candidate_skills = []
             
         required_skills = self.extract_job_skills(job_description)
         if not required_skills:
-            return {"skill_gaps": [], "skill_match_score": 0.0}
+            return {"skill_gaps": [], "skill_match_score": 0.0, "implicit_skills": []}
 
         # Expand candidate skills with graph knowledge
         candidate_expanded_skills = self.get_expanded_skills(candidate_skills)
@@ -112,8 +171,8 @@ class GraphRAGAgent:
 
 graph_agent_instance = GraphRAGAgent()
 
-async def graph_rag_agent(candidate_profile: dict, job_description: str) -> dict:
-    return await graph_agent_instance.run(candidate_profile, job_description)
+async def graph_rag_agent(candidate_profile: dict, job_description: str, cv_raw: str = None) -> dict:
+    return await graph_agent_instance.run(candidate_profile, job_description, cv_raw)
 
 # Standalone A2A function for orchestrator pattern wrapper
 def get_graph_rag_agent():

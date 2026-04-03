@@ -1,4 +1,4 @@
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { 
     Home, 
     Mic, 
@@ -18,8 +18,18 @@ const SIDEBAR_WIDTH = 280;
 export default function Sidebar() {
     const navigate = useNavigate();
     const location = useLocation();
+    const [searchParams] = useSearchParams();
+    const currentRunId = searchParams.get('runId');
     
     const isActive = (path: string) => location.pathname === path || (path !== '/dashboard' && location.pathname.startsWith(path));
+
+    const buildLink = (path: string) => {
+        // Preserve runId query param for dashboard sub-pages
+        if (currentRunId && path.startsWith('/dashboard') && path !== '/dashboard/pipeline-runs') {
+            return `${path}?runId=${currentRunId}`;
+        }
+        return path;
+    };
 
     const handleSignOut = () => {
         localStorage.removeItem('access_token');
@@ -69,7 +79,7 @@ export default function Sidebar() {
                         return (
                             <Link
                                 key={item.path}
-                                to={item.path}
+                                to={buildLink(item.path)}
                                 className={`group flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-200 ${
                                     exactActive 
                                     ? 'bg-[#3B82F6] text-white shadow-md shadow-blue-500/10' 

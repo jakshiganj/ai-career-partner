@@ -1,9 +1,11 @@
+import { useSearchParams } from 'react-router-dom';
 import { type PipelineResultState } from '../api/pipeline';
 import { useDashboardData } from '../hooks/useDashboardData';
 import Sidebar, { SIDEBAR_WIDTH } from '../components/dashboard/Sidebar';
 import JobMatchesCard, { type JobMatchItem } from '../components/dashboard/JobMatchesCard';
 import CoverLetterCard from '../components/dashboard/CoverLetterCard';
 import SalaryInsightsCard from '../components/dashboard/SalaryInsightsCard';
+import { Clock } from 'lucide-react';
 
 function buildJobMatchesFromState(state: PipelineResultState): JobMatchItem[] {
     const market = state.market_analysis?.market_analysis;
@@ -37,7 +39,9 @@ function buildJobMatchesFromState(state: PipelineResultState): JobMatchItem[] {
 }
 
 export default function JobSearchPage() {
-    const { runResult, dashboardSummary, loading } = useDashboardData();
+    const [searchParams] = useSearchParams();
+    const runId = searchParams.get('runId');
+    const { runResult, runs, dashboardSummary, loading } = useDashboardData(runId);
 
     if (loading) {
         return (
@@ -48,6 +52,7 @@ export default function JobSearchPage() {
     }
 
     const data = runResult ?? null;
+    const selectedRun = runs.find((r) => r.id === runId);
     const jobMatches: JobMatchItem[] = data
         ? runResult
             ? buildJobMatchesFromState(runResult)
@@ -77,6 +82,17 @@ export default function JobSearchPage() {
                 </header>
 
                 <div className="p-8 max-w-7xl mx-auto w-full space-y-8">
+                    {selectedRun && (
+                        <div className="flex items-center gap-3 rounded-xl border border-blue-100 bg-blue-50/50 px-5 py-3">
+                            <Clock className="h-4 w-4 text-blue-500" />
+                            <span className="text-sm font-semibold text-blue-800">
+                                Viewing: <span className="font-bold">{selectedRun.label || 'Career Analysis'}</span>
+                            </span>
+                            <span className="text-xs text-blue-500 ml-auto">
+                                {selectedRun.created_at ? new Date(selectedRun.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : ''}
+                            </span>
+                        </div>
+                    )}
                     <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
                         <JobMatchesCard
                             jobs={jobMatches}

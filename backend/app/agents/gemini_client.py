@@ -46,4 +46,20 @@ class GeminiClient:
             print(f"Embedding error: {str(e)}")
             return [0.0] * 768
 
+    def embed_content_batch(self, model: str, contents: list[str]) -> list[list[float]]:
+        if not self.client or not contents:
+            return [[0.0] * 768 for _ in contents]
+        
+        try:
+            response = self.client.models.embed_content(
+                model=model,
+                contents=contents
+            )
+            if hasattr(response, 'embeddings') and len(response.embeddings) > 0:
+                return [emb.values for emb in response.embeddings]
+            return [[0.0] * 768 for _ in contents]
+        except Exception as e:
+            print(f"Batch embedding error: {str(e)}")
+            return [[0.0] * 768 for _ in contents]
+
 gemini_client = GeminiClient()
