@@ -57,6 +57,9 @@ app.include_router(dashboard.router, prefix="/api/dashboard", tags=["Dashboard"]
 from app.routers import roadmap
 app.include_router(roadmap.router, prefix="/api/roadmap", tags=["Skill Roadmap"])
 
+from app.routers import payment
+app.include_router(payment.router, prefix="/api/payment", tags=["Payment & Subscriptions"])
+
 from fastapi.staticfiles import StaticFiles
 
 app.mount("/static", StaticFiles(directory="static"), name="static")

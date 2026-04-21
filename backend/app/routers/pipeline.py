@@ -13,7 +13,7 @@ import uuid
 from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlmodel import select, desc
+from sqlmodel import select, desc, func
 from pydantic import BaseModel
 
 from app.core.database import get_session
@@ -83,6 +83,20 @@ async def start_pipeline(
     """
     Trigger a new Master Orchestrator pipeline run for the authenticated user.
     """
+    if current_user.tier != "pro":
+        # Check current run count
+        count_q = select(func.count()).select_from(PipelineRun).where(PipelineRun.user_id == current_user.id)
+        res = await session.execute(count_q)
+        run_count = res.scalar()
+        if run_count >= 5:
+            raise HTTPException(
+                status_code=403, 
+                detail={
+                    "code": "UPGRADE_REQUIRED", 
+                    "message": "You have reached your 5 free pipeline runs limit. Please upgrade to Pro."
+                }
+            )
+
     db_url = os.environ.get("LANGGRAPH_CHECKPOINT_URL", "postgresql://admin:password123@localhost:5432/career_db")
     orchestrator = MasterOrchestratorAgent(session, db_url)
     pipeline_id = await orchestrator.start_pipeline(

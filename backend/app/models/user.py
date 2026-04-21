@@ -7,6 +7,9 @@ class UserBase(SQLModel):
     email: str = Field(unique=True, index=True)
     full_name: str
     is_active: bool = Field(default=True)
+    tier: str = Field(default="free")
+    stripe_customer_id: Optional[str] = Field(default=None)
+    stripe_subscription_id: Optional[str] = Field(default=None)
 
 class UserCreate(UserBase):
     password: str

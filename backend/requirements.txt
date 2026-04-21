@@ -25,3 +25,4 @@ beautifulsoup4        # HTML parsing (used by market trends scraper)
 httpx                 # Async HTTP client
 aiohttp               # Async HTTP client for specific agents
 apify-client
+stripe

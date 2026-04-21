@@ -17,6 +17,7 @@ import EmptyState from './EmptyState';
 import { runPipeline } from '../../api/pipeline';
 import CVUpload from '../CVUpload';
 import { useState } from 'react';
+import PricingModal from '../ui/PricingModal';
 
 export default function Dashboard() {
     const navigate = useNavigate();
@@ -32,6 +33,7 @@ export default function Dashboard() {
     } = useDashboardData();
 
     const [showNewRunModal, setShowNewRunModal] = useState(false);
+    const [showPricingModal, setShowPricingModal] = useState(false);
     const [uploadMode, setUploadMode] = useState<'text' | 'file'>('file');
     const [newRunCv, setNewRunCv] = useState('');
     const [newRunJob, setNewRunJob] = useState('');
@@ -69,8 +71,14 @@ export default function Dashboard() {
             setNewRunJob('');
             refresh();
             navigate(`/dashboard?runId=${pipeline_id}`);
-        } catch (e: unknown) {
-            setStartError((e as { response?: { data?: { detail?: string } } })?.response?.data?.detail ?? 'Failed to start pipeline');
+        } catch (e: any) {
+            const detail = e.response?.data?.detail;
+            if (detail && detail.code === "UPGRADE_REQUIRED") {
+                setShowNewRunModal(false);
+                setShowPricingModal(true);
+            } else {
+                setStartError(typeof detail === 'string' ? detail : 'Failed to start pipeline');
+            }
         }
     }
 
@@ -267,6 +275,10 @@ export default function Dashboard() {
                         </div>
                     </motion.div>
                 </div>
+            )}
+            
+            {showPricingModal && (
+                <PricingModal onClose={() => setShowPricingModal(false)} />
             )}
         </div>
     );

@@ -56,3 +56,9 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
         data={"sub": user.email}, expires_delta=access_token_expires
     )
     return {"access_token": access_token, "token_type": "bearer"}
+
+from app.core.security import get_current_user
+
+@router.get("/me", response_model=UserRead)
+async def get_my_profile(current_user: User = Depends(get_current_user)):
+    return current_user

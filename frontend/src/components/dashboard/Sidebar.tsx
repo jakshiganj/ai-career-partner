@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { 
     Home, 
@@ -20,6 +21,24 @@ export default function Sidebar() {
     const location = useLocation();
     const [searchParams] = useSearchParams();
     const currentRunId = searchParams.get('runId');
+    const [tier, setTier] = useState<string>('free');
+
+    useEffect(() => {
+        const fetchUser = async () => {
+            const token = localStorage.getItem('token') || localStorage.getItem('access_token');
+            if (!token) return;
+            try {
+                const res = await fetch('http://localhost:8000/auth/me', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    setTier(data.tier || 'free');
+                }
+            } catch (e) {}
+        };
+        fetchUser();
+    }, []);
     
     const isActive = (path: string) => location.pathname === path || (path !== '/dashboard' && location.pathname.startsWith(path));
 
@@ -62,7 +81,9 @@ export default function Sidebar() {
                     <span className="block text-lg font-extrabold text-[#0F172A] leading-tight" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                         CareerAI
                     </span>
-                    <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#94A3B8]">Professional</span>
+                    <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#94A3B8]">
+                        {tier === 'pro' ? 'PRO TIER' : 'FREE TIER'}
+                    </span>
                 </div>
             </div>
 
