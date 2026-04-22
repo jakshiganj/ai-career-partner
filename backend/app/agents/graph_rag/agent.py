@@ -2,10 +2,15 @@ import os
 import json
 from neo4j import GraphDatabase
 from app.agents.gemini_client import gemini_client
+from sentence_transformers import SentenceTransformer
+from sklearn.metrics.pairwise import cosine_similarity
 
 NEO4J_URI = os.getenv("NEO4J_URI", "bolt://localhost:7687")
 NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
 NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "password123")
+
+# Initialize the baseline model globally so it doesn't reload on every evaluation loop
+sbert_model = SentenceTransformer('all-MiniLM-L6-v2')
 
 class GraphRAGAgent:
     def __init__(self):
@@ -19,7 +24,9 @@ class GraphRAGAgent:
         system_instruction = '''
         You are an expert IT recruiter. Extract a JSON list of required skills from the job description.
         Only include hard skills, programming languages, frameworks, and tools.
-        Return ONLY a JSON array of strings, formatted as valid JSON (e.g., ["Python", "React", "AWS"]).
+        CRITICAL: If a skill is a specific modern framework or tool (e.g., React, Docker, Next.js), 
+        also output its broader ESCO-compatible IT category (e.g., Frontend Web Development, Containerization).
+        Return ONLY a JSON array of strings in lowercase (e.g., ["python", "react", "frontend web development"]).
         Do not include markdown or code block tags.
         '''
         prompt = f"--- Job Description ---\n{job_description}"
@@ -54,12 +61,16 @@ class GraphRAGAgent:
             
             with self.driver.session() as session:
                 for idx, skill in enumerate(skills):
-                    # 1. Graph matches
+                    # 1. Graph matches (Direct + Shared Occupation context)
                     graph_query = """
-                    MATCH (s:Skill)-[:RELATED_TO|broaderSkill*1..2]->(r:Skill)
+                    MATCH (s:Skill)
                     WHERE toLower(s.name) = toLower($skill)
-                    RETURN DISTINCT r.name AS name
-                    LIMIT 20
+                    OPTIONAL MATCH (s)-[:RELATED_TO|IMPLIES*1..2]-(r1:Skill)
+                    OPTIONAL MATCH (s)<-[:REQUIRES]-(o:Occupation)-[:REQUIRES]->(r2:Skill)
+                    WITH collect(DISTINCT r1.name) + collect(DISTINCT r2.name) AS combined
+                    UNWIND combined AS name
+                    RETURN DISTINCT name
+                    LIMIT 30
                     """
                     graph_res = [record["name"] for record in session.run(graph_query, skill=skill)]
                     
@@ -67,10 +78,12 @@ class GraphRAGAgent:
                     embedding = embeddings[idx] if idx < len(embeddings) else []
                     vector_res = []
                     if embedding and not all(v == 0.0 for v in embedding):
+                        # Added LIMIT 15 to cap over-retrieval
                         vector_query = """
                         CALL db.index.vector.queryNodes('skill_embeddings', 20, $embedding) 
                         YIELD node, score
                         RETURN node.name AS name
+                        LIMIT 15
                         """
                         try:
                             vector_res = [record["name"] for record in session.run(vector_query, embedding=embedding)]
@@ -103,8 +116,10 @@ class GraphRAGAgent:
         """Extract candidate skills from their raw CV if profile is missing."""
         system_instruction = '''
         You are an expert IT recruiter. Extract a JSON list of technical skills from the candidate's CV.
-        Only include hard skills, programming languages, frameworks, and tools already present in the text.
-        Return ONLY a JSON array of strings (e.g., ["Python", "React", "AWS"]).
+        Only include hard skills, programming languages, frameworks, and tools.
+        CRITICAL: If a skill is a specific modern framework or tool (e.g., React, Docker, Next.js), 
+        also output its broader ESCO-compatible IT category (e.g., Frontend Web Development, Containerization).
+        Return ONLY a JSON array of strings in lowercase (e.g., ["python", "react", "frontend web development", "aws"]).
         Do not include markdown or code block tags.
         '''
         prompt = f"--- Candidate CV ---\n{cv_text[:3000]}"
@@ -147,25 +162,45 @@ class GraphRAGAgent:
         gaps = []
         matched_count = 0
         
+        # --- FUZZY SUBSTRING MATCHING ---
         for req_skill in required_skills:
             req_lower = req_skill.lower()
-            # Direct match or implied match
-            if req_lower in candidate_expanded_skills:
+            match_found = False
+            
+            # Check if the required skill is a substring of the expanded skill, or vice versa
+            for exp_skill in candidate_expanded_skills:
+                if req_lower in exp_skill or exp_skill in req_lower:
+                    match_found = True
+                    break
+                    
+            if match_found:
                 matched_count += 1
             else:
                 gaps.append(req_skill)
                 
-        # Calculate score
+        # --- HYBRID SCORING LOGIC ---
+        
+        # 1. Calculate the Graph Overlap Ratio (0.0 to 1.0)
         if len(required_skills) > 0:
-            score = round(matched_count / len(required_skills), 2)
+            graph_ratio = matched_count / len(required_skills)
         else:
-            score = 0.0
+            graph_ratio = 0.0
+
+        # 2. Calculate the Baseline SBERT Score
+        base_semantic_score = 0.0
+        if cv_raw and job_description:
+            cv_emb = sbert_model.encode([cv_raw])
+            jd_emb = sbert_model.encode([job_description])
+            base_semantic_score = float(cosine_similarity(cv_emb, jd_emb)[0][0])
+            
+        # 3. Calculate Final Weighted Hybrid Score (60% Baseline, 40% Graph Validation)
+        final_score = round((base_semantic_score * 0.6) + (graph_ratio * 0.4), 4)
             
         implicit_skills = list(candidate_expanded_skills - set(s.lower() for s in candidate_skills))
         
         return {
             "skill_gaps": gaps,
-            "skill_match_score": score,
+            "skill_match_score": final_score,
             "implicit_skills": implicit_skills
         }
 
