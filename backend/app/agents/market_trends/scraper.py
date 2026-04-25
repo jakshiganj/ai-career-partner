@@ -104,7 +104,7 @@ def scrape_linkedin_jobs_via_apify(keyword):
         
     return jobs
 
-def get_jobs_for_skill(skill, all_jobs=None):
+def get_jobs_for_skill(skill, all_jobs=None, linkedin_jobs=None, scrape_apify=True):
     """
     Filters cached/fresh jobs for a specific skill (fuzzy match).
     Combines TopJobs and Apify LinkedIn results.
@@ -122,9 +122,13 @@ def get_jobs_for_skill(skill, all_jobs=None):
             source_tag = j.get('source', 'Job Board')
             matches.append(f"{j['title']} at {j['company']} [{source_tag}]")
             
-    # Also scrape LinkedIn via Apify specifically for this skill
-    linkedin_jobs = scrape_linkedin_jobs_via_apify(skill)
-    for j in linkedin_jobs:
-        matches.append(f"{j['title']} at {j['company']} [{j.get('source', 'LinkedIn')}]")
+    # Use provided linkedin_jobs or optionally scrape them now
+    if linkedin_jobs is None and scrape_apify:
+        linkedin_jobs = scrape_linkedin_jobs_via_apify(skill)
+        
+    if linkedin_jobs:
+        for j in linkedin_jobs:
+            if any(kw in j.get('search_text', '') for kw in keywords):
+                matches.append(f"{j['title']} at {j['company']} [{j.get('source', 'LinkedIn')}]")
             
     return matches

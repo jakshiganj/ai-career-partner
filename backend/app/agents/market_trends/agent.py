@@ -12,15 +12,20 @@ def market_trends_agent(skills: list) -> dict:
     try:
         scraped_matches = {}
         # Pre-fetch all jobs to avoid hitting the site 10 times in a loop
-        from .scraper import scrape_topjobs_software_vacancies
+        from .scraper import scrape_topjobs_software_vacancies, scrape_linkedin_jobs_via_apify
         all_jobs = scrape_topjobs_software_vacancies()
         
+        # Aggregate LinkedIn Search to avoid high latency and costs
+        # Limit to 3 skills to avoid URL length issues or overly broad searches
+        aggregated_query = " OR ".join(skills[:3]) if skills else ""
+        linkedin_jobs = scrape_linkedin_jobs_via_apify(aggregated_query) if aggregated_query else []
+        
         for skill in skills:
-             matched_titles = get_jobs_for_skill(skill, all_jobs=all_jobs)
+             matched_titles = get_jobs_for_skill(skill, all_jobs=all_jobs, linkedin_jobs=linkedin_jobs, scrape_apify=False)
              if matched_titles:
                  scraped_matches[skill] = matched_titles
     except Exception as e:
-        print(f"TopJobs integration error: {e}")
+        print(f"TopJobs/LinkedIn integration error: {e}")
         scraped_matches = {}
 
     with DDGS() as ddgs:
