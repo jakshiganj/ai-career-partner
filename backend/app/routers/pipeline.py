@@ -39,19 +39,28 @@ def _run_label_from_state(state_json: dict) -> str:
 
 @router.get("/runs")
 async def list_pipeline_runs(
-    limit: int = 8,
+    skip: int = 0,
+    limit: int = 10,
     current_user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ):
-    """List previous pipeline runs for the current user (for dashboard sidebar)."""
+    """List previous pipeline runs for the current user with pagination."""
+    # Get total count
+    count_q = select(func.count()).select_from(PipelineRun).where(PipelineRun.user_id == current_user.id)
+    count_res = await session.execute(count_q)
+    total = count_res.scalar()
+
+    # Get paginated runs
     q = (
         select(PipelineRun)
         .where(PipelineRun.user_id == current_user.id)
         .order_by(desc(PipelineRun.created_at))
+        .offset(skip)
         .limit(limit)
     )
     res = await session.execute(q)
     runs = res.scalars().all()
+    
     out = []
     for r in runs:
         state = r.state_json or {}
@@ -63,7 +72,28 @@ async def list_pipeline_runs(
             "status": r.status,
             "current_stage": r.current_stage,
         })
-    return {"runs": out}
+    return {
+        "runs": out,
+        "total": total,
+        "skip": skip,
+        "limit": limit
+    }
+
+@router.delete("/{pipeline_id}")
+async def delete_pipeline_run(
+    pipeline_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+):
+    """Delete a specific pipeline run."""
+    run = await session.get(PipelineRun, pipeline_id)
+    if not run or run.user_id != current_user.id:
+        raise HTTPException(status_code=404, detail="Pipeline run not found")
+    
+    await session.delete(run)
+    await session.commit()
+    return {"status": "deleted"}
+
 
 class PipelineStartOptions(BaseModel):
     run_interview_prep: bool = True

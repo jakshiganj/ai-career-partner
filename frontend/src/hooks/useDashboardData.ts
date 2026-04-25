@@ -30,7 +30,7 @@ export function useDashboardData(initialSelectedRunId: string | null = null) {
 
     const fetchRuns = useCallback(async () => {
         try {
-            const { runs: list } = await getPipelineRuns(20);
+            const { runs: list } = await getPipelineRuns(0, 20);
             setRuns(list);
             if (list.length > 0 && !selectedRunId && !urlRunId) {
                 setSelectedRunId(list[0].id);

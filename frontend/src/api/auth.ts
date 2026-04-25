@@ -20,3 +20,19 @@ export async function signup(payload: SignupPayload) {
     const { data } = await axios.post(`${BASE_URL}/auth/signup`, payload);
     return data;
 }
+
+export async function forgotPassword(email: string): Promise<void> {
+    await axios.post(`${BASE_URL}/auth/forgot-password`, { email });
+}
+
+export async function resetPassword(token: string, newPassword: string): Promise<void> {
+    await axios.post(`${BASE_URL}/auth/reset-password`, { token, new_password: newPassword });
+}
+
+export async function verifyResetToken(token: string): Promise<{ valid: boolean }> {
+    const { data } = await axios.get<{ valid: boolean }>(`${BASE_URL}/auth/verify-reset-token`, {
+        params: { token },
+    });
+    return data;
+}
+

@@ -2,11 +2,13 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from pydantic import BaseModel
 from app.core.database import get_session
 from app.models.user import User, UserCreate, UserRead
 from app.models.preference import UserPreference
 from app.core.security import get_password_hash, verify_password, create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
-from datetime import timedelta
+from datetime import timedelta, datetime
+import secrets
 
 router = APIRouter()
 
@@ -62,3 +64,91 @@ from app.core.security import get_current_user
 @router.get("/me", response_model=UserRead)
 async def get_my_profile(current_user: User = Depends(get_current_user)):
     return current_user
+
+
+# ─── Forgot / Reset Password ────────────────────────────────────────────────
+
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
+
+RESET_TOKEN_EXPIRE_MINUTES = 15
+
+@router.post("/forgot-password")
+async def forgot_password(body: ForgotPasswordRequest, session: AsyncSession = Depends(get_session)):
+    """Generate a password-reset token and email it to the user."""
+    from app.services.email_service import send_password_reset_email
+
+    statement = select(User).where(User.email == body.email)
+    result = await session.execute(statement)
+    user = result.scalar_one_or_none()
+
+    # Always return the same response to avoid email enumeration
+    generic_msg = {"message": "If an account exists with that email, we've sent a password reset link."}
+
+    if not user:
+        return generic_msg
+
+    # OAuth-only users cannot reset password
+    if user.password_hash == "oauth_placeholder":
+        return generic_msg
+
+    # Generate secure token
+    token = secrets.token_urlsafe(32)
+    user.reset_token = token
+    user.reset_token_expires = datetime.utcnow() + timedelta(minutes=RESET_TOKEN_EXPIRE_MINUTES)
+
+    session.add(user)
+    await session.commit()
+
+    # Send reset email
+    reset_link = f"http://localhost:5173/reset-password?token={token}"
+    await send_password_reset_email(to_email=user.email, reset_link=reset_link)
+
+    return generic_msg
+
+
+@router.get("/verify-reset-token")
+async def verify_reset_token(token: str, session: AsyncSession = Depends(get_session)):
+    """Check if a password reset token is still valid."""
+    statement = select(User).where(User.reset_token == token)
+    result = await session.execute(statement)
+    user = result.scalar_one_or_none()
+
+    if not user or not user.reset_token_expires:
+        return {"valid": False}
+
+    if datetime.utcnow() > user.reset_token_expires:
+        return {"valid": False}
+
+    return {"valid": True}
+
+
+@router.post("/reset-password")
+async def reset_password(body: ResetPasswordRequest, session: AsyncSession = Depends(get_session)):
+    """Reset the user's password using a valid reset token."""
+    statement = select(User).where(User.reset_token == body.token)
+    result = await session.execute(statement)
+    user = result.scalar_one_or_none()
+
+    if not user or not user.reset_token_expires:
+        raise HTTPException(status_code=400, detail="Invalid or expired reset token")
+
+    if datetime.utcnow() > user.reset_token_expires:
+        raise HTTPException(status_code=400, detail="Reset token has expired")
+
+    if len(body.new_password) < 8:
+        raise HTTPException(status_code=400, detail="Password must be at least 8 characters")
+
+    # Update password and clear the reset token
+    user.password_hash = get_password_hash(body.new_password)
+    user.reset_token = None
+    user.reset_token_expires = None
+
+    session.add(user)
+    await session.commit()
+
+    return {"message": "Password reset successfully. You can now log in with your new password."}

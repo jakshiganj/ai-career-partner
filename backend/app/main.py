@@ -45,6 +45,9 @@ app.include_router(cv_versions.router, prefix="/api/cv-versions", tags=["CV Vers
 from app.routers import linkedin
 app.include_router(linkedin.router, prefix="/auth", tags=["LinkedIn OAuth"])
 
+from app.routers import google_auth
+app.include_router(google_auth.router, prefix="/auth", tags=["Google OAuth"])
+
 from app.routers import scrape
 app.include_router(scrape.router, prefix="/api/linkedin", tags=["LinkedIn Scrape"])
 
