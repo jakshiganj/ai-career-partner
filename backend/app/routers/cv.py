@@ -82,6 +82,27 @@ async def upload_cv(
         
     await session.commit()
     
+    # 7. Auto-Sync Roadmap with new CV Data
+    from app.models.interview_roadmap import SkillRoadmap
+    from app.agents.roadmap_sync_agent import RoadmapSyncAgent
+    from sqlmodel import desc
+    
+    try:
+        query = select(SkillRoadmap).where(SkillRoadmap.user_id == current_user.id).order_by(desc(SkillRoadmap.created_at)).limit(1)
+        res_rm = await session.execute(query)
+        active_roadmap = res_rm.scalar_one_or_none()
+        
+        if active_roadmap:
+            sync_agent = RoadmapSyncAgent()
+            sync_result = await sync_agent.sync(parsed_data, active_roadmap.roadmap)
+            if sync_result and "updated_roadmap" in sync_result:
+                active_roadmap.roadmap = sync_result["updated_roadmap"]
+                session.add(active_roadmap)
+                await session.commit()
+    except Exception as e:
+        print(f"Roadmap sync failed silently: {e}")
+        pass
+    
     return {
         "message": "CV uploaded and parsed successfully", 
         "cv_id": new_cv.id,

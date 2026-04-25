@@ -18,18 +18,14 @@ def get_session(session_id: str):
 from app.agents.gemini_client import gemini_client
 import json
 
-def interview_prep_agent(job_description: str, resume_summary: str, mode: str = "text") -> dict:
+async def interview_prep_agent(job_description: str, resume_summary: str, tier: str = "Stretch", mode: str = "text") -> dict:
     """
-    Initializes an interview session and generates initial questions.
+    Initializes an interview session and generates initial questions dynamically via Gemini.
     """
     session_id = create_interview_session(job_description, resume_summary, mode)
     
-    # Generate initial questions (Mock for now, normally would use Gemini)
-    questions = [
-        "Tell me about a project where you used the skills mentioned in your resume.",
-        "What is your biggest weakness?",
-        "How do you handle conflict in a team?"
-    ]
+    # Generate initial questions dynamically
+    questions = await generate_interview_questions(job_description, resume_summary, tier)
     
     return {
         "session_id": session_id,
@@ -49,14 +45,17 @@ async def generate_interview_questions(job_description: str, cv_text: str, tier:
     Structure the response as a JSON array of strings:
     ["Question 1", "Question 2", "Question 3"]
     """
-    try:
-        response_text = gemini_client.generate_content(model='gemini-2.5-flash', prompt=prompt)
-        clean_text = response_text.replace("```json", "").replace("```", "").strip()
-        questions = json.loads(clean_text)
-        if isinstance(questions, list):
-            return questions
-    except Exception as e:
-        print(f"Error generating interview questions: {e}")
+    for attempt in range(3):
+        try:
+            response_text = gemini_client.generate_content(model='gemini-2.5-flash', prompt=prompt)
+            clean_text = response_text.replace("```json", "").replace("```", "").strip()
+            questions = json.loads(clean_text)
+            if isinstance(questions, list):
+                return questions
+            raise ValueError("Response is not a valid JSON list")
+        except Exception as e:
+            if attempt == 2:
+                print(f"Error generating interview questions: {e}")
     
     return [
         f"Tell me about a time you used your skills for this {tier} role.",

@@ -45,6 +45,13 @@ export interface PipelineResultState {
     created_at?: string;
     completed_at?: string | null;
     error_log?: string[];
+    critique?: {
+        summary?: string;
+        matching_skills?: string[];
+        transferable_skills?: string[];
+        missing_critical_skills?: string[];
+    };
+    implicit_skills?: string[];
 }
 
 export async function runPipeline(payload: PipelineRunPayload) {

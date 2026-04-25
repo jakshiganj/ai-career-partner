@@ -1,4 +1,4 @@
-import { BarChart2, Key, Layout, Type } from 'lucide-react';
+import { BarChart2, Key, Layout, Type, Star } from 'lucide-react';
 import type { PipelineResultState } from '../../api/pipeline';
 import type { DashboardSummary } from '../../api/dashboard';
 
@@ -36,7 +36,7 @@ export default function OverviewStats({ data, dashboardSummary }: OverviewStatsP
     const wordCount = data?.cv_raw ? data.cv_raw.split(/\s+/).length : 0;
 
     return (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5 mb-6">
             <div className="rounded-xl border border-[#E2E8F0] bg-white p-5 shadow-sm transition-shadow hover:shadow-md">
                 <div className="flex items-center justify-between">
                     <p className="text-sm font-medium text-[#64748B]">Match Potential</p>
@@ -82,6 +82,16 @@ export default function OverviewStats({ data, dashboardSummary }: OverviewStatsP
                     <span className="text-sm font-medium text-[#64748B]">
                         {wordCount > 400 && wordCount < 800 ? 'Optimal' : wordCount > 0 ? 'Review' : '--'}
                     </span>
+                </div>
+            </div>
+            <div className="rounded-xl border border-[#E2E8F0] bg-white p-5 shadow-sm transition-shadow hover:shadow-md">
+                <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-[#64748B]">Candidate Tier</p>
+                    <Star className="h-5 w-5 text-[#EAB308]" />
+                </div>
+                <div className="mt-3 flex items-baseline gap-2">
+                    <span className="text-3xl font-bold text-[#0F172A] leading-none tracking-tight">{data?.job_tier || '--'}</span>
+                    {data?.job_tier && <span className="text-sm font-medium text-[#EAB308]">GraphRAG</span>}
                 </div>
             </div>
         </div>

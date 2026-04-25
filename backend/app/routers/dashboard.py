@@ -148,10 +148,21 @@ async def get_dashboard_summary(
     jm_res = await session.execute(job_matches_query)
     db_job_matches = jm_res.scalars().all()
 
-    # 5. Persisted skill roadmap (from dedicated table)
-    roadmap_query = select(SkillRoadmap).where(SkillRoadmap.user_id == user_id).order_by(desc(SkillRoadmap.created_at)).limit(1)
-    rm_res = await session.execute(roadmap_query)
-    db_roadmap = rm_res.scalar_one_or_none()
+    # 5. Persisted skill roadmap — prefer one linked to THIS pipeline run
+    db_roadmap = None
+    if latest_run:
+        roadmap_query = select(SkillRoadmap).where(
+            SkillRoadmap.user_id == user_id,
+            SkillRoadmap.pipeline_id == latest_run.id
+        ).limit(1)
+        rm_res = await session.execute(roadmap_query)
+        db_roadmap = rm_res.scalar_one_or_none()
+    
+    # Fall back to the most recent roadmap if current run has none
+    if not db_roadmap:
+        fallback_query = select(SkillRoadmap).where(SkillRoadmap.user_id == user_id).order_by(desc(SkillRoadmap.created_at)).limit(1)
+        fb_res = await session.execute(fallback_query)
+        db_roadmap = fb_res.scalar_one_or_none()
 
     # 6. Salary benchmarks (from dedicated table)
     salary_query = select(SalaryBenchmark).order_by(desc(SalaryBenchmark.scraped_at)).limit(5)
@@ -169,10 +180,8 @@ async def get_dashboard_summary(
     market_data = state_json.get("market_analysis", {})
     hot_skills = market_data.get("hot_skills", []) if isinstance(market_data, dict) else []
 
-    # Roadmap: prefer state_json (live), fall back to DB
-    roadmap_data = state_json.get("skill_roadmap", [])
-    if not roadmap_data and db_roadmap:
-        roadmap_data = db_roadmap.roadmap or []
+    # Roadmap: prefer current run's state_json (freshest), then DB row
+    roadmap_data = state_json.get("skill_roadmap", []) or (db_roadmap.roadmap if db_roadmap and db_roadmap.roadmap else [])
 
     dashboard_data = {
         "cv_raw": state_json.get("cv_raw", latest_cv.cv_text if latest_cv else ""),

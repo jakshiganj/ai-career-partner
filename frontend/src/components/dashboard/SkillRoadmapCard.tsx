@@ -16,6 +16,7 @@ interface SkillRoadmapCardProps {
     steps: RoadmapStep[];
     completedCount?: number;
     totalCount?: number;
+    implicitSkills?: string[];
     status?: CardStatus;
     onViewFull?: () => void;
 }
@@ -32,6 +33,7 @@ export default function SkillRoadmapCard({
     steps,
     completedCount,
     totalCount,
+    implicitSkills,
     status = 'Not Run',
     onViewFull,
 }: SkillRoadmapCardProps) {
@@ -101,6 +103,15 @@ export default function SkillRoadmapCard({
                 >
                     View Full Roadmap
                 </button>
+            )}
+            
+            {implicitSkills && implicitSkills.length > 0 && (
+                <div className="mt-4 pt-4 border-t border-[#F1F5F9]">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-[#64748B] mb-2">Inferred Masteries (Neo4j)</h4>
+                    <div className="flex flex-wrap gap-1.5">
+                        {implicitSkills.map(s => <span key={s} className="bg-[#F8FAFC] border border-[#E2E8F0] text-[#475569] px-2 py-0.5 rounded shadow-sm text-[10px] font-bold uppercase">{s}</span>)}
+                    </div>
+                </div>
             )}
         </div>
     );

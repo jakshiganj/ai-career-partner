@@ -43,225 +43,183 @@ async def ingest_node(state: AgentState) -> dict:
     }
 
 
-# ── STAGE 2: ANALYSE (PARALLEL) ──────────────────────────────────────────────
+# ── STAGE 2: ANALYSE (WAVE 1 PARALLEL) ───────────────────────────────────────
 
 async def analyse_node(state: AgentState) -> dict:
     """
-    Stage 2: Run ATS scoring, GraphRAG skill analysis, and market trends concurrently.
-    Each sub-task has independent error handling — one failure does not stop the others.
+    Stage 2 (Wave 1): Run ATS scoring, GraphRAG skill analysis, Market Trends, 
+    CV Critique, Cover Letter, and Job Classifier concurrently!
+    (Everything here only depends on initial Inputs)
     """
-    print(f"[Stage 2] ANALYSE — running ATS + GraphRAG + Market in parallel")
+    print(f"[Stage 2] ANALYSE — Wave 1 Parallel Execution")
     
     cv_raw = state.get("cv_raw", "")
     job_description = state.get("job_description", "")
+    preferred_tone = state.get("preferred_tone", "formal")
     error_log = list(state.get("error_log", []))
     
-    # Run all three concurrently
+    # Define tasks for Wave 1
     ats_task = _run_ats(cv_raw, job_description)
-    graphrag_task = _run_graphrag(cv_raw, job_description)
+    graphrag_task = _run_graphrag(state.get("candidate_profile", {}), job_description, cv_raw)
     market_task = _run_market(job_description)
+    critique_task = analyze_cv_with_gemini(cv_raw)
     
-    ats_result, graphrag_result, market_result = await asyncio.gather(
-        ats_task, graphrag_task, market_task, return_exceptions=True
+    async def run_cover_letter():
+        return await CoverLetterAgent().run(cv_raw, job_description, tone=preferred_tone)
+    cl_task = run_cover_letter()
+    
+    async def run_classifier():
+        return await JobClassifierAgent().run(cv_raw, job_description)
+    classify_task = run_classifier()
+    
+    # Execute all 6 tasks concurrently
+    results = await asyncio.gather(
+        ats_task, graphrag_task, market_task, critique_task, cl_task, classify_task,
+        return_exceptions=True
     )
+    (ats_res, graphrag_res, market_res, critique_res, cl_res, classify_res) = results
     
     updates = {
         "current_stage": 2,
         "error_log": error_log,
-        "messages": []
+        "messages": ["Stage 2: Wave 1 completed"]
     }
     
-    # ATS result
-    if isinstance(ats_result, Exception):
-        updates["error_log"].append(f"Stage 2 ATSScorerAgent failed: {ats_result}")
-        updates["messages"].append("Stage 2: ATS scoring failed — continuing")
+    # 1. ATS
+    if isinstance(ats_res, Exception):
+        updates["error_log"].append(f"ATS failed: {ats_res}")
     else:
-        updates["ats_score"] = ats_result.get("ats_score", 0)
-        updates["ats_breakdown"] = ats_result
-        updates["missing_skills"] = ats_result.get("missing_keywords", [])
-        updates["messages"].append(f"Stage 2: ATS Score = {ats_result.get('ats_score')}")
-    
-    # GraphRAG result
-    if isinstance(graphrag_result, Exception):
-        updates["error_log"].append(f"Stage 2 GraphRAGAgent failed: {graphrag_result}")
-        updates["messages"].append("Stage 2: GraphRAG failed — continuing")
+        updates["ats_score"] = ats_res.get("ats_score", 0)
+        updates["ats_breakdown"] = ats_res
+        updates["missing_skills"] = ats_res.get("missing_keywords", [])
+        
+    # 2. GraphRAG
+    if isinstance(graphrag_res, Exception):
+        updates["error_log"].append(f"GraphRAG failed: {graphrag_res}")
     else:
-        updates["skill_match_score"] = graphrag_result.get("final_score")
-        updates["skill_gaps"] = graphrag_result.get("skill_gaps", [])
-        updates["implicit_skills"] = graphrag_result.get("implicit_skills", [])
-        updates["messages"].append(f"Stage 2: Skill Match Score = {graphrag_result.get('final_score')}")
-    
-    # Market result
-    if isinstance(market_result, Exception):
-        updates["error_log"].append(f"Stage 2 MarketConnectorAgent failed: {market_result}")
-        updates["messages"].append("Stage 2: Market trends failed — continuing")
+        updates["skill_match_score"] = graphrag_res.get("skill_match_score")
+        updates["skill_gaps"] = graphrag_res.get("skill_gaps", [])
+        updates["implicit_skills"] = graphrag_res.get("implicit_skills", [])
+        
+    # 3. Market
+    if isinstance(market_res, Exception):
+        updates["error_log"].append(f"Market failed: {market_res}")
     else:
-        # market_result contains: {'salary_benchmarks': {...}, 'market_analysis': {...}}
-        # We assign full object to satisfy frontend nesting: state.market_analysis.market_analysis
-        updates["market_analysis"] = market_result
-        updates["salary_benchmarks"] = market_result.get("salary_benchmarks", {})
-        updates["messages"].append("Stage 2: Market data retrieved")
-    
+        updates["market_analysis"] = market_res
+        updates["salary_benchmarks"] = market_res.get("salary_benchmarks", {})
+        
+    # 4. CV Critique
+    if isinstance(critique_res, Exception):
+        updates["error_log"].append(f"Critique failed: {critique_res}")
+    else:
+        updates["critique"] = critique_res
+        
+    # 5. Cover Letter
+    if isinstance(cl_res, Exception):
+        updates["error_log"].append(f"Cover Letter failed: {cl_res}")
+    else:
+        updates["cover_letter"] = cl_res
+        
+    # 6. Job Classifier
+    if isinstance(classify_res, Exception):
+        updates["error_log"].append(f"Classifier failed: {classify_res}")
+        updates["job_tier"] = "Stretch"
+    else:
+        tier = classify_res.get("tier", "Stretch")
+        updates["job_tier"] = tier if tier in ["Safety", "Realistic", "Reach"] else "Stretch"
+        
     return updates
 
-
 async def _run_ats(cv_raw: str, job_description: str) -> dict:
-    agent = ATSScorerAgent()
-    return await agent.run(cv_raw, job_description)
+    return await ATSScorerAgent().run(cv_raw, job_description)
 
-async def _run_graphrag(cv_raw: str, job_description: str) -> dict:
-    # graph_rag_agent may be sync — wrap if needed
-    return await asyncio.to_thread(graph_rag_agent, cv_raw, job_description)
+async def _run_graphrag(candidate_profile: dict, job_description: str, cv_raw: str = None) -> dict:
+    return await graph_rag_agent(candidate_profile, job_description, cv_raw)
 
 async def _run_market(job_description: str) -> dict:
-    agent = MarketConnectorAgent()
-    return await agent.run(job_description)
+    return await MarketConnectorAgent().run(job_description)
 
 
-# ── STAGE 3: OPTIMISE (SEQUENTIAL WITHIN NODE) ───────────────────────────────
+# ── STAGE 3: OPTIMISE (WAVE 2 PARALLEL) ──────────────────────────────────────
 
 async def optimise_node(state: AgentState) -> dict:
     """
-    Stage 3: CV Critique → CV Creator → Cover Letter (sequential, each depends on previous).
-    All three steps run inside this single node in strict order.
+    Stage 3 (Wave 2): Run CV Creator, Skill Roadmap, and Interview Prep concurrently!
+    (Everything here depends on Wave 1 outcomes)
     """
-    print(f"[Stage 3] OPTIMISE — CV critique → create → cover letter")
+    print(f"[Stage 3] OPTIMISE — Wave 2 Parallel Execution")
     
     cv_raw = state.get("cv_raw", "")
     job_description = state.get("job_description", "")
     skill_gaps = state.get("skill_gaps", [])
-    preferred_tone = state.get("preferred_tone", "formal")
+    critique = state.get("critique", {})
+    job_tier = state.get("job_tier", "Stretch")
     error_log = list(state.get("error_log", []))
-    updates = {"current_stage": 3, "error_log": error_log, "messages": []}
     
-    # Step 1: CV Critique
-    critique = None
-    try:
-        critique = await asyncio.to_thread(analyze_cv_with_gemini, cv_raw)
-        updates["critique"] = critique
-        updates["messages"].append(f"Stage 3: CV critique complete — score={critique.get('score')}")
-    except Exception as e:
-        updates["error_log"].append(f"Stage 3 CVCriticAgent failed: {e}")
-        updates["messages"].append("Stage 3: CV critique failed — continuing")
-    
-    # Step 2: CV Creator (uses critique from step 1)
-    try:
-        optimised_cv = await asyncio.to_thread(
-            cv_creator_agent,
-            cv_text=cv_raw,
-            critique=critique or {},
-            skill_gaps=skill_gaps
+    # Fallback to prevent failing output if critique errored
+    if not critique:
+        critique = {"summary": "CV requires general restructuring."}
+        
+    # Define tasks for Wave 2
+    async def run_cv_creator():
+        return await asyncio.to_thread(
+            cv_creator_agent, cv_text=cv_raw, critique=critique, skill_gaps=skill_gaps
         )
-        updates["optimised_cv"] = optimised_cv
-        updates["messages"].append("Stage 3: Optimised CV generated")
-    except Exception as e:
-        updates["error_log"].append(f"Stage 3 CVCreatorAgent failed: {e}")
-        updates["messages"].append("Stage 3: CV creation failed — continuing")
+        
+    async def run_roadmap():
+        gaps = skill_gaps if skill_gaps else state.get("missing_skills", [])
+        return await RoadmapAgent().run(gaps, job_description)
+        
+    async def run_interview():
+        return await generate_interview_questions(job_description, cv_raw, job_tier)
+        
+    results = await asyncio.gather(
+        run_cv_creator(), run_roadmap(), run_interview(), return_exceptions=True
+    )
+    (cv_res, roadmap_res, int_res) = results
     
-    # Step 3: Cover Letter
-    try:
-        cl_agent = CoverLetterAgent()
-        cover_letter = await cl_agent.run(cv_raw, job_description, tone=preferred_tone)
-        updates["cover_letter"] = cover_letter
-        updates["messages"].append("Stage 3: Cover letter generated")
-    except Exception as e:
-        updates["error_log"].append(f"Stage 3 CoverLetterAgent failed: {e}")
-        updates["messages"].append("Stage 3: Cover letter failed — continuing")
+    updates = {
+        "current_stage": 3,
+        "error_log": error_log,
+        "messages": ["Stage 3: Wave 2 completed"]
+    }
     
+    # CV Creator
+    if isinstance(cv_res, Exception):
+        updates["error_log"].append(f"CV Creator failed: {cv_res}")
+    else:
+        updates["optimised_cv"] = cv_res
+        
+    # Roadmap
+    if isinstance(roadmap_res, Exception):
+        updates["error_log"].append(f"Roadmap failed: {roadmap_res}")
+        updates["skill_roadmap"] = []
+    else:
+        updates["skill_roadmap"] = roadmap_res.get("phases", [])
+        
+    # Interview Prep
+    if isinstance(int_res, Exception):
+        updates["error_log"].append(f"Interview Prep failed: {int_res}")
+        updates["interview_question_bank"] = []
+    else:
+        updates["interview_question_bank"] = int_res
+        
     return updates
 
 
-# ── STAGE 4: CLASSIFY ─────────────────────────────────────────────────────────
+# ── STAGE 4, 5, 6: FAST FORWARD PASS-THROUGHS ────────────────────────────────
 
 async def classify_node(state: AgentState) -> dict:
-    """Stage 4: Classify job match tier based on skill match score from GraphRAG."""
-    print(f"[Stage 4] CLASSIFY")
-    
-    error_log = list(state.get("error_log", []))
-    
-    try:
-        agent = JobClassifierAgent()
-        result = await agent.run(state.get("cv_raw", ""), state.get("job_description", ""))
-        tier = result.get("tier", "Stretch")
-        
-        # Validate tier value
-        if tier not in ["Realistic", "Stretch", "Reach"]:
-            tier = "Stretch"
-        
-        return {
-            "job_tier": tier,
-            "current_stage": 4,
-            "error_log": error_log,
-            "messages": [f"Stage 4: Job tier = {tier}"]
-        }
-    except Exception as e:
-        error_log.append(f"Stage 4 JobClassifierAgent failed: {e}")
-        return {
-            "job_tier": "Stretch",  # safe default
-            "current_stage": 4,
-            "error_log": error_log,
-            "messages": ["Stage 4: Classification failed — defaulting to Stretch"]
-        }
-
-
-# ── STAGE 5: ROADMAP ─────────────────────────────────────────────────────────
+    """Stage 4: Pass-through (logic resolved in Wave 1)."""
+    return {"current_stage": 4, "messages": ["Stage 4: Job classification complete"]}
 
 async def roadmap_node(state: AgentState) -> dict:
-    """Stage 5: Generate skill learning roadmap from GraphRAG skill gaps."""
-    print(f"[Stage 5] ROADMAP")
-    
-    error_log = list(state.get("error_log", []))
-    
-    # Prefer GraphRAG skill_gaps, fall back to ATS missing_skills
-    gaps = state.get("skill_gaps") or state.get("missing_skills") or []
-    
-    try:
-        agent = RoadmapAgent()
-        result = await agent.run(gaps, state.get("job_description", ""))
-        return {
-            "skill_roadmap": result.get("phases", []),
-            "current_stage": 5,
-            "error_log": error_log,
-            "messages": [f"Stage 5: Roadmap generated with {len(result.get('phases', []))} phases"]
-        }
-    except Exception as e:
-        error_log.append(f"Stage 5 RoadmapAgent failed: {e}")
-        return {
-            "skill_roadmap": [],
-            "current_stage": 5,
-            "error_log": error_log,
-            "messages": ["Stage 5: Roadmap generation failed — continuing"]
-        }
-
-
-# ── STAGE 6: INTERVIEW PREP ───────────────────────────────────────────────────
+    """Stage 5: Pass-through (logic resolved in Wave 2)."""
+    return {"current_stage": 5, "messages": ["Stage 5: Skill roadmap generated"]}
 
 async def interview_prep_node(state: AgentState) -> dict:
-    """Stage 6: Generate personalised interview question bank."""
-    print(f"[Stage 6] INTERVIEW PREP")
-    
-    error_log = list(state.get("error_log", []))
-    
-    try:
-        questions = await generate_interview_questions(
-            state.get("job_description", ""),
-            state.get("cv_raw", ""),
-            state.get("job_tier", "Stretch")
-        )
-        return {
-            "interview_question_bank": questions,
-            "current_stage": 6,
-            "error_log": error_log,
-            "messages": [f"Stage 6: {len(questions)} interview questions generated"]
-        }
-    except Exception as e:
-        error_log.append(f"Stage 6 InterviewPrepAgent failed: {e}")
-        return {
-            "interview_question_bank": [],
-            "current_stage": 6,
-            "error_log": error_log,
-            "messages": ["Stage 6: Interview prep failed — continuing"]
-        }
+    """Stage 6: Pass-through (logic resolved in Wave 2)."""
+    return {"current_stage": 6, "messages": ["Stage 6: Interview prep ready"]}
 
 
 # ── STAGE 7: PERSIST ─────────────────────────────────────────────────────────

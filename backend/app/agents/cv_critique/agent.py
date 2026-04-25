@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.agents.gemini_client import gemini_client
 from app.retrieval.graph_rag import fetch_skill_context
 
-async def analyze_cv_with_gemini(cv_text: str, session: AsyncSession) -> dict:
+async def analyze_cv_with_gemini(cv_text: str, session: AsyncSession = None) -> dict:
     """
     1. Quick keyword extraction
     2. Fetch GraphRAG context for those keywords
@@ -18,7 +18,12 @@ async def analyze_cv_with_gemini(cv_text: str, session: AsyncSession) -> dict:
         keywords_str = "Python, React, SQL"
         
     # 2. Fetch Graph Context from ESCO
-    context = await fetch_skill_context(keywords_str, session, limit=5)
+    if session:
+        context = await fetch_skill_context(keywords_str, session, limit=5)
+    else:
+        from app.core.database import async_session
+        async with async_session() as temp_session:
+            context = await fetch_skill_context(keywords_str, temp_session, limit=5)
     
     # 3. Final Gap Analysis Prompt
     system_instruction = f"""
@@ -43,15 +48,16 @@ async def analyze_cv_with_gemini(cv_text: str, session: AsyncSession) -> dict:
     }}
     """
     
-    response_text = gemini_client.generate_content(
-        model='gemini-2.5-flash', 
-        prompt=cv_text,
-        config={"system_instruction": system_instruction}
-    )
-
-    try:
-        clean_text = response_text.replace("```json", "").replace("```", "").strip()
-        data = json.loads(clean_text)
-        return data
-    except Exception as e:
-        return {"error": "Failed to analyze CV", "details": str(e), "raw": response_text}
+    for attempt in range(3):
+        try:
+            response_text = gemini_client.generate_content(
+                model='gemini-2.5-flash', 
+                prompt=cv_text,
+                config={"system_instruction": system_instruction}
+            )
+            clean_text = response_text.replace("```json", "").replace("```", "").strip()
+            data = json.loads(clean_text)
+            return data
+        except Exception as e:
+            if attempt == 2:
+                return {"error": "Failed to analyze CV", "details": str(e)}

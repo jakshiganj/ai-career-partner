@@ -113,7 +113,13 @@ class MasterOrchestratorAgent:
                 import traceback
                 traceback.print_exc()
                 run.status = "failed"
-                run.state_json["error_log"] = run.state_json.get("error_log", []) + [str(e)]
+                
+                # Properly update state_json for SQLAlchemy JSONB mutation detection
+                new_state = dict(run.state_json or {})
+                new_state["error_log"] = new_state.get("error_log", []) + [str(e)]
+                new_state["status"] = "failed"
+                run.state_json = new_state
+                
                 session.add(run)
                 await session.commit()
 
@@ -212,7 +218,7 @@ class MasterOrchestratorAgent:
                 session.add(sr)
 
             await session.commit()
-            print(f"[PERSIST] ✅ All tables saved for pipeline {pipeline_id}")
+            print(f"[PERSIST] [SUCCESS] All tables saved for pipeline {pipeline_id}")
             
         except Exception as e:
-            print(f"[PERSIST] ⚠️ Non-fatal persistence error: {e}")
+            print(f"[PERSIST] [WARNING] Non-fatal persistence error: {e}")

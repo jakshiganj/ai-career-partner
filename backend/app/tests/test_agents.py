@@ -16,21 +16,24 @@ def test_market_trends_agent():
 
 from unittest.mock import patch, MagicMock
 
-@patch('app.agents.graph_rag.agent.GraphRAGAgent.get_related_skills')
-def test_graph_rag_agent(mock_get_related_skills):
-    # Just mock the return to bypass Neo4j init entirely in CI
-    mock_get_related_skills.return_value = {
-        "input_skills": ["Python"],
-        "related_skills": ["Django", "PostgreSQL"],
-        "learning_path": "Mocked learning path"
-    }
+@patch('app.agents.graph_rag.agent.GraphRAGAgent.get_expanded_skills')
+def test_graph_rag_agent(mock_get_expanded_skills):
+    # Mock Neo4j expansion
+    mock_get_expanded_skills.return_value = {"python", "django", "postgresql"}
     
-    result = graph_rag_agent(["Python"])
-    assert "Django" in result["related_skills"]
-    assert "learning_path" in result
+    # Mock the gemini extraction so it returns a stable set of job skills
+    with patch('app.agents.graph_rag.agent.GraphRAGAgent.extract_job_skills') as mock_extract:
+        mock_extract.return_value = ["Python", "AWS"]
+        
+        result = asyncio.run(graph_rag_agent({"skills": ["Python"]}, "Python Developer wanted"))
+        
+        assert "skill_match_score" in result
+        assert "AWS" in result["skill_gaps"]
+
+import asyncio
 
 def test_interview_prep_agent():
-    result = interview_prep_agent("Job Desc", "Resume Summary")
+    result = asyncio.run(interview_prep_agent("Job Desc", "Resume Summary"))
     assert len(result["initial_questions"]) > 0
 
 if __name__ == "__main__":

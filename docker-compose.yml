@@ -67,6 +67,19 @@ services:
     depends_on:
       - db
 
+  # 5. Stripe CLI (Local Webhook Testing)
+  # Run via: docker compose up stripe-cli
+  stripe-cli:
+    image: stripe/stripe-cli:latest
+    container_name: career_stripe_cli
+    env_file:
+      - ./backend/.env
+    # Forward webhooks to the FastAPI instance running natively on your host machine
+    # $$ escapes the variable so the container's shell evaluates it (which was injected via env_file)
+    entrypoint: [ "sh", "-c", "stripe listen --api-key $$STRIPE_SECRET_KEY --forward-to http://host.docker.internal:8000/api/payment/webhook" ]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
 volumes:
   postgres_data:
   neo4j_data:
