@@ -71,7 +71,7 @@ export default function Dashboard() {
             setNewRunJob('');
             refresh();
             navigate(`/dashboard?runId=${pipeline_id}`);
-        } catch (e: any) {
+        } catch (e: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
             const detail = e.response?.data?.detail;
             if (detail && detail.code === "UPGRADE_REQUIRED") {
                 setShowNewRunModal(false);

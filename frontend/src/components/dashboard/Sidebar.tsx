@@ -35,7 +35,9 @@ export default function Sidebar() {
                     const data = await res.json();
                     setTier(data.tier || 'free');
                 }
-            } catch (e) {}
+            } catch {
+                // Ignore errors during user fetch
+            }
         };
         fetchUser();
     }, []);

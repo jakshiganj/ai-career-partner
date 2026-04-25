@@ -24,11 +24,9 @@ export function useDashboardData(initialSelectedRunId: string | null = null) {
     const [runStatus, setRunStatus] = useState<{ current_stage: number; status: string } | null>(null);
 
     // Sync with URL param when it changes
-    useEffect(() => {
-        if (urlRunId && urlRunId !== selectedRunId) {
-            setSelectedRunId(urlRunId);
-        }
-    }, [urlRunId]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (urlRunId && urlRunId !== selectedRunId) {
+        setSelectedRunId(urlRunId);
+    }
 
     const fetchRuns = useCallback(async () => {
         try {
