@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar, { SIDEBAR_WIDTH } from '../components/dashboard/Sidebar';
-import { CheckCircle2, Clock, AlertCircle, Play, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { CheckCircle2, Clock, AlertCircle, Play, Trash2, ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 import { getPipelineRuns, deletePipelineRun, type PipelineRunSummary } from '../api/pipeline';
 import ConfirmModal from '../components/ui/ConfirmModal';
 
@@ -80,82 +80,84 @@ export default function PipelineRunsPage() {
     };
 
     return (
-        <div className="min-h-screen bg-[#F8FAFC]" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+        <div className="min-h-screen bg-[#F9F9F9]" style={{ fontFamily: "'Inter', sans-serif" }}>
             <Sidebar />
 
             <main className="min-h-screen flex-1 bg-white" style={{ marginLeft: SIDEBAR_WIDTH }}>
-                <header className="sticky top-0 z-20 flex h-20 w-full items-center justify-between border-b border-[#F1F5F9] bg-white/80 px-8 backdrop-blur-md">
+                {/* Institutional Header */}
+                <header className="sticky top-0 z-20 flex h-20 w-full items-center justify-between border-b border-[#E0E0E0] bg-white/90 px-12 backdrop-blur-md">
                     <div>
-                        <h2 className="text-2xl font-bold text-[#0F172A]">Pipeline Runs</h2>
-                        <p className="text-sm text-[#64748B]">View and manage all your career analysis sessions.</p>
+                        <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#4A4A4A] opacity-60 block mb-0.5">[ REPOSITORY ]</span>
+                        <h2 className="text-xl font-bold tracking-tight text-[#0D0D0D]">Historical Runs</h2>
                     </div>
                 </header>
 
-                <div className="p-8">
-                    <div className="overflow-hidden rounded-2xl border border-[#F1F5F9] bg-white shadow-sm">
+                <div className="p-12">
+                    <div className="overflow-hidden rounded-xl border border-[#E0E0E0] bg-white">
                         <table className="w-full text-left border-collapse">
                             <thead>
-                                <tr className="bg-[#F8FAFC] border-b border-[#F1F5F9]">
-                                    <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-[#94A3B8]">Label</th>
-                                    <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-[#94A3B8]">Date Started</th>
-                                    <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-[#94A3B8]">ATS Score</th>
-                                    <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-[#94A3B8]">Status</th>
-                                    <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-[#94A3B8]">Actions</th>
+                                <tr className="bg-[#F9F9F9] border-b border-[#E0E0E0]">
+                                    <th className="px-8 py-5 text-[10px] font-bold uppercase tracking-[0.15em] text-[#4A4A4A] opacity-60">Session Label</th>
+                                    <th className="px-8 py-5 text-[10px] font-bold uppercase tracking-[0.15em] text-[#4A4A4A] opacity-60">Timestamp</th>
+                                    <th className="px-8 py-5 text-[10px] font-bold uppercase tracking-[0.15em] text-[#4A4A4A] opacity-60">ATS Index</th>
+                                    <th className="px-8 py-5 text-[10px] font-bold uppercase tracking-[0.15em] text-[#4A4A4A] opacity-60">Status</th>
+                                    <th className="px-8 py-5 text-[10px] font-bold uppercase tracking-[0.15em] text-[#4A4A4A] opacity-60">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-[#F1F5F9]">
+                            <tbody className="divide-y divide-[#E0E0E0]">
                                 {loading ? (
                                     <tr>
-                                        <td colSpan={5} className="px-6 py-12 text-center">
+                                        <td colSpan={5} className="px-8 py-20 text-center">
                                             <div className="flex justify-center">
-                                                <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#E2E8F0] border-t-[#3B82F6]" />
+                                                <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#E0E0E0] border-t-[#5BC0EB]" />
                                             </div>
                                         </td>
                                     </tr>
                                 ) : runs.length === 0 ? (
                                     <tr>
-                                        <td colSpan={5} className="px-6 py-12 text-center text-[#64748B]">
-                                            No pipeline runs found.
+                                        <td colSpan={5} className="px-8 py-20 text-center text-sm font-medium text-[#4A4A4A] opacity-60">
+                                            No sessions found in the repository.
                                         </td>
                                     </tr>
                                 ) : (
                                     runs.map((run) => (
-                                        <tr key={run.id} className="group hover:bg-[#F8FAFC] transition-colors">
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="h-8 w-8 flex items-center justify-center rounded-lg bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                                        <tr key={run.id} className="group hover:bg-[#F9F9F9] transition-colors">
+                                            <td className="px-8 py-6">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="h-9 w-9 flex items-center justify-center rounded-lg bg-white border border-[#E0E0E0] group-hover:bg-[#0D0D0D] group-hover:text-white group-hover:border-[#0D0D0D] transition-all">
                                                         <Play className="h-3 w-3 fill-current" />
                                                     </div>
-                                                    <span className="font-semibold text-[#0F172A]">{run.label || 'Career Analysis'}</span>
+                                                    <span className="text-sm font-bold tracking-tight text-[#0D0D0D]">{run.label || 'Career Analysis'}</span>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 text-sm text-[#64748B]">
+                                            <td className="px-8 py-6 text-[13px] font-medium text-[#4A4A4A]">
                                                 {formatDate(run.created_at)}
                                             </td>
-                                            <td className="px-6 py-4">
+                                            <td className="px-8 py-6">
                                                 {run.ats_score ? (
-                                                    <div className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-sm font-bold bg-[#DCFCE7] text-[#16A34A]">
-                                                        {run.ats_score}
+                                                    <div className="inline-flex items-center gap-1.5 rounded-lg border border-[#E0E0E0] px-3 py-1 text-[13px] font-bold tabular-nums text-[#0D0D0D]">
+                                                        {run.ats_score}%
                                                     </div>
                                                 ) : (
-                                                    <span className="text-sm text-[#94A3B8]">N/A</span>
+                                                    <span className="text-xs font-bold text-[#A0A0A0]">--</span>
                                                 )}
                                             </td>
-                                            <td className="px-6 py-4">
+                                            <td className="px-8 py-6">
                                                 <StatusBadge status={run.status} />
                                             </td>
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center gap-4">
+                                            <td className="px-8 py-6">
+                                                <div className="flex items-center gap-6">
                                                     <button 
-                                                        onClick={() => navigate(`/dashboard/cv-analysis?runId=${run.id}`)}
-                                                        className="text-sm font-bold text-[#3B82F6] hover:text-[#2563EB] hover:underline"
+                                                        onClick={() => navigate(`/dashboard?runId=${run.id}`)}
+                                                        className="text-[11px] font-bold uppercase tracking-widest text-[#5BC0EB] hover:text-[#0D0D0D] flex items-center gap-2 transition-colors"
                                                     >
-                                                        View Details
+                                                        Details
+                                                        <ArrowRight className="h-3 w-3" />
                                                     </button>
                                                     <button 
                                                         onClick={() => openDeleteModal(run.id)}
                                                         disabled={deletingId === run.id}
-                                                        className={`p-2 text-[#94A3B8] hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors ${deletingId === run.id ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                        className={`p-2 text-[#A0A0A0] hover:text-[#0D0D0D] transition-colors ${deletingId === run.id ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                         title="Delete run"
                                                     >
                                                         <Trash2 className="h-4 w-4" />
@@ -168,32 +170,29 @@ export default function PipelineRunsPage() {
                             </tbody>
                         </table>
                         
-                        {/* Pagination Controls */}
+                        {/* Institutional Pagination */}
                         {!loading && total > 0 && (
-                            <div className="flex items-center justify-between border-t border-[#F1F5F9] bg-[#F8FAFC] px-6 py-4">
-                                <div className="text-sm text-[#64748B]">
-                                    Showing <span className="font-semibold text-[#0F172A]">{(currentPage - 1) * PAGE_SIZE + 1}</span> to{' '}
-                                    <span className="font-semibold text-[#0F172A]">{Math.min(currentPage * PAGE_SIZE, total)}</span> of{' '}
-                                    <span className="font-semibold text-[#0F172A]">{total}</span> runs
+                            <div className="flex items-center justify-between border-t border-[#E0E0E0] bg-[#F9F9F9] px-8 py-5">
+                                <div className="text-[11px] font-bold uppercase tracking-wider text-[#4A4A4A] opacity-60">
+                                    Displaying {Math.min(currentPage * PAGE_SIZE, total)} of {total} Sessions
                                 </div>
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-4">
                                     <button
                                         onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                                         disabled={currentPage === 1}
-                                        className="flex items-center gap-1 rounded-lg border border-[#E2E8F0] bg-white px-3 py-1.5 text-sm font-semibold text-[#64748B] transition-colors hover:bg-[#F8FAFC] disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="h-9 w-9 flex items-center justify-center rounded-lg border border-[#E0E0E0] bg-white text-[#4A4A4A] transition-all hover:bg-[#0D0D0D] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
                                     >
                                         <ChevronLeft className="h-4 w-4" />
-                                        Previous
                                     </button>
-                                    <div className="flex items-center gap-1">
+                                    <div className="flex items-center gap-2">
                                         {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
                                             <button
                                                 key={page}
                                                 onClick={() => setCurrentPage(page)}
-                                                className={`h-8 w-8 rounded-lg text-sm font-bold transition-colors ${
+                                                className={`h-9 w-9 rounded-lg text-[11px] font-bold transition-all ${
                                                     currentPage === page
-                                                    ? 'bg-[#3B82F6] text-white shadow-md shadow-blue-500/20'
-                                                    : 'text-[#64748B] hover:bg-[#E2E8F0]'
+                                                    ? 'bg-[#0D0D0D] text-white'
+                                                    : 'bg-white border border-[#E0E0E0] text-[#4A4A4A] hover:border-[#0D0D0D]'
                                                 }`}
                                             >
                                                 {page}
@@ -203,9 +202,8 @@ export default function PipelineRunsPage() {
                                     <button
                                         onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                                         disabled={currentPage === totalPages}
-                                        className="flex items-center gap-1 rounded-lg border border-[#E2E8F0] bg-white px-3 py-1.5 text-sm font-semibold text-[#64748B] transition-colors hover:bg-[#F8FAFC] disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="h-9 w-9 flex items-center justify-center rounded-lg border border-[#E0E0E0] bg-white text-[#4A4A4A] transition-all hover:bg-[#0D0D0D] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
                                     >
-                                        Next
                                         <ChevronRight className="h-4 w-4" />
                                     </button>
                                 </div>
@@ -235,16 +233,16 @@ function StatusBadge({ status }: { status: string }) {
     const isFailed = status === 'failed';
     
     return (
-        <div className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold ${
-            isCompleted ? 'bg-[#DCFCE7] text-[#16A34A]' :
-            isRunning ? 'bg-blue-50 text-[#3B82F6]' :
-            isFailed ? 'bg-red-50 text-red-600' :
-            'bg-gray-50 text-gray-400'
+        <div className={`inline-flex items-center gap-1.5 rounded-lg border border-[#E0E0E0] px-3 py-1 text-[10px] font-bold uppercase tracking-widest ${
+            isCompleted ? 'bg-white text-[#16A34A]' :
+            isRunning ? 'bg-white text-[#5BC0EB]' :
+            isFailed ? 'bg-white text-red-600' :
+            'bg-white text-[#A0A0A0]'
         }`}>
             {isRunning && <Clock className="h-3 w-3 animate-pulse" />}
             {isCompleted && <CheckCircle2 className="h-3 w-3" />}
             {isFailed && <AlertCircle className="h-3 w-3" />}
-            {status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ')}
+            {status.replace('_', ' ')}
         </div>
     );
 }

@@ -20,50 +20,53 @@ interface SalaryInsightsCardProps {
 export default function SalaryInsightsCard({ benchmarks, status = 'Not Run' }: SalaryInsightsCardProps) {
     if (!benchmarks || typeof benchmarks.salary_min !== 'number') {
         return (
-            <div className="rounded-2xl border border-[#E2E8F0] bg-white shadow-sm overflow-hidden flex flex-col h-full">
-                <div className="flex items-center justify-between border-b border-[#F1F5F9] px-6 py-4">
-                    <div className="flex items-center gap-3">
-                        <h3 className="text-lg font-bold text-[#0F172A]">Salary Insights</h3>
-                    </div>
+            <div className="rounded-xl border border-[#E0E0E0] bg-white h-full overflow-hidden flex flex-col">
+                <div className="flex items-center justify-between border-b border-[#E0E0E0] px-8 py-5 bg-[#F9F9F9]">
+                    <h3 className="text-sm font-bold uppercase tracking-[0.15em] text-[#0D0D0D]">Market Valuation</h3>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-[#4A4A4A] opacity-40">[ NO DATA ]</span>
                 </div>
-                <div className="flex-1 p-8 flex items-center justify-center text-sm text-[#94A3B8]">
-                    No salary data available
+                <div className="flex-1 p-16 flex items-center justify-center text-sm font-medium text-[#4A4A4A] opacity-60">
+                    Valuation data will be computed after market analysis.
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="rounded-2xl border border-[#E2E8F0] bg-white shadow-sm overflow-hidden flex flex-col h-full">
-            <div className="flex items-center justify-between border-b border-[#F1F5F9] px-6 py-4">
-                <div className="flex items-center gap-3 w-full sm:w-auto">
-                    <h3 className="text-lg font-bold text-[#0F172A]">Salary Insights</h3>
-                    <span className="rounded-full bg-[#EFF6FF] px-2.5 py-0.5 text-xs font-bold text-[#3B82F6] border border-[#BFDBFE] flex items-center gap-1">
-                        <DollarSign className="h-3 w-3" /> Market Data
+        <div className="rounded-xl border border-[#E0E0E0] bg-white h-full overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between border-b border-[#E0E0E0] px-8 py-5 bg-[#F9F9F9]">
+                <div className="flex items-center gap-4">
+                    <h3 className="text-sm font-bold uppercase tracking-[0.15em] text-[#0D0D0D]">Market Valuation</h3>
+                    <span className="rounded-full bg-[#5BC0EB] px-3 py-1 text-[9px] font-bold uppercase tracking-widest text-white flex items-center gap-1">
+                        <DollarSign className="h-3 w-3" /> ADVIEST INDEX
                     </span>
                 </div>
-                <div className="flex gap-2 text-xs">
-                    <span className="text-[#64748B] font-medium hidden sm:inline">
-                        Status: <span className="text-[#16A34A]">{status}</span>
-                    </span>
-                </div>
+                <span className="rounded-full bg-[#0D0D0D] px-3 py-1 text-[9px] font-bold uppercase tracking-widest text-white">
+                    {status}
+                </span>
             </div>
 
-            <div className="p-6 flex flex-col gap-6">
+            <div className="p-8 flex flex-col gap-10">
                 <div>
-                    <h4 className="text-sm font-semibold text-[#0F172A] mb-4">Estimated Market Range ({benchmarks.currency || 'USD'})</h4>
-                    <SalaryBenchmark 
-                        min={benchmarks.salary_min}
-                        max={benchmarks.salary_max!}
-                        median={benchmarks.salary_median!}
-                    />
+                    <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#4A4A4A] opacity-60 mb-6">COMPENSATION BENCHMARK ({benchmarks.currency || 'USD'})</h4>
+                    <div className="rounded-xl border border-[#E0E0E0] bg-[#F9F9F9] p-8">
+                        <SalaryBenchmark 
+                            min={benchmarks.salary_min}
+                            max={benchmarks.salary_max!}
+                            median={benchmarks.salary_median!}
+                        />
+                    </div>
                 </div>
                 
                 {benchmarks.source_summary && (
-                    <div className="rounded-xl bg-[#F8FAFC] p-4 text-sm text-[#475569] leading-relaxed border border-[#F1F5F9]">
-                        <p><span className="font-semibold text-[#0F172A]">Analysis:</span> {benchmarks.source_summary}</p>
+                    <div className="rounded-xl bg-[#0D0D0D] p-8 text-white">
+                        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#5BC0EB] mb-4">ECONOMIC ANALYSIS</p>
+                        <p className="text-[14px] leading-relaxed font-medium opacity-90">{benchmarks.source_summary}</p>
                         {benchmarks.confidence && (
-                            <p className="mt-2 text-xs text-[#64748B]">Confidence: <span className="font-medium text-[#0F172A]">{benchmarks.confidence}</span></p>
+                            <div className="mt-6 flex items-center gap-3">
+                                <span className="text-[10px] font-bold uppercase tracking-widest opacity-40">Confidence Level:</span>
+                                <span className="text-[10px] font-bold uppercase tracking-widest text-[#5BC0EB]">{benchmarks.confidence}</span>
+                            </div>
                         )}
                     </div>
                 )}

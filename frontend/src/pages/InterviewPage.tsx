@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import client from '../api/client';
-import { Mic, Keyboard, MessageSquare, Lightbulb } from 'lucide-react';
+import { Mic, Keyboard, MessageSquare, Lightbulb, Play, Square, ArrowRight, ShieldCheck } from 'lucide-react';
 import Sidebar, { SIDEBAR_WIDTH } from '../components/dashboard/Sidebar';
 
 interface Message {
@@ -192,86 +192,131 @@ export default function InterviewPage() {
     useEffect(() => { return () => { cleanupAudio(); if (pingIntervalRef.current) clearInterval(pingIntervalRef.current); wsRef.current?.close(); }; }, []);
 
     return (
-        <div className="flex min-h-screen bg-[#F8FAFC]">
+        <div className="flex min-h-screen bg-[#F9F9F9]" style={{ fontFamily: "'Inter', sans-serif" }}>
             <Sidebar />
             
-            <main className="flex-1 flex flex-col min-h-screen" style={{ marginLeft: SIDEBAR_WIDTH }}>
-                <div className="flex-1 flex overflow-hidden p-6 gap-6" style={{ height: '100vh' }}>
-                    {/* Left: Orb & Live Feedback */}
-                    <div className="flex-[2] flex flex-col gap-6 min-w-0">
-                        {/* Visualizer Container */}
-                        <div className="relative flex-1 bg-white rounded-3xl border border-[#F1F5F9] overflow-hidden shadow-sm flex items-center justify-center">
-                            {/* Orb */}
-                            <div className="relative flex items-center justify-center w-full h-full bg-slate-50/30">
-                                {connected ? (
-                                    audioMode ? (
-                                        <div className="w-32 h-32 bg-blue-500 rounded-full animate-pulse shadow-[0_0_60px_rgba(59,130,246,0.3)]"></div>
-                                    ) : (
-                                        <div className="text-center">
-                                            <div className="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-blue-500/20">
-                                                <Keyboard className="h-10 w-10 text-blue-600" />
-                                            </div>
-                                            <p className="text-slate-600 font-bold">Text Mode Active</p>
-                                        </div>
-                                    )
-                                ) : (
-                                    <div className="text-center">
-                                        <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 border border-dashed border-gray-300">
-                                            <Mic className="h-10 w-10 text-gray-400 opacity-50" />
-                                        </div>
-                                        <p className="text-gray-500 font-bold tracking-tight">Agent Offline</p>
-                                    </div>
-                                )}
-
-                                {connected && (
-                                    <div className="absolute top-6 left-6 flex items-center gap-2 bg-black/80 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 shadow-lg">
-                                        <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-                                        <span className="text-[10px] font-black text-white tracking-widest uppercase">Live Session</span>
-                                    </div>
-                                )}
+            <main className="flex-1 flex flex-col bg-white" style={{ marginLeft: SIDEBAR_WIDTH }}>
+                {/* Institutional Header */}
+                <header className="sticky top-0 z-20 flex h-20 w-full items-center justify-between border-b border-[#E0E0E0] bg-white/90 px-12 backdrop-blur-md">
+                    <div>
+                        <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#4A4A4A] opacity-60 block mb-0.5">[ SIMULATION ]</span>
+                        <h2 className="text-xl font-bold tracking-tight text-[#0D0D0D]">Behavioral Interview Lab</h2>
+                    </div>
+                    <div className="flex items-center gap-6">
+                        {connected && (
+                            <div className="flex items-center gap-3 rounded-lg border border-[#E0E0E0] px-4 py-2">
+                                <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+                                <span className="text-[10px] font-bold uppercase tracking-widest text-[#0D0D0D]">Live Capture Active</span>
                             </div>
+                        )}
+                        <div className="flex items-center gap-2 text-[#4A4A4A]">
+                            <ShieldCheck className="h-4 w-4" />
+                            <span className="text-[10px] font-bold uppercase tracking-widest opacity-60">Verified Environment</span>
+                        </div>
+                    </div>
+                </header>
 
-                            {/* Bottom Controls */}
-                            <div className="absolute bottom-6 right-6 flex items-center gap-3">
+                <div className="flex flex-1 overflow-hidden p-12 gap-12 h-[calc(100vh-80px)]">
+                    {/* Left: Simulation Control & Visuals */}
+                    <div className="flex-[3] flex flex-col gap-10 min-w-0">
+                        {/* Interactive Orb Panel */}
+                        <div className="relative flex-1 bg-[#F9F9F9] rounded-xl border border-[#E0E0E0] overflow-hidden flex items-center justify-center">
+                            {/* Institutional Grid Background */}
+                            <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(#0D0D0D 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
+
+                            {connected ? (
+                                <div className="relative flex flex-col items-center">
+                                    {audioMode ? (
+                                        <div className="relative">
+                                            <div className="w-48 h-48 bg-[#0D0D0D] rounded-full flex items-center justify-center shadow-[0_0_80px_rgba(91,192,235,0.2)] animate-pulse">
+                                                <div className="w-44 h-44 border border-white/10 rounded-full" />
+                                            </div>
+                                            <div className="absolute -inset-4 border border-[#5BC0EB]/30 rounded-full animate-ping" style={{ animationDuration: '3s' }} />
+                                        </div>
+                                    ) : (
+                                        <div className="w-48 h-48 bg-white border border-[#E0E0E0] rounded-full flex items-center justify-center shadow-xl">
+                                            <Keyboard className="h-12 w-12 text-[#0D0D0D]" />
+                                        </div>
+                                    )}
+                                    <div className="mt-12 text-center">
+                                        <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-[#0D0D0D]">ADVIEST CO-PILOT</h3>
+                                        <p className="mt-2 text-[11px] font-bold uppercase tracking-widest text-[#4A4A4A] opacity-60">Processing Neural Inputs...</p>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="text-center">
+                                    <div className="w-24 h-24 border border-dashed border-[#E0E0E0] rounded-full flex items-center justify-center mx-auto mb-8">
+                                        <Mic className="h-8 w-8 text-[#E0E0E0]" />
+                                    </div>
+                                    <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-[#0D0D0D] opacity-40">Awaiting Signal</h3>
+                                    <p className="mt-2 text-[10px] font-bold uppercase tracking-widest text-[#4A4A4A] opacity-40">Initialize session to begin</p>
+                                </div>
+                            )}
+
+                            {/* Control Bar */}
+                            <div className="absolute bottom-10 flex items-center gap-4">
                                 {!connected ? (
                                     <>
-                                        <button className="px-6 h-12 flex items-center gap-2 justify-center rounded-2xl bg-blue-600 text-white shadow-xl shadow-blue-500/10 hover:bg-blue-700 transition-all font-bold text-sm" onClick={() => connect(true)}>
-                                            <Mic className="h-4 w-4" /> Start Voice
+                                        <button 
+                                            className="h-12 px-8 flex items-center gap-3 rounded-lg bg-[#0D0D0D] text-white text-[11px] font-bold uppercase tracking-widest hover:bg-[#5BC0EB] transition-all" 
+                                            onClick={() => connect(true)}
+                                        >
+                                            <Mic className="h-4 w-4" /> Initialize Voice
                                         </button>
-                                        <button className="px-6 h-12 flex items-center gap-2 justify-center rounded-2xl bg-white text-slate-700 border border-[#F1F5F9] hover:bg-slate-50 transition-all font-bold text-sm" onClick={() => connect(false)}>
-                                            <Keyboard className="h-4 w-4" /> Text Only
+                                        <button 
+                                            className="h-12 px-8 flex items-center gap-3 rounded-lg bg-white border border-[#E0E0E0] text-[#0D0D0D] text-[11px] font-bold uppercase tracking-widest hover:bg-[#F9F9F9] transition-all" 
+                                            onClick={() => connect(false)}
+                                        >
+                                            <Keyboard className="h-4 w-4" /> Text Interface
                                         </button>
                                         {sessionEnded && (
-                                            <button className="px-6 h-12 flex items-center gap-2 justify-center rounded-2xl bg-emerald-600 text-white shadow-xl shadow-emerald-500/10 hover:bg-emerald-700 transition-all font-bold text-sm ml-4" onClick={() => navigate('/interview/report')}>
-                                                View Report
+                                            <button 
+                                                className="h-12 px-8 flex items-center gap-3 rounded-lg bg-[#5BC0EB] text-white text-[11px] font-bold uppercase tracking-widest hover:bg-[#0D0D0D] transition-all" 
+                                                onClick={() => navigate('/interview/report')}
+                                            >
+                                                Analytical Report <ArrowRight className="h-4 w-4" />
                                             </button>
                                         )}
                                     </>
                                 ) : (
-                                    <button className="px-6 h-12 flex items-center justify-center rounded-2xl bg-red-600 text-white shadow-xl shadow-red-500/10 hover:bg-red-700 transition-all font-bold text-sm" onClick={disconnect}>
-                                        End Session
+                                    <button 
+                                        className="h-12 px-8 flex items-center gap-3 rounded-lg bg-red-600 text-white text-[11px] font-bold uppercase tracking-widest hover:bg-red-700 transition-all shadow-lg shadow-red-500/10" 
+                                        onClick={disconnect}
+                                    >
+                                        <Square className="h-3 w-3 fill-current" /> Terminate Session
                                     </button>
                                 )}
                             </div>
                         </div>
 
-                        {/* Live Transcription */}
-                        <div className="h-64 bg-white rounded-3xl border border-[#F1F5F9] p-6 overflow-hidden flex flex-col shadow-sm">
-                            <div className="flex items-center gap-2 mb-4">
-                                <MessageSquare className="h-4 w-4 text-blue-600" />
-                                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[#94A3B8]">Live Transcript</h3>
+                        {/* Dialogue Feed */}
+                        <div className="h-72 bg-white rounded-xl border border-[#E0E0E0] p-10 overflow-hidden flex flex-col">
+                            <div className="flex items-center justify-between mb-8 pb-4 border-b border-[#F0F0F0]">
+                                <div className="flex items-center gap-3">
+                                    <MessageSquare className="h-4 w-4 text-[#5BC0EB]" />
+                                    <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#4A4A4A] opacity-60">Session Transcript</h3>
+                                </div>
+                                <span className="text-[9px] font-bold uppercase tracking-widest text-[#4A4A4A] opacity-40">Secure Feed</span>
                             </div>
 
-                            <div className="flex-1 overflow-y-auto space-y-4 pr-2">
+                            <div className="flex-1 overflow-y-auto space-y-6 pr-4 custom-scrollbar">
                                 {messages.length === 0 && (
-                                    <div className="text-center text-[#94A3B8] text-sm mt-8 italic font-medium opacity-50 uppercase tracking-widest">Awaiting interaction...</div>
+                                    <div className="flex flex-col items-center justify-center h-full opacity-30">
+                                        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#0D0D0D]">Ready for Input</p>
+                                    </div>
                                 )}
                                 {messages.map(msg => (
-                                    <div key={msg.id} className="flex gap-4">
-                                        <span className={`text-[10px] font-black w-10 pt-1.5 shrink-0 uppercase tracking-wider ${msg.type === 'user' ? 'text-blue-600' : msg.type === 'system' ? 'text-amber-500' : 'text-slate-400'}`}>
-                                            {msg.type === 'user' ? 'YOU' : msg.type === 'system' ? 'SYS' : 'AI'}
-                                        </span>
-                                        <p className={`text-sm leading-relaxed ${msg.type === 'user' ? 'text-[#0F172A] font-bold' : msg.type === 'system' ? 'text-amber-600 italic' : 'text-[#475569]'}`}>
+                                    <div key={msg.id} className="flex gap-8 group">
+                                        <div className={`w-16 pt-1 shrink-0 text-[9px] font-bold uppercase tracking-[0.15em] ${
+                                            msg.type === 'user' ? 'text-[#5BC0EB]' : 
+                                            msg.type === 'system' ? 'text-amber-500' : 'text-[#0D0D0D]'
+                                        }`}>
+                                            {msg.type === 'user' ? 'CANDIDATE' : msg.type === 'system' ? 'KERNEL' : 'ADVIEST'}
+                                        </div>
+                                        <p className={`text-[13px] leading-relaxed font-medium ${
+                                            msg.type === 'user' ? 'text-[#0D0D0D] font-bold' : 
+                                            msg.type === 'system' ? 'text-amber-600 italic' : 'text-[#4A4A4A]'
+                                        }`}>
                                             {msg.text}
                                         </p>
                                     </div>
@@ -280,62 +325,82 @@ export default function InterviewPage() {
                             </div>
 
                             {connected && (
-                                <div className="mt-4 flex gap-3 pt-4 border-t border-[#F1F5F9]">
+                                <div className="mt-8 pt-8 border-t border-[#F0F0F0] flex gap-4">
                                     <input
-                                        className="flex-1 bg-[#F8FAFC] border border-[#F1F5F9] rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-400 transition-all"
-                                        placeholder={audioMode ? 'Supplementary message...' : 'Enter your response...'}
+                                        className="flex-1 bg-[#F9F9F9] border border-[#E0E0E0] rounded-lg px-6 py-4 text-[13px] font-bold placeholder:text-[#A0A0A0] focus:outline-none focus:border-[#0D0D0D] transition-all"
+                                        placeholder={audioMode ? 'Secondary Context Input...' : 'Enter your professional response...'}
                                         value={input}
                                         onChange={e => setInput(e.target.value)}
                                         onKeyDown={handleKeyDown}
                                     />
                                     <button
-                                        className="px-6 py-3 bg-[#0F172A] text-white rounded-xl text-sm font-black hover:bg-black transition-all shadow-xl shadow-black/5 disabled:opacity-50"
+                                        className="px-8 bg-[#0D0D0D] text-white rounded-lg text-[11px] font-bold uppercase tracking-widest hover:bg-[#5BC0EB] transition-all disabled:opacity-20"
                                         onClick={sendMessage}
                                         disabled={!input.trim()}
                                     >
-                                        Send
+                                        Execute
                                     </button>
                                 </div>
                             )}
                         </div>
                     </div>
 
-                    {/* Right Sidebar: Context */}
-                    <aside className="flex-1 min-w-[320px] max-w-sm flex flex-col gap-6 overflow-y-auto">
-                        <div className="bg-white rounded-3xl border border-[#F1F5F9] p-6 shadow-sm">
-                            <div className="flex items-center justify-between mb-4">
-                                <span className="px-3 py-1 bg-blue-50 text-blue-600 text-[10px] font-black rounded-lg uppercase tracking-wider border border-blue-100">Live Agent</span>
+                    {/* Right: Insights Panel */}
+                    <aside className="flex-1 min-w-[360px] max-w-sm flex flex-col gap-10">
+                        <div className="bg-[#0D0D0D] rounded-xl p-10 text-white shadow-2xl">
+                            <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-[#5BC0EB] block mb-4">PROTOCOL 4.2</span>
+                            <h2 className="text-2xl font-bold tracking-tight mb-2">Performance Monitor</h2>
+                            <p className="text-[11px] font-medium text-white/40 uppercase tracking-widest">Active Analysis: Behavioral Response</p>
+                            
+                            <div className="mt-10 space-y-6">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-[10px] font-bold uppercase tracking-widest text-white/60">Voice Clarity</span>
+                                    <span className="text-[11px] font-bold text-[#5BC0EB]">{connected && audioMode ? 'Optimal' : '--'}</span>
+                                </div>
+                                <div className="h-1 w-full bg-white/10 rounded-full overflow-hidden">
+                                    <div className={`h-full bg-[#5BC0EB] transition-all duration-1000 ${connected && audioMode ? 'w-3/4' : 'w-0'}`} />
+                                </div>
+                                
+                                <div className="flex items-center justify-between pt-2">
+                                    <span className="text-[10px] font-bold uppercase tracking-widest text-white/60">Logic Consistency</span>
+                                    <span className="text-[11px] font-bold text-[#5BC0EB]">{messages.length > 2 ? 'Analyzing' : '--'}</span>
+                                </div>
+                                <div className="h-1 w-full bg-white/10 rounded-full overflow-hidden">
+                                    <div className={`h-full bg-[#5BC0EB] transition-all duration-1000 ${messages.length > 2 ? 'w-1/2' : 'w-0'}`} />
+                                </div>
                             </div>
-                            <h2 className="text-xl font-bold text-[#0F172A] mb-1">Interview Prep</h2>
-                            <p className="text-sm font-medium text-[#64748B]">Professional Mode Active</p>
                         </div>
 
-                        <div className="bg-white rounded-3xl border border-[#F1F5F9] p-6 shadow-sm flex-1">
-                            <div className="flex items-center gap-2 mb-6">
-                                <Lightbulb className="h-5 w-5 text-amber-500" />
-                                <h3 className="text-sm font-black text-[#0F172A] uppercase tracking-wider">Coach Insights</h3>
+                        <div className="bg-white rounded-xl border border-[#E0E0E0] p-10 flex-1 flex flex-col">
+                            <div className="flex items-center gap-3 mb-10">
+                                <Lightbulb className="h-5 w-5 text-[#5BC0EB]" />
+                                <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#0D0D0D]">Tactical Insights</h3>
                             </div>
 
-                            <div className="space-y-6">
-                                <section className="space-y-3">
-                                    <p className="text-[10px] font-black text-[#94A3B8] uppercase tracking-[0.2em] mb-4">Talking Points</p>
-                                    {[
-                                        { title: 'STAR Method', desc: 'Situation, Task, Action, Result.' },
-                                        { title: 'Concise answers', desc: 'Aim for 60-90s per response.' }
-                                    ].map((item, i) => (
-                                        <div key={i} className="p-4 rounded-2xl border border-[#F1F5F9] bg-[#F8FAFC] hover:border-blue-200 transition-all cursor-default">
-                                            <p className="text-sm font-bold text-[#0F172A] mb-1">{item.title}</p>
-                                            <p className="text-xs font-medium text-[#64748B]">{item.desc}</p>
-                                        </div>
-                                    ))}
+                            <div className="space-y-8 flex-1">
+                                <section>
+                                    <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#4A4A4A] opacity-40 block mb-6">Execution Strategy</span>
+                                    <div className="space-y-4">
+                                        {[
+                                            { title: 'The STAR Framework', desc: 'Structure responses: Situation, Task, Action, Result.' },
+                                            { title: 'Temporal Control', desc: 'Maintain response duration between 60-90 seconds.' }
+                                        ].map((item, i) => (
+                                            <div key={i} className="p-5 rounded-lg border border-[#F0F0F0] bg-[#F9F9F9] group hover:border-[#5BC0EB] transition-all">
+                                                <p className="text-[11px] font-bold text-[#0D0D0D] mb-1 uppercase tracking-tight">{item.title}</p>
+                                                <p className="text-[11px] font-medium text-[#4A4A4A] opacity-60 leading-relaxed">{item.desc}</p>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </section>
 
-                                <section className="space-y-3">
-                                    <p className="text-[10px] font-black text-[#94A3B8] uppercase tracking-[0.2em] mb-4">Real-time Feed</p>
-                                    <div className="p-4 rounded-2xl bg-blue-50/50 border border-blue-100">
-                                        <p className="text-xs font-black text-blue-600 uppercase tracking-tight mb-1">{connected ? 'Listening' : 'Ready'}</p>
-                                        <p className="text-xs font-medium text-blue-800/80 leading-relaxed">
-                                            {connected ? 'The agent is listening for your voice. Speak naturally and clearly.' : 'Connect to start receiving real-time coaching insights.'}
+                                <section className="mt-auto pt-10 border-t border-[#F0F0F0]">
+                                    <div className="p-6 rounded-lg bg-[#5BC0EB]/5 border border-[#5BC0EB]/20">
+                                        <div className="flex items-center gap-2 mb-3">
+                                            <div className="h-1.5 w-1.5 rounded-full bg-[#5BC0EB]" />
+                                            <span className="text-[9px] font-bold uppercase tracking-widest text-[#5BC0EB]">Live Observer</span>
+                                        </div>
+                                        <p className="text-[11px] font-medium text-[#0D0D0D] leading-relaxed">
+                                            {connected ? 'The agent is parsing your vocal tone and semantic structure. Maintain a neutral, professional frequency.' : 'Initialize the simulation to activate the real-time feedback kernel.'}
                                         </p>
                                     </div>
                                 </section>

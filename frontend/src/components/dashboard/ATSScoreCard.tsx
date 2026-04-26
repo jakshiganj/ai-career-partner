@@ -1,4 +1,4 @@
-import { CheckCircle2, XCircle, Check, AlertCircle } from 'lucide-react';
+import { CheckCircle2, XCircle, Check, AlertCircle, ArrowUpRight } from 'lucide-react';
 
 type CardStatus = 'Complete' | 'In Progress' | 'Not Run' | 'Failed';
 
@@ -11,9 +11,9 @@ interface ATSScoreCardProps {
 }
 
 function getScoreColor(score: number): { text: string; stroke: string } {
-    if (score >= 80) return { text: '#16A34A', stroke: '#22C55E' };
-    if (score >= 50) return { text: '#B45309', stroke: '#F59E0B' };
-    return { text: '#DC2626', stroke: '#EF4444' };
+    if (score >= 80) return { text: '#0D0D0D', stroke: '#5BC0EB' }; // Institutional black with vibrant blue
+    if (score >= 50) return { text: '#0D0D0D', stroke: '#F4D35E' }; // Warm yellow
+    return { text: '#0D0D0D', stroke: '#EE6C4D' }; // Muted coral
 }
 
 export default function ATSScoreCard({
@@ -24,13 +24,13 @@ export default function ATSScoreCard({
 }: ATSScoreCardProps) {
     if (score == null) {
         return (
-            <div className="rounded-2xl border border-[#E2E8F0] bg-white shadow-sm mb-6 overflow-hidden">
-                <div className="flex items-center justify-between border-b border-[#F1F5F9] px-6 py-4">
-                    <h3 className="text-lg font-bold text-[#0F172A]">ATS Compatibility Score</h3>
-                    <span className="text-sm font-medium text-[#3B82F6] opacity-50 cursor-not-allowed">View Full Report</span>
+            <div className="rounded-xl border border-[#E0E0E0] bg-white mb-8 overflow-hidden">
+                <div className="flex items-center justify-between border-b border-[#E0E0E0] px-8 py-5 bg-[#F9F9F9]">
+                    <h3 className="text-sm font-bold uppercase tracking-[0.15em] text-[#0D0D0D]">ATS Compatibility Score</h3>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-[#4A4A4A] opacity-40">[ RUN REQUIRED ]</span>
                 </div>
-                <div className="p-8 text-center text-sm text-[#94A3B8]">
-                    Run pipeline to see ATS score
+                <div className="p-16 text-center text-sm font-medium text-[#4A4A4A] opacity-60">
+                    Initialize the career pipeline to generate your compatibility index.
                 </div>
             </div>
         );
@@ -53,11 +53,11 @@ export default function ATSScoreCard({
     const formattingScore = atsBreakdown.formatting ?? (typeof b.formatting === 'number' ? b.formatting : score);
 
     return (
-        <section className="rounded-2xl border border-[#E2E8F0] bg-white shadow-sm mb-6 overflow-hidden">
-            <div className="flex lg:flex-row flex-col items-center justify-between border-b border-[#F1F5F9] px-6 py-4">
-                <div className="flex items-center gap-3 w-full lg:w-auto">
-                    <h3 className="text-lg font-bold text-[#0F172A]">ATS Compatibility Score</h3>
-                    <span className="rounded-full bg-[#DCFCE7] px-2.5 py-0.5 text-xs font-bold text-[#16A34A] border border-[#BBF7D0]">
+        <section className="rounded-xl border border-[#E0E0E0] bg-white mb-10 overflow-hidden">
+            <div className="flex lg:flex-row flex-col items-center justify-between border-b border-[#E0E0E0] px-8 py-5 bg-[#F9F9F9]">
+                <div className="flex items-center gap-4 w-full lg:w-auto">
+                    <h3 className="text-sm font-bold uppercase tracking-[0.15em] text-[#0D0D0D]">ATS Compatibility Index</h3>
+                    <span className="rounded-full bg-[#0D0D0D] px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-white">
                         {status}
                     </span>
                 </div>
@@ -65,27 +65,27 @@ export default function ATSScoreCard({
                     <button
                         type="button"
                         onClick={onViewImprovements}
-                        className="text-sm font-medium text-[#3B82F6] hover:text-[#2563EB] mt-3 lg:mt-0 self-start lg:self-auto"
+                        className="text-[11px] font-bold uppercase tracking-widest text-[#5BC0EB] hover:text-[#0D0D0D] flex items-center gap-2 transition-colors mt-3 lg:mt-0"
                     >
                         View Full Report
+                        <ArrowUpRight className="h-3.5 w-3.5" />
                     </button>
                 )}
             </div>
 
             <div className="flex flex-col lg:flex-row">
                 {/* Left: Radial Chart Area */}
-                <div className="flex flex-1 flex-col items-center justify-center p-8 border-b lg:border-b-0 lg:border-r border-[#F1F5F9]">
+                <div className="flex flex-1 flex-col items-center justify-center p-12 border-b lg:border-b-0 lg:border-r border-[#E0E0E0]">
                     <div className="relative flex h-64 w-64 items-center justify-center">
-                        {/* Decorative SVG for Radial Chart */}
                         <svg className="h-full w-full -rotate-90 transform" viewBox="0 0 100 100">
                             <circle
-                                className="text-[#F1F5F9]"
+                                className="text-[#E0E0E0]"
                                 cx="50"
                                 cy="50"
                                 fill="transparent"
                                 r={radius}
                                 stroke="currentColor"
-                                strokeWidth="8"
+                                strokeWidth="6"
                             />
                             <circle
                                 className="transition-all duration-1000 ease-out"
@@ -98,81 +98,75 @@ export default function ATSScoreCard({
                                 strokeDasharray={circumference}
                                 strokeDashoffset={strokeDashoffset}
                                 strokeLinecap="round"
-                                strokeWidth="8"
+                                strokeWidth="6"
                             />
                         </svg>
                         <div className="absolute flex flex-col items-center">
-                            <span className="text-5xl font-extrabold text-[#0F172A]" style={{ fontFamily: "'DM Mono', monospace" }}>
+                            <span className="text-6xl font-extrabold tracking-tighter text-[#0D0D0D]" style={{ fontFamily: "'Inter', sans-serif" }}>
                                 {score}
                             </span>
-                            <span className="mt-1 text-sm font-medium text-[#64748B]">Total Score</span>
+                            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#4A4A4A] opacity-60">TOTAL INDEX</span>
                         </div>
                     </div>
 
-                    <div className="mt-8 flex w-full max-w-xs justify-between text-center gap-2">
+                    <div className="mt-12 flex w-full max-w-sm justify-between text-center gap-4">
                         <div className="flex-1">
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-[#64748B]">Hard Skills</p>
-                            <p className="mt-1 font-bold text-[#0F172A]">{hardSkillsScore}%</p>
+                            <p className="text-[9px] font-bold uppercase tracking-widest text-[#4A4A4A] opacity-60">HARD SKILLS</p>
+                            <p className="mt-2 text-lg font-bold text-[#0D0D0D]">{hardSkillsScore}%</p>
                         </div>
-                        <div className="h-8 w-px bg-[#E2E8F0] self-center" />
+                        <div className="h-10 w-px bg-[#E0E0E0] self-center" />
                         <div className="flex-1">
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-[#64748B]">Soft Skills</p>
-                            <p className="mt-1 font-bold text-[#0F172A]">{softSkillsScore}%</p>
+                            <p className="text-[9px] font-bold uppercase tracking-widest text-[#4A4A4A] opacity-60">SOFT SKILLS</p>
+                            <p className="mt-2 text-lg font-bold text-[#0D0D0D]">{softSkillsScore}%</p>
                         </div>
-                        <div className="h-8 w-px bg-[#E2E8F0] self-center" />
+                        <div className="h-10 w-px bg-[#E0E0E0] self-center" />
                         <div className="flex-1">
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-[#64748B]">Impact</p>
-                            <p className="mt-1 font-bold text-[#0F172A]">{impactScore}%</p>
+                            <p className="text-[9px] font-bold uppercase tracking-widest text-[#4A4A4A] opacity-60">IMPACT</p>
+                            <p className="mt-2 text-lg font-bold text-[#0D0D0D]">{impactScore}%</p>
                         </div>
                     </div>
                 </div>
 
                 {/* Right: Breakdowns */}
-                <div className="flex flex-[1.5] flex-col gap-8 p-8">
+                <div className="flex flex-[1.5] flex-col gap-10 p-12">
                     {/* Keyword Match */}
                     <div>
-                        <h4 className="mb-4 text-xs font-bold uppercase tracking-wider text-[#64748B]">Keyword Match Analysis</h4>
-                        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                        <h4 className="mb-6 text-[10px] font-bold uppercase tracking-[0.2em] text-[#4A4A4A] opacity-60">KEYWORD ALIGNMENT</h4>
+                        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                             {/* Found Keywords */}
-                            <div className="rounded-xl bg-[#F0FDF4] p-5 border border-[#DCFCE7]">
-                                <div className="flex items-center gap-2 mb-3">
-                                    <CheckCircle2 className="h-4 w-4 text-[#16A34A]" />
-                                    <p className="text-sm font-bold text-[#166534]">Found Keywords</p>
+                            <div className="rounded-xl bg-[#F9F9F9] p-6 border border-[#E0E0E0]">
+                                <div className="flex items-center gap-2.5 mb-4">
+                                    <div className="h-6 w-6 flex items-center justify-center rounded-full bg-[#0D0D0D] text-white">
+                                        <Check className="h-3 w-3" />
+                                    </div>
+                                    <p className="text-xs font-bold uppercase tracking-wider text-[#0D0D0D]">FOUND</p>
                                 </div>
                                 <div className="flex flex-wrap gap-2">
                                     {matchingKeywords.length > 0 ? matchingKeywords.slice(0, 10).map((kw, i) => (
-                                        <span key={i} className="rounded-md bg-white border border-[#BBF7D0] px-2 py-1 text-xs font-medium text-[#15803D] shadow-sm">
+                                        <span key={i} className="rounded-lg bg-white border border-[#E0E0E0] px-3 py-1.5 text-[11px] font-bold text-[#0D0D0D]">
                                             {kw}
                                         </span>
                                     )) : (
-                                        <span className="text-xs text-[#166534] opacity-80">No matching keywords found</span>
-                                    )}
-                                    {matchingKeywords.length > 10 && (
-                                        <span className="rounded-md bg-white border border-[#BBF7D0] px-2 py-1 text-xs font-medium text-[#15803D] shadow-sm">
-                                            +{matchingKeywords.length - 10} more
-                                        </span>
+                                        <span className="text-xs font-medium text-[#4A4A4A] opacity-60 italic">No matches detected</span>
                                     )}
                                 </div>
                             </div>
 
                             {/* Missing Keywords */}
-                            <div className="rounded-xl bg-[#FEF2F2] p-5 border border-[#FEE2E2]">
-                                <div className="flex items-center gap-2 mb-3">
-                                    <XCircle className="h-4 w-4 text-[#DC2626]" />
-                                    <p className="text-sm font-bold text-[#991B1B]">Missing Keywords</p>
+                            <div className="rounded-xl bg-[#F9F9F9] p-6 border border-[#E0E0E0]">
+                                <div className="flex items-center gap-2.5 mb-4">
+                                    <div className="h-6 w-6 flex items-center justify-center rounded-full bg-[#EE6C4D] text-white">
+                                        <AlertCircle className="h-3 w-3" />
+                                    </div>
+                                    <p className="text-xs font-bold uppercase tracking-wider text-[#EE6C4D]">MISSING</p>
                                 </div>
                                 <div className="flex flex-wrap gap-2">
                                     {missingKeywords.length > 0 ? missingKeywords.slice(0, 10).map((kw, i) => (
-                                        <span key={i} className="rounded-md bg-white border border-[#FECACA] px-2 py-1 text-xs font-medium text-[#B91C1C] shadow-sm">
+                                        <span key={i} className="rounded-lg bg-white border border-[#E0E0E0] px-3 py-1.5 text-[11px] font-bold text-[#EE6C4D]">
                                             {kw}
                                         </span>
                                     )) : (
-                                        <span className="text-xs text-[#991B1B] opacity-80">No missing keywords!</span>
-                                    )}
-                                    {missingKeywords.length > 10 && (
-                                        <span className="rounded-md bg-white border border-[#FECACA] px-2 py-1 text-xs font-medium text-[#B91C1C] shadow-sm">
-                                            +{missingKeywords.length - 10} more
-                                        </span>
+                                        <span className="text-xs font-medium text-[#4A4A4A] opacity-60 italic">Perfect keyword match</span>
                                     )}
                                 </div>
                             </div>
@@ -181,37 +175,35 @@ export default function ATSScoreCard({
 
                     {/* Formatting Checks */}
                     <div>
-                        <h4 className="mb-4 text-xs font-bold uppercase tracking-wider text-[#64748B]">Formatting Checks</h4>
-                        <div className="space-y-3">
-                            <div className="flex items-center justify-between py-1">
-                                <div className="flex items-center gap-3">
-                                    <div className="rounded-full bg-[#DCFCE7] p-1 text-[#16A34A]">
-                                        <Check className="h-3 w-3" strokeWidth={3} />
+                        <h4 className="mb-6 text-[10px] font-bold uppercase tracking-[0.2em] text-[#4A4A4A] opacity-60">STRUCTURAL VALIDATION</h4>
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between py-2 border-b border-[#F0F0F0]">
+                                <div className="flex items-center gap-4">
+                                    <div className="h-5 w-5 flex items-center justify-center rounded-full border border-[#E0E0E0] bg-[#F9F9F9] text-[#0D0D0D]">
+                                        <Check className="h-2.5 w-2.5" strokeWidth={4} />
                                     </div>
-                                    <span className="text-sm font-medium text-[#334155]">File Parseable</span>
+                                    <span className="text-[13px] font-bold text-[#0D0D0D]">File Parseability</span>
                                 </div>
-                                <span className="text-sm font-bold text-[#0F172A]">Pass</span>
+                                <span className="text-[11px] font-bold uppercase tracking-widest text-[#16A34A]">Pass</span>
                             </div>
-                            <div className="h-px w-full bg-[#F1F5F9]"></div>
-                            <div className="flex items-center justify-between py-1">
-                                <div className="flex items-center gap-3">
-                                    <div className="rounded-full bg-[#DCFCE7] p-1 text-[#16A34A]">
-                                        <Check className="h-3 w-3" strokeWidth={3} />
+                            <div className="flex items-center justify-between py-2 border-b border-[#F0F0F0]">
+                                <div className="flex items-center gap-4">
+                                    <div className="h-5 w-5 flex items-center justify-center rounded-full border border-[#E0E0E0] bg-[#F9F9F9] text-[#0D0D0D]">
+                                        <Check className="h-2.5 w-2.5" strokeWidth={4} />
                                     </div>
-                                    <span className="text-sm font-medium text-[#334155]">Font Legibility</span>
+                                    <span className="text-[13px] font-bold text-[#0D0D0D]">Typography Standard</span>
                                 </div>
-                                <span className="text-sm font-bold text-[#0F172A]">Pass</span>
+                                <span className="text-[11px] font-bold uppercase tracking-widest text-[#16A34A]">Pass</span>
                             </div>
-                            <div className="h-px w-full bg-[#F1F5F9]"></div>
-                            <div className="flex items-center justify-between py-1">
-                                <div className="flex items-center gap-3">
-                                    <div className="rounded-full flex items-center justify-center p-1" style={{ backgroundColor: formattingScore < 80 ? '#FEF9C3' : '#DCFCE7', color: formattingScore < 80 ? '#CA8A04' : '#16A34A' }}>
-                                        {formattingScore < 80 ? <AlertCircle className="h-3 w-3" strokeWidth={3} /> : <Check className="h-3 w-3" strokeWidth={3} />}
+                            <div className="flex items-center justify-between py-2">
+                                <div className="flex items-center gap-4">
+                                    <div className="h-5 w-5 flex items-center justify-center rounded-full border border-[#E0E0E0] bg-[#F9F9F9] text-[#0D0D0D]">
+                                        <Check className="h-2.5 w-2.5" strokeWidth={4} />
                                     </div>
-                                    <span className="text-sm font-medium text-[#334155]">Overall Formatting</span>
+                                    <span className="text-[13px] font-bold text-[#0D0D0D]">Layout Consistency</span>
                                 </div>
-                                <span className="text-sm font-bold" style={{ color: formattingScore < 80 ? '#B45309' : '#0F172A' }}>
-                                    {formattingScore < 80 ? 'Review' : 'Pass'}
+                                <span className={`text-[11px] font-bold uppercase tracking-widest ${formattingScore < 80 ? 'text-[#F4D35E]' : 'text-[#16A34A]'}`}>
+                                    {formattingScore < 80 ? 'Warning' : 'Pass'}
                                 </span>
                             </div>
                         </div>

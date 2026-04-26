@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Mail, ChevronDown, ChevronUp } from 'lucide-react';
+import { Mail, ChevronDown, ChevronUp, Copy, RefreshCcw } from 'lucide-react';
 
 type CardStatus = 'Complete' | 'In Progress' | 'Not Run' | 'Failed';
 type Tone = 'Formal' | 'Conversational' | 'Creative';
@@ -43,25 +43,25 @@ export default function CoverLetterCard({
 
     const toneColor =
         tone === 'Formal'
-            ? 'bg-[#E0F2FE] text-[#0369A1]'
+            ? 'bg-[#0D0D0D] text-white'
             : tone === 'Conversational'
-                ? 'bg-[#FEF3C7] text-[#B45309]'
-                : 'bg-[#F3E8FF] text-[#6B21A8]';
+                ? 'bg-[#5BC0EB] text-white'
+                : 'bg-[#F4D35E] text-[#0D0D0D]';
 
     if (!hasContent) {
         return (
-            <div className="rounded-xl border border-[#E2E8F0] bg-white p-5 shadow-sm">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <Mail className="h-5 w-5 text-[#94A3B8]" />
-                        <h3 className="font-semibold text-[#0F172A]">Cover Letter</h3>
+            <div className="rounded-xl border border-[#E0E0E0] bg-white p-8">
+                <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-3">
+                        <Mail className="h-4 w-4 text-[#0D0D0D]" />
+                        <h3 className="text-xs font-bold uppercase tracking-[0.15em] text-[#0D0D0D]">Cover Letter Generator</h3>
                     </div>
-                    <span className="rounded-full bg-[#F1F5F9] px-2.5 py-0.5 text-xs font-medium text-[#64748B]">
-                        Not Run
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-[#4A4A4A] opacity-40">
+                        [ PENDING ANALYSIS ]
                     </span>
                 </div>
-                <div className="mt-4 flex h-28 items-center justify-center rounded-lg bg-[#F8FAFC] text-sm text-[#94A3B8]">
-                    Cover letter will appear after pipeline run
+                <div className="flex h-32 items-center justify-center rounded-lg border border-dashed border-[#E0E0E0] bg-[#F9F9F9] text-[11px] font-bold uppercase tracking-widest text-[#4A4A4A] opacity-60">
+                    Draft will be generated post-analysis.
                 </div>
             </div>
         );
@@ -69,74 +69,77 @@ export default function CoverLetterCard({
 
     return (
         <div
-            className={`rounded-xl border border-[#E2E8F0] bg-white p-5 shadow-sm transition-all duration-200 hover:shadow-md cursor-pointer ${isExpanded ? 'ring-1 ring-[#3B82F6]' : ''}`}
+            className={`rounded-xl border border-[#E0E0E0] bg-white p-8 transition-all duration-300 hover:border-[#0D0D0D] cursor-pointer ${isExpanded ? 'ring-1 ring-[#0D0D0D]' : ''}`}
             onClick={() => setIsExpanded(!isExpanded)}
         >
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <Mail className={`h-5 w-5 ${isExpanded ? 'text-[#3B82F6]' : 'text-[#3B82F6]'}`} />
-                    <h3 className="font-semibold text-[#0F172A]">Cover Letter</h3>
+            <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                    <Mail className={`h-4 w-4 ${isExpanded ? 'text-[#5BC0EB]' : 'text-[#0D0D0D]'}`} />
+                    <h4 className="text-xs font-bold uppercase tracking-[0.15em] text-[#0D0D0D]">Strategic Outreach Draft</h4>
                 </div>
-                <div className="flex items-center gap-2">
-                    <span className="rounded-full bg-[#DCFCE7] px-2.5 py-0.5 text-xs font-medium text-[#16A34A]">
+                <div className="flex items-center gap-4">
+                    <span className="rounded-full bg-[#0D0D0D] px-3 py-1 text-[9px] font-bold uppercase tracking-widest text-white">
                         {status}
                     </span>
                     {isExpanded ? (
-                        <ChevronUp className="h-4 w-4 text-[#64748B]" />
+                        <ChevronUp className="h-4 w-4 text-[#0D0D0D]" />
                     ) : (
-                        <ChevronDown className="h-4 w-4 text-[#64748B]" />
+                        <ChevronDown className="h-4 w-4 text-[#0D0D0D]" />
                     )}
                 </div>
             </div>
 
-            <p className={`mt-4 whitespace-pre-wrap leading-relaxed text-[#475569] ${!isExpanded ? 'line-clamp-4 italic' : ''}`}>
+            <p className={`whitespace-pre-wrap text-[13px] leading-relaxed text-[#4A4A4A] ${!isExpanded ? 'line-clamp-3 italic opacity-60' : ''}`} style={{ fontFamily: "'Inter', sans-serif" }}>
                 {displayedText}
                 {!isExpanded && hasContent && preview.split('\n').length > PREVIEW_LINES && (
-                    <span className="text-[#3B82F6] block mt-1 font-medium text-xs">Click to read more...</span>
+                    <span className="text-[#5BC0EB] block mt-4 font-bold text-[10px] uppercase tracking-widest">Click to expand document</span>
                 )}
             </p>
 
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-                {tone && (
-                    <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${toneColor}`}>
-                        {tone}
-                    </span>
-                )}
-                {wordCount != null && (
-                    <span className="text-xs text-[#64748B]">{wordCount} words</span>
-                )}
-            </div>
+            <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-[#F0F0F0] pt-6">
+                <div className="flex items-center gap-4">
+                    {tone && (
+                        <span className={`rounded-lg px-3 py-1 text-[9px] font-bold uppercase tracking-widest ${toneColor}`}>
+                            {tone} Tone
+                        </span>
+                    )}
+                    {wordCount != null && (
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-[#4A4A4A] opacity-40">{wordCount} Words</span>
+                    )}
+                </div>
 
-            <div className="mt-4 flex flex-wrap gap-2" onClick={(e) => e.stopPropagation()}>
-                {onCopy && (
-                    <button
-                        type="button"
-                        onClick={handleCopyClick}
-                        className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors ${copied ? 'border-green-500 bg-green-50 text-green-600' : 'border-[#E2E8F0] bg-white text-[#475569] hover:bg-[#F1F5F9]'}`}
-                    >
-                        {copied ? 'Copied!' : 'Copy'}
-                    </button>
-                )}
-                {onRegenerate && (
-                    <div className="flex items-center gap-1">
+                <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
+                    {onCopy && (
                         <button
                             type="button"
-                            onClick={() => onRegenerate('formal')}
-                            className="rounded-lg border border-[#E2E8F0] bg-white px-3 py-1.5 text-sm font-medium text-[#475569] hover:bg-[#F1F5F9]"
+                            onClick={handleCopyClick}
+                            className={`flex items-center gap-2 rounded-lg px-4 py-2 text-[10px] font-bold uppercase tracking-widest transition-all ${copied ? 'bg-[#16A34A] text-white' : 'bg-white border border-[#0D0D0D] text-[#0D0D0D] hover:bg-[#0D0D0D] hover:text-white'}`}
                         >
-                            Regenerate
+                            <Copy className="h-3 w-3" />
+                            {copied ? 'Copied' : 'Copy'}
                         </button>
-                        <select
-                            className="rounded-lg border border-[#E2E8F0] bg-white px-2 py-1.5 text-sm text-[#475569]"
-                            onChange={(e) => onRegenerate(e.target.value)}
-                            defaultValue={tone || 'Formal'}
-                        >
-                            <option value="formal">Formal</option>
-                            <option value="conversational">Conversational</option>
-                            <option value="creative">Creative</option>
-                        </select>
-                    </div>
-                )}
+                    )}
+                    {onRegenerate && (
+                        <div className="flex items-center gap-2">
+                            <select
+                                className="rounded-lg border border-[#E0E0E0] bg-white px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-[#0D0D0D] focus:outline-none focus:border-[#0D0D0D]"
+                                onChange={(e) => onRegenerate(e.target.value)}
+                                defaultValue={tone || 'Formal'}
+                            >
+                                <option value="formal">Formal</option>
+                                <option value="conversational">Conversational</option>
+                                <option value="creative">Creative</option>
+                            </select>
+                            <button
+                                type="button"
+                                onClick={() => onRegenerate(tone?.toLowerCase() || 'formal')}
+                                className="flex items-center justify-center h-8 w-8 rounded-lg bg-[#0D0D0D] text-white hover:bg-[#5BC0EB] transition-all"
+                            >
+                                <RefreshCcw className="h-3 w-3" />
+                            </button>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );

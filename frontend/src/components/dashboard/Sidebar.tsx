@@ -5,12 +5,13 @@ import {
     Mic, 
     Settings, 
     LogOut, 
-    Zap, 
+    Sparkles, 
     TableProperties, 
     FileText, 
     Briefcase, 
     GraduationCap,
-    ClipboardCheck
+    ClipboardCheck,
+    ChevronRight
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -45,7 +46,6 @@ export default function Sidebar() {
     const isActive = (path: string) => location.pathname === path || (path !== '/dashboard' && location.pathname.startsWith(path));
 
     const buildLink = (path: string) => {
-        // Preserve runId query param for dashboard sub-pages
         if (currentRunId && path.startsWith('/dashboard') && path !== '/dashboard/pipeline-runs') {
             return `${path}?runId=${currentRunId}`;
         }
@@ -71,30 +71,30 @@ export default function Sidebar() {
 
     return (
         <aside
-            className="fixed left-0 top-0 z-30 flex h-full flex-col border-r border-[#E2E8F0] bg-white transition-all duration-200 lg:flex shadow-[4px_0_24px_rgba(0,0,0,0.02)]"
+            className="fixed left-0 top-0 z-30 flex h-full flex-col border-r border-[#E0E0E0] bg-white transition-all duration-300"
             style={{ width: SIDEBAR_WIDTH }}
         >
-            {/* Logo */}
-            <div className="flex h-20 shrink-0 items-center gap-3 border-b border-[#F1F5F9] px-6">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#3B82F6] to-[#8B5CF6] shadow-lg shadow-blue-500/20">
-                    <Zap className="h-6 w-6 text-white" />
+            {/* Logo area matching Landing Page */}
+            <div className="flex h-20 shrink-0 items-center gap-3 border-b border-[#E0E0E0] px-8">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#5BC0EB] text-white">
+                    <Sparkles className="h-5 w-5" />
                 </div>
                 <div>
-                    <span className="block text-lg font-extrabold text-[#0F172A] leading-tight" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                    <span className="block text-lg font-bold tracking-tight text-[#0D0D0D]">
                         CareerAI
                     </span>
-                    <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#94A3B8]">
-                        {tier === 'pro' ? 'PRO TIER' : 'FREE TIER'}
+                    <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#4A4A4A]">
+                        {tier === 'pro' ? 'PRO MEMBER' : 'STANDARD'}
                     </span>
                 </div>
             </div>
 
             {/* Nav links */}
-            <div className="flex-1 overflow-y-auto px-4 py-6">
-                <p className="mb-4 px-2 text-[10px] font-bold uppercase tracking-[0.15em] text-[#94A3B8]">
-                    Main Menu
-                </p>
-                <nav className="space-y-1.5">
+            <div className="flex-1 overflow-y-auto px-4 py-8">
+                <span className="mb-6 block px-4 text-[10px] font-bold uppercase tracking-[0.2em] text-[#4A4A4A] opacity-60">
+                    [ MENU ]
+                </span>
+                <nav className="space-y-1">
                     {navItems.map((item) => {
                         const active = isActive(item.path);
                         const exactActive = item.path === '/dashboard' ? location.pathname === '/dashboard' : active;
@@ -103,51 +103,53 @@ export default function Sidebar() {
                             <Link
                                 key={item.path}
                                 to={buildLink(item.path)}
-                                className={`group flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-200 ${
+                                className={`group relative flex items-center gap-3 rounded-lg px-4 py-3.5 text-[13px] font-semibold transition-all duration-200 ${
                                     exactActive 
-                                    ? 'bg-[#3B82F6] text-white shadow-md shadow-blue-500/10' 
-                                    : 'text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#0F172A]'
+                                    ? 'bg-[#F9F9F9] text-[#0D0D0D]' 
+                                    : 'text-[#4A4A4A] hover:bg-[#F9F9F9] hover:text-[#0D0D0D]'
                                 }`}
-                                style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
                             >
-                                <item.icon className={`h-5 w-5 shrink-0 transition-colors ${exactActive ? 'text-white' : 'text-[#94A3B8] group-hover:text-[#3B82F6]'}`} />
+                                <item.icon className={`h-4.5 w-4.5 shrink-0 transition-colors ${exactActive ? 'text-[#5BC0EB]' : 'text-[#A0A0A0] group-hover:text-[#5BC0EB]'}`} />
                                 {item.label}
+                                
                                 {exactActive && (
                                     <motion.div 
-                                        layoutId="active-pill"
-                                        className="ml-auto h-1.5 w-1.5 rounded-full bg-white/80"
+                                        layoutId="sidebar-active-indicator"
+                                        className="absolute left-0 h-4 w-1 rounded-r-full bg-[#5BC0EB]"
                                     />
                                 )}
+
+                                {exactActive && <ChevronRight className="ml-auto h-3.5 w-3.5 opacity-40" />}
                             </Link>
                         );
                     })}
                 </nav>
 
-                <p className="mt-8 mb-4 px-2 text-[10px] font-bold uppercase tracking-[0.15em] text-[#94A3B8]">
-                    System
-                </p>
-                <div className="space-y-1.5">
-                    <button
-                        type="button"
-                        className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-semibold text-[#64748B] transition-all duration-200 hover:bg-[#F8FAFC] hover:text-[#0F172A]"
-                        style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
-                        onClick={() => {}}
-                    >
-                        <Settings className="h-5 w-5 shrink-0 text-[#94A3B8]" />
-                        Settings
-                    </button>
+                <div className="mt-10">
+                    <span className="mb-6 block px-4 text-[10px] font-bold uppercase tracking-[0.2em] text-[#4A4A4A] opacity-60">
+                        [ PREFERENCES ]
+                    </span>
+                    <div className="space-y-1">
+                        <button
+                            type="button"
+                            className="flex w-full items-center gap-3 rounded-lg px-4 py-3.5 text-left text-[13px] font-semibold text-[#4A4A4A] transition-all duration-200 hover:bg-[#F9F9F9] hover:text-[#0D0D0D]"
+                            onClick={() => {}}
+                        >
+                            <Settings className="h-4.5 w-4.5 shrink-0 text-[#A0A0A0]" />
+                            Settings
+                        </button>
+                    </div>
                 </div>
             </div>
 
             {/* Footer / User */}
-            <div className="border-t border-[#F1F5F9] p-4">
+            <div className="border-t border-[#E0E0E0] p-6">
                 <button
                     type="button"
-                    className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-semibold text-[#EF4444] transition-all duration-200 hover:bg-red-50"
-                    style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+                    className="flex w-full items-center gap-3 rounded-lg border border-[#E0E0E0] bg-white px-4 py-3.5 text-left text-[13px] font-bold text-[#0D0D0D] transition-all duration-200 hover:bg-[#0D0D0D] hover:text-white hover:border-[#0D0D0D]"
                     onClick={handleSignOut}
                 >
-                    <LogOut className="h-5 w-5 shrink-0" />
+                    <LogOut className="h-4.5 w-4.5 shrink-0" />
                     Sign Out
                 </button>
             </div>

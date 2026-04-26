@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Sparkles, ArrowRight, Edit3, Download, FileText, Check } from 'lucide-react';
+import { Sparkles, ArrowRight, Edit3, Download, FileText, Check, ArrowUpRight } from 'lucide-react';
 import MDEditor from '@uiw/react-md-editor';
 import { marked } from 'marked';
 import html2pdf from 'html2pdf.js';
@@ -112,7 +112,7 @@ export default function CVOptimisationCard({
         
         // Format raw emails
         text = text.replace(/(?<!\]\()([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+)/gi, '[$1](mailto:$1)');
-
+        
         // Format the name (first non-empty line) as H1 if not already
         const lines = text.split('\n');
         for (let i = 0; i < lines.length; i++) {
@@ -198,8 +198,6 @@ export default function CVOptimisationCard({
     const handleDownloadDOCX = async () => {
         setIsExporting(true);
         try {
-            // For browser DOCX export, a simple standard way without heavy node dependencies is saving as a .doc mime type, 
-            // but since we installed html-to-docx, let's try to use it if available, else fallback to standard msword blob.
             // @ts-ignore
             let docxModule;
             try {
@@ -234,17 +232,17 @@ export default function CVOptimisationCard({
 
     if (!hasContent) {
         return (
-            <div className="rounded-2xl border border-[#E2E8F0] bg-white shadow-sm mb-6 overflow-hidden">
-                <div className="flex items-center justify-between border-b border-[#F1F5F9] px-6 py-4">
-                    <div className="flex items-center gap-3">
-                        <h3 className="text-lg font-bold text-[#0F172A]">CV Optimisation</h3>
-                        <span className="rounded-full bg-[#EFF6FF] px-2.5 py-0.5 text-xs font-bold text-[#3B82F6] border border-[#BFDBFE]">
-                            AI Suggestions
+            <div className="rounded-xl border border-[#E0E0E0] bg-white mb-8 overflow-hidden">
+                <div className="flex items-center justify-between border-b border-[#E0E0E0] px-8 py-5 bg-[#F9F9F9]">
+                    <div className="flex items-center gap-4">
+                        <h3 className="text-sm font-bold uppercase tracking-[0.15em] text-[#0D0D0D]">CV Optimisation</h3>
+                        <span className="rounded-full bg-[#0D0D0D] px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-white">
+                            AI GENERATION
                         </span>
                     </div>
                 </div>
-                <div className="p-8 text-center text-sm text-[#94A3B8]">
-                    Optimised CV will appear after pipeline run
+                <div className="p-16 text-center text-sm font-medium text-[#4A4A4A] opacity-60">
+                    Optimised version will be available after successful pipeline execution.
                 </div>
             </div>
         );
@@ -253,21 +251,21 @@ export default function CVOptimisationCard({
     const leftPreview = (originalText || '').split('\\n').filter(l => l.trim().length > 0).slice(0, PREVIEW_LINES).join('\\n\\n');
 
     return (
-        <section className="rounded-2xl border border-[#E2E8F0] bg-white shadow-sm mb-6 overflow-hidden">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-[#F1F5F9] px-6 py-4 gap-4">
-                <div className="flex items-center gap-3 w-full sm:w-auto">
-                    <h3 className="text-lg font-bold text-[#0F172A]">CV Optimisation</h3>
-                    <span className="rounded-full bg-[#EFF6FF] px-2.5 py-0.5 text-xs font-bold text-[#3B82F6] border border-[#BFDBFE] flex items-center gap-1">
-                        <Sparkles className="h-3 w-3" /> AI Suggestions
+        <section className="rounded-xl border border-[#E0E0E0] bg-white mb-10 overflow-hidden">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-[#E0E0E0] px-8 py-5 bg-[#F9F9F9] gap-4">
+                <div className="flex items-center gap-4 w-full sm:w-auto">
+                    <h3 className="text-sm font-bold uppercase tracking-[0.15em] text-[#0D0D0D]">CV Optimisation</h3>
+                    <span className="rounded-full bg-[#5BC0EB] px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-white flex items-center gap-2">
+                        <Sparkles className="h-3 w-3" /> ADVIEST AI
                     </span>
                 </div>
-                <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
+                <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto justify-end">
                     {isEditing ? (
                         <>
-                            <div className="flex items-center gap-2 mr-4 border-r border-[#E2E8F0] pr-4">
-                                <span className="text-xs font-semibold text-[#64748B]">Template:</span>
+                            <div className="flex items-center gap-3 mr-4 border-r border-[#E0E0E0] pr-4">
+                                <span className="text-[10px] font-bold uppercase tracking-widest text-[#4A4A4A] opacity-60">TEMPLATE:</span>
                                 <select 
-                                    className="text-sm border border-[#E2E8F0] rounded-md px-2 py-1 text-[#0F172A] bg-[#F8FAFC] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                                    className="text-xs font-bold border border-[#E0E0E0] rounded-lg px-3 py-1.5 text-[#0D0D0D] bg-white focus:outline-none focus:border-[#0D0D0D]"
                                     value={selectedTemplate}
                                     onChange={(e) => setSelectedTemplate(e.target.value as keyof typeof TEMPLATES)}
                                 >
@@ -279,22 +277,22 @@ export default function CVOptimisationCard({
                             <button
                                 onClick={handleDownloadPDF}
                                 disabled={isExporting}
-                                className="flex items-center gap-1.5 rounded-lg bg-[#EF4444] px-3 py-1.5 text-sm font-medium text-white hover:bg-[#DC2626] transition-colors shadow-sm disabled:opacity-50"
+                                className="flex items-center gap-2 rounded-lg bg-[#0D0D0D] px-4 py-2 text-[11px] font-bold uppercase tracking-widest text-white hover:bg-[#5BC0EB] transition-all disabled:opacity-50"
                             >
-                                <FileText className="h-4 w-4" /> PDF
+                                <FileText className="h-3.5 w-3.5" /> PDF
                             </button>
                             <button
                                 onClick={handleDownloadDOCX}
                                 disabled={isExporting}
-                                className="flex items-center gap-1.5 rounded-lg bg-[#3B82F6] px-3 py-1.5 text-sm font-medium text-white hover:bg-[#2563EB] transition-colors shadow-sm disabled:opacity-50"
+                                className="flex items-center gap-2 rounded-lg bg-[#0D0D0D] px-4 py-2 text-[11px] font-bold uppercase tracking-widest text-white hover:bg-[#5BC0EB] transition-all disabled:opacity-50"
                             >
-                                <Download className="h-4 w-4" /> DOCX
+                                <Download className="h-3.5 w-3.5" /> DOCX
                             </button>
                             <button
                                 onClick={() => setIsEditing(false)}
-                                className="flex items-center gap-1.5 rounded-lg border border-[#E2E8F0] bg-white px-3 py-1.5 text-sm font-medium text-[#475569] hover:bg-[#F8FAFC] transition-colors shadow-sm ml-2"
+                                className="flex items-center gap-2 rounded-lg border border-[#0D0D0D] bg-white px-4 py-2 text-[11px] font-bold uppercase tracking-widest text-[#0D0D0D] hover:bg-[#0D0D0D] hover:text-white transition-all ml-2"
                             >
-                                <Check className="h-4 w-4 text-[#10B981]" /> Done
+                                <Check className="h-3.5 w-3.5" /> DONE
                             </button>
                         </>
                     ) : (
@@ -303,16 +301,16 @@ export default function CVOptimisationCard({
                                 <button
                                     type="button"
                                     onClick={onRestorePrevious}
-                                    className="rounded-lg px-3 py-1.5 text-sm font-medium text-[#64748B] hover:bg-[#F1F5F9] transition-colors"
+                                    className="text-[11px] font-bold uppercase tracking-widest text-[#4A4A4A] opacity-60 hover:opacity-100 transition-opacity"
                                 >
                                     Discard All
                                 </button>
                             )}
                             <button
                                 onClick={handleEditClick}
-                                className="flex items-center gap-1.5 rounded-lg bg-[#3B82F6] px-4 py-1.5 text-sm font-medium text-white hover:bg-[#2563EB] transition-colors shadow-sm"
+                                className="flex items-center gap-2 rounded-lg bg-[#0D0D0D] px-5 py-2.5 text-[11px] font-bold uppercase tracking-widest text-white hover:bg-[#5BC0EB] transition-all shadow-lg shadow-black/10"
                             >
-                                <Edit3 className="h-4 w-4" /> Edit & Export
+                                <Edit3 className="h-3.5 w-3.5" /> Edit & Export
                             </button>
                         </>
                     )}
@@ -320,31 +318,36 @@ export default function CVOptimisationCard({
             </div>
 
             {critique && !isEditing && (
-                <div className="bg-[#F8FAFC] border-b border-[#F1F5F9] p-6 text-sm text-[#475569] shadow-inner inset-0">
-                    <h4 className="font-bold text-[#0F172A] mb-3 flex items-center gap-2"><Sparkles className="h-4 w-4 text-[#3B82F6]" /> Strategic Feedback</h4>
-                    <p className="mb-5 leading-relaxed">{critique.summary}</p>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-[#F9F9F9] border-b border-[#E0E0E0] p-10 text-sm text-[#4A4A4A]">
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="h-8 w-8 flex items-center justify-center rounded-lg bg-[#5BC0EB] text-white">
+                            <Sparkles className="h-4 w-4" />
+                        </div>
+                        <h4 className="text-sm font-bold uppercase tracking-[0.15em] text-[#0D0D0D]">Strategic Feedback</h4>
+                    </div>
+                    <p className="mb-10 leading-relaxed max-w-4xl text-[15px]">{critique.summary}</p>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
                         {critique.matching_skills && critique.matching_skills.length > 0 && (
                             <div>
-                                <h5 className="font-bold text-[#16A34A] mb-2 uppercase tracking-wider text-[10px]">Matching Skills</h5>
-                                <div className="flex flex-wrap gap-1.5">
-                                    {critique.matching_skills.map(s => <span key={s} className="bg-[#DCFCE7] border border-[#BBF7D0] text-[#166534] px-2 py-0.5 rounded shadow-sm text-xs font-semibold">{s}</span>)}
+                                <h5 className="text-[10px] font-bold uppercase tracking-widest text-[#4A4A4A] opacity-60 mb-4">MATCHING ASSETS</h5>
+                                <div className="flex flex-wrap gap-2">
+                                    {critique.matching_skills.map(s => <span key={s} className="bg-white border border-[#E0E0E0] text-[#0D0D0D] px-3 py-1.5 rounded-lg text-[11px] font-bold">{s}</span>)}
                                 </div>
                             </div>
                         )}
                         {critique.transferable_skills && critique.transferable_skills.length > 0 && (
                             <div>
-                                <h5 className="font-bold text-[#3B82F6] mb-2 uppercase tracking-wider text-[10px]">Transferable</h5>
-                                <div className="flex flex-wrap gap-1.5">
-                                    {critique.transferable_skills.map(s => <span key={s} className="bg-[#DBEAFE] border border-[#BFDBFE] text-[#1E40AF] px-2 py-0.5 rounded shadow-sm text-xs font-semibold">{s}</span>)}
+                                <h5 className="text-[10px] font-bold uppercase tracking-widest text-[#4A4A4A] opacity-60 mb-4">TRANSFERABLE VALUE</h5>
+                                <div className="flex flex-wrap gap-2">
+                                    {critique.transferable_skills.map(s => <span key={s} className="bg-white border border-[#E0E0E0] text-[#5BC0EB] px-3 py-1.5 rounded-lg text-[11px] font-bold">{s}</span>)}
                                 </div>
                             </div>
                         )}
                         {critique.missing_critical_skills && critique.missing_critical_skills.length > 0 && (
                             <div>
-                                <h5 className="font-bold text-[#DC2626] mb-2 uppercase tracking-wider text-[10px]">Missing / Critical</h5>
-                                <div className="flex flex-wrap gap-1.5">
-                                    {critique.missing_critical_skills.map(s => <span key={s} className="bg-[#FEE2E2] border border-[#FECACA] text-[#991B1B] px-2 py-0.5 rounded shadow-sm text-xs font-semibold">{s}</span>)}
+                                <h5 className="text-[10px] font-bold uppercase tracking-widest text-[#EE6C4D] mb-4">CRITICAL GAPS</h5>
+                                <div className="flex flex-wrap gap-2">
+                                    {critique.missing_critical_skills.map(s => <span key={s} className="bg-white border border-[#EE6C4D] text-[#EE6C4D] px-3 py-1.5 rounded-lg text-[11px] font-bold">{s}</span>)}
                                 </div>
                             </div>
                         )}
@@ -353,10 +356,10 @@ export default function CVOptimisationCard({
             )}
 
             {isEditing ? (
-                <div className="flex flex-col h-[600px] bg-white">
-                    <div className="p-4 bg-[#F8FAFC] border-b border-[#F1F5F9] flex justify-between items-center">
-                        <span className="text-sm font-bold text-[#0F172A]">Markdown Editor</span>
-                        <span className="text-xs text-[#64748B]">You can freely edit your CV here before exporting.</span>
+                <div className="flex flex-col h-[650px] bg-white">
+                    <div className="px-8 py-4 bg-[#F9F9F9] border-b border-[#E0E0E0] flex justify-between items-center">
+                        <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#4A4A4A] opacity-60">RAW SOURCE EDITOR</span>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-[#A0A0A0]">MARKDOWN ENABLED</span>
                     </div>
                     <div className="flex-1 overflow-hidden" data-color-mode="light">
                         <MDEditor
@@ -370,18 +373,18 @@ export default function CVOptimisationCard({
                     </div>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-[#F1F5F9]">
+                <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-[#E0E0E0]">
                     {/* Original Column */}
-                    <div className="flex flex-col">
-                        <div className="bg-[#F8FAFC] px-6 py-3 border-b border-[#F1F5F9]">
-                            <span className="text-xs font-bold uppercase tracking-wider text-[#64748B]">Original Content</span>
+                    <div className="flex flex-col bg-white">
+                        <div className="px-8 py-4 bg-[#F9F9F9] border-b border-[#E0E0E0]">
+                            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#4A4A4A] opacity-60">ORIGINAL DOCUMENT</span>
                         </div>
-                        <div className="p-6 relative h-[500px] overflow-y-auto">
-                            <div className="absolute right-0 top-1/2 -mt-4 -mr-4 bg-white rounded-full p-2 border border-[#E2E8F0] shadow-sm z-10 hidden md:block">
-                                <ArrowRight className="h-4 w-4 text-[#94A3B8]" />
+                        <div className="p-10 relative h-[550px] overflow-y-auto">
+                            <div className="absolute right-0 top-1/2 -mt-4 -mr-4 bg-white rounded-full p-2 border border-[#E0E0E0] shadow-xl z-10 hidden md:block">
+                                <ArrowRight className="h-4 w-4 text-[#0D0D0D]" />
                             </div>
-                            <div className="group relative rounded-xl border border-transparent p-4 hover:border-[#E2E8F0] hover:bg-[#F8FAFC] transition-colors">
-                                <pre className="whitespace-pre-wrap font-display text-sm leading-relaxed text-[#475569] opacity-80" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                            <div className="rounded-lg border border-dashed border-[#E0E0E0] p-8">
+                                <pre className="whitespace-pre-wrap text-[13px] leading-relaxed text-[#4A4A4A] opacity-70" style={{ fontFamily: "'Inter', sans-serif" }}>
                                     {leftPreview}
                                     {originalText && originalText.split('\\n').filter(l => l.trim().length > 0).length > PREVIEW_LINES && '\\n\\n...'}
                                 </pre>
@@ -390,27 +393,27 @@ export default function CVOptimisationCard({
                     </div>
 
                     {/* Optimised Column */}
-                    <div className="flex flex-col bg-[#F8FAFC]/30">
-                        <div className="bg-[#EFF6FF]/50 px-6 py-3 border-b border-[#E0E7FF] flex justify-between items-center">
-                            <span className="text-xs font-bold uppercase tracking-wider text-[#3B82F6]">Optimised Content Preview</span>
-                            <span className="text-[10px] uppercase font-bold text-[#3B82F6] bg-white px-2 py-0.5 rounded border border-[#BFDBFE]">Markdown</span>
+                    <div className="flex flex-col bg-[#F9F9F9]">
+                        <div className="px-8 py-4 bg-[#F9F9F9] border-b border-[#E0E0E0] flex justify-between items-center">
+                            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#5BC0EB]">OPTIMISED VERSION</span>
+                            <span className="text-[9px] font-bold uppercase tracking-widest text-white bg-[#5BC0EB] px-2.5 py-1 rounded-md">LIVE PREVIEW</span>
                         </div>
-                        <div className="p-6 h-[500px] overflow-y-auto" data-color-mode="light">
-                            <div className="group relative rounded-xl border border-[#D1FAE5] bg-white p-6 shadow-sm overflow-hidden prose prose-sm max-w-none">
-                                <MDEditor.Markdown source={editedText} style={{ whiteSpace: 'pre-wrap', backgroundColor: 'transparent', color: '#0F172A' }} />
+                        <div className="p-10 h-[550px] overflow-y-auto" data-color-mode="light">
+                            <div className="rounded-xl border border-[#E0E0E0] bg-white p-10 shadow-xl overflow-hidden prose prose-sm max-w-none">
+                                <MDEditor.Markdown source={editedText} style={{ whiteSpace: 'pre-wrap', backgroundColor: 'transparent', color: '#0D0D0D', fontFamily: "'Inter', sans-serif" }} />
                             </div>
 
-                            <div className="mt-6 flex flex-wrap items-center gap-3 text-xs px-2">
+                            <div className="mt-8 flex flex-wrap items-center gap-6 text-[10px] font-bold uppercase tracking-widest px-2">
                                 {matchScoreImprovement != null && (
-                                    <span className="font-bold text-[#16A34A] flex items-center gap-1">
-                                        ↑ {matchScoreImprovement}% Match Increase
+                                    <span className="text-[#16A34A] flex items-center gap-2">
+                                        <ArrowUpRight className="h-3 w-3" /> {matchScoreImprovement}% COMPATIBILITY GAIN
                                     </span>
                                 )}
                                 {versionNumber != null && (
-                                    <span className="text-[#64748B] font-medium">Version {versionNumber}</span>
+                                    <span className="text-[#4A4A4A] opacity-60">REVISION {versionNumber}</span>
                                 )}
-                                <span className="text-[#64748B] font-medium ml-auto">
-                                    Status: <span className="text-[#16A34A]">{status}</span>
+                                <span className="text-[#4A4A4A] opacity-60 ml-auto flex items-center gap-2">
+                                    STATUS: <span className="text-[#16A34A]">{status}</span>
                                 </span>
                             </div>
                         </div>

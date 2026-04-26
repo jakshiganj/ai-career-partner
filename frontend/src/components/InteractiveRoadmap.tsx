@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { CheckCircle2, Circle, Clock, Target, Check, ChevronDown, ChevronUp, Sparkles, Loader2, MessageSquare, Send } from 'lucide-react';
+import { CheckCircle2, Circle, Clock, Target, Check, ChevronDown, ChevronUp, Sparkles, Loader2, MessageSquare, Send, ArrowUpRight } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { getCurrentRoadmap, updateRoadmap, pivotRoadmap, chatRoadmap, getRoadmapByPipelineId } from '../api/roadmap';
 import type { ActionItem, SkillRoadmapResponse, RoadmapPhase } from '../api/roadmap';
@@ -56,7 +56,7 @@ export default function InteractiveRoadmap({ implicitSkills, pipelineId }: Inter
         return text.split(urlRegex).map((part, i) => {
             if (part.match(urlRegex)) {
                 return (
-                    <a key={i} href={part} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-700 underline underline-offset-2 transition-colors inline-block break-all max-w-[200px] truncate align-bottom" onClick={(e) => e.stopPropagation()}>
+                    <a key={i} href={part} target="_blank" rel="noopener noreferrer" className="text-[#5BC0EB] hover:text-[#0D0D0D] underline underline-offset-4 transition-colors inline-block break-all max-w-[200px] truncate align-bottom" onClick={(e) => e.stopPropagation()}>
                         {part.replace(/^https?:\/\//, '')}
                     </a>
                 );
@@ -80,17 +80,15 @@ export default function InteractiveRoadmap({ implicitSkills, pipelineId }: Inter
 
         setDbRoadmap({ ...dbRoadmap, roadmap: newRoadmap });
         
-        // Trigger generic milestone celebration if completing the very last item in this phase
         if (isCompleting && currentCompletedCount + 1 === items.length && items.length > 0) {
             confetti({
                 particleCount: 150,
                 spread: 80,
                 origin: { y: 0.6 },
-                colors: ['#3B82F6', '#10B981', '#F59E0B', '#F43F5E', '#8B5CF6']
+                colors: ['#5BC0EB', '#0D0D0D', '#F4D35E', '#EE6C4D']
             });
         }
         
-        // Debounce or flush immediately
         try {
             await updateRoadmap(dbRoadmap.id, newRoadmap);
         } catch (e) {
@@ -146,53 +144,54 @@ export default function InteractiveRoadmap({ implicitSkills, pipelineId }: Inter
     };
 
     if (loading) {
-        return <div className="animate-pulse bg-[#F8FAFC] h-64 rounded-xl border border-[#E2E8F0]"></div>;
+        return <div className="animate-pulse bg-[#F9F9F9] h-96 rounded-xl border border-[#E0E0E0]"></div>;
     }
 
     if (!dbRoadmap || !dbRoadmap.roadmap.length) {
         return (
-            <div className="bg-white rounded-xl border border-[#E2E8F0] p-8 text-center text-[#64748B]">
-                Your Skill Roadmap has not been generated yet.
+            <div className="bg-white rounded-xl border border-[#E0E0E0] p-16 text-center text-[11px] font-bold uppercase tracking-widest text-[#4A4A4A] opacity-60">
+                Roadmap compilation required. Run your first career analysis to begin.
             </div>
         );
     }
 
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+        <div className="space-y-10" style={{ fontFamily: "'Inter', sans-serif" }}>
+            <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 bg-white border border-[#E0E0E0] p-10 rounded-xl">
                 <div>
-                    <h2 className="text-xl font-bold text-[#0F172A]">Your Learning Capability Roadmap</h2>
-                    <p className="text-sm text-[#64748B] mt-1">
-                        Track your progress towards becoming a <span className="font-semibold text-[#3B82F6]">{dbRoadmap.target_role}</span>
+                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#5BC0EB] block mb-2">[ GROWTH TRAJECTORY ]</span>
+                    <h2 className="text-2xl font-bold tracking-tight text-[#0D0D0D]">Interactive Career Roadmap</h2>
+                    <p className="text-[14px] text-[#4A4A4A] mt-2 opacity-80">
+                        Strategic progression plan for <span className="font-bold text-[#0D0D0D]">{dbRoadmap.target_role}</span>
                     </p>
                 </div>
                 
                 {/* Pivot UI */}
-                <div className="bg-[#F8FAFC] border border-[#E2E8F0] p-3 rounded-lg flex flex-col gap-2 min-w-[300px]">
-                    <div className="flex items-center gap-2 text-xs font-bold text-[#475569] uppercase tracking-wider mb-1">
-                        <Sparkles className="h-4 w-4 text-[#8B5CF6]" /> AI Auto-Adjust
+                <div className="bg-[#F9F9F9] border border-[#E0E0E0] p-6 rounded-xl flex flex-col gap-4 min-w-[350px]">
+                    <div className="flex items-center gap-2.5 text-[10px] font-bold text-[#0D0D0D] uppercase tracking-[0.2em]">
+                        <Sparkles className="h-4 w-4 text-[#5BC0EB]" /> AI Optimization
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-3">
                         <input 
                             type="text" 
-                            placeholder="e.g. 'Compress this to 4 weeks'" 
+                            placeholder="e.g. 'Shorten timeline to 4 weeks'" 
                             value={constraint}
                             onChange={e => setConstraint(e.target.value)}
                             disabled={pivoting}
-                            className="flex-1 px-3 py-1.5 text-sm border border-[#CBD5E1] rounded outline-none focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6] disabled:opacity-50"
+                            className="flex-1 px-4 py-2.5 text-xs font-bold border border-[#E0E0E0] rounded-lg outline-none focus:border-[#0D0D0D] disabled:opacity-50"
                         />
                         <button 
                             disabled={!constraint.trim() || pivoting}
                             onClick={handlePivot}
-                            className="bg-[#3B82F6] hover:bg-[#2563EB] disabled:bg-[#94A3B8] text-white px-4 py-1.5 rounded text-sm font-medium transition-colors flex items-center gap-2"
+                            className="bg-[#0D0D0D] hover:bg-[#5BC0EB] disabled:bg-[#A0A0A0] text-white px-6 py-2.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all flex items-center gap-2"
                         >
-                            {pivoting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Pivot"}
+                            {pivoting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "PIVOT"}
                         </button>
                     </div>
                 </div>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-6">
                 {dbRoadmap.roadmap.map((phase, pIdx) => {
                     const title = phase.phase_name || phase.focus || `Phase ${pIdx + 1}`;
                     const items = (phase.action_items as ActionItem[]) || [];
@@ -202,76 +201,78 @@ export default function InteractiveRoadmap({ implicitSkills, pipelineId }: Inter
                     const isExpanded = expandedPhase === pIdx;
 
                     return (
-                        <div key={pIdx} className="bg-white rounded-xl border border-[#E2E8F0] overflow-hidden shadow-sm transition-all">
+                        <div key={pIdx} className="bg-white rounded-xl border border-[#E0E0E0] overflow-hidden transition-all hover:border-[#0D0D0D]">
                             {/* Header row */}
                             <div 
-                                className={`p-5 flex items-center justify-between cursor-pointer hover:bg-[#F8FAFC] transition-colors ${isExpanded ? 'bg-[#F8FAFC] border-b border-[#E2E8F0]' : ''}`}
+                                className={`p-8 flex items-center justify-between cursor-pointer transition-colors ${isExpanded ? 'bg-[#F9F9F9] border-b border-[#E0E0E0]' : ''}`}
                                 onClick={() => setExpandedPhase(isExpanded ? -1 : pIdx)}
                             >
-                                <div className="flex items-center gap-4 flex-1">
+                                <div className="flex items-center gap-6 flex-1">
                                     <div className="flex-shrink-0">
                                         {progressPct === 100 ? (
-                                            <div className="h-10 w-10 rounded-full bg-[#DCFCE7] flex items-center justify-center text-[#16A34A]">
-                                                <Check strokeWidth={3} className="h-5 w-5" />
+                                            <div className="h-12 w-12 rounded-lg bg-[#0D0D0D] flex items-center justify-center text-[#5BC0EB]">
+                                                <Check strokeWidth={4} className="h-5 w-5" />
                                             </div>
                                         ) : (
-                                            <div className="h-10 w-10 rounded-full bg-[#EFF6FF] flex items-center justify-center text-[#3B82F6] font-bold">
-                                                {pIdx + 1}
+                                            <div className="h-12 w-12 rounded-lg border-2 border-[#E0E0E0] flex items-center justify-center text-[#0D0D0D] font-bold text-sm">
+                                                0{pIdx + 1}
                                             </div>
                                         )}
                                     </div>
                                     <div className="flex-1">
-                                        <h3 className="font-semibold text-[#0F172A]">{title}</h3>
-                                        <div className="flex items-center gap-4 mt-1 text-xs text-[#64748B]">
-                                            <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> {(phase.estimated_weeks || phase.duration_weeks || phase.weeks || 0)} Weeks</span>
-                                            {phase.skills_covered && <span className="flex items-center gap-1"><Target className="h-3.5 w-3.5" /> {phase.skills_covered.length} Skills</span>}
+                                        <h3 className="text-sm font-bold uppercase tracking-widest text-[#0D0D0D]">{title}</h3>
+                                        <div className="flex items-center gap-6 mt-2 text-[10px] font-bold uppercase tracking-widest text-[#4A4A4A] opacity-60">
+                                            <span className="flex items-center gap-2"><Clock className="h-3.5 w-3.5" /> {(phase.estimated_weeks || phase.duration_weeks || phase.weeks || 0)} Weeks</span>
+                                            {phase.skills_covered && <span className="flex items-center gap-2"><Target className="h-3.5 w-3.5" /> {phase.skills_covered.length} Core Skills</span>}
                                         </div>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-6">
-                                    <div className="text-right hidden sm:block">
-                                        <div className="text-sm font-medium text-[#0F172A]">{progressPct}%</div>
-                                        <div className="text-xs text-[#64748B]">{completedCount} of {totalCount} tasks</div>
+                                <div className="flex items-center gap-8">
+                                    <div className="text-right hidden md:block">
+                                        <div className="text-[13px] font-bold text-[#0D0D0D]">{progressPct}% COMPLETION</div>
+                                        <div className="text-[10px] font-bold uppercase tracking-widest text-[#4A4A4A] opacity-40 mt-1">{completedCount} / {totalCount} MILESTONES</div>
                                     </div>
-                                    <div className="w-24 h-2 bg-[#E2E8F0] rounded-full overflow-hidden hidden sm:block">
-                                        <div className="h-full bg-[#3B82F6] transition-all duration-500" style={{ width: `${progressPct}%` }}></div>
+                                    <div className="w-32 h-1.5 bg-[#E0E0E0] rounded-full overflow-hidden hidden md:block">
+                                        <div className="h-full bg-[#0D0D0D] transition-all duration-700" style={{ width: `${progressPct}%` }}></div>
                                     </div>
-                                    {isExpanded ? <ChevronUp className="h-5 w-5 text-[#94A3B8]" /> : <ChevronDown className="h-5 w-5 text-[#94A3B8]" />}
+                                    {isExpanded ? <ChevronUp className="h-4 w-4 text-[#0D0D0D]" /> : <ChevronDown className="h-4 w-4 text-[#0D0D0D]" />}
                                 </div>
                             </div>
                             
                             {/* Expanded Content */}
                             {isExpanded && (
-                                <div className="p-5 bg-white space-y-4">
+                                <div className="p-10 bg-white space-y-10">
                                     {phase.skills_covered && phase.skills_covered.length > 0 && (
-                                        <div className="mb-4">
-                                            <h4 className="text-xs font-bold uppercase tracking-wider text-[#64748B] mb-2">Skills Covered</h4>
+                                        <div>
+                                            <h4 className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#4A4A4A] opacity-40 mb-4">COMPETENCY FOCUS</h4>
                                             <div className="flex flex-wrap gap-2">
                                                 {phase.skills_covered.map(skill => (
-                                                    <span key={skill} className="px-2.5 py-1 bg-[#F1F5F9] text-[#475569] text-xs font-medium rounded-md">{skill}</span>
+                                                    <span key={skill} className="px-3 py-1.5 bg-[#F9F9F9] border border-[#E0E0E0] text-[#0D0D0D] text-[10px] font-bold uppercase tracking-widest rounded-lg">{skill}</span>
                                                 ))}
                                             </div>
                                         </div>
                                     )}
 
                                     <div>
-                                        <h4 className="text-xs font-bold uppercase tracking-wider text-[#64748B] mb-3">Action Items</h4>
-                                        <div className="space-y-3">
+                                        <h4 className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#4A4A4A] opacity-40 mb-6">STRATEGIC ACTION ITEMS</h4>
+                                        <div className="grid grid-cols-1 gap-4">
                                             {items.map((item, iIdx) => (
                                                 <div 
                                                     key={iIdx} 
                                                     onClick={(e) => { e.stopPropagation(); toggleActionItem(pIdx, iIdx); }}
-                                                    className={`group p-3 rounded-lg border transition-all cursor-pointer flex items-start gap-3
-                                                        ${item.completed ? 'bg-[#F0FDF4] border-[#BBF7D0]' : 'bg-white border-[#E2E8F0] hover:border-[#3B82F6] hover:shadow-sm'}`}
+                                                    className={`group p-5 rounded-xl border transition-all cursor-pointer flex items-center gap-5
+                                                        ${item.completed ? 'bg-[#F9F9F9] border-[#E0E0E0] opacity-60' : 'bg-white border-[#E0E0E0] hover:border-[#0D0D0D]'}`}
                                                 >
-                                                    <button className="flex-shrink-0 mt-0.5 focus:outline-none">
+                                                    <div className="flex-shrink-0">
                                                         {item.completed ? (
-                                                            <CheckCircle2 className="h-5 w-5 text-[#22C55E]" />
+                                                            <div className="h-6 w-6 rounded-full bg-[#0D0D0D] flex items-center justify-center text-[#5BC0EB]">
+                                                                <Check className="h-3 w-3" strokeWidth={4} />
+                                                            </div>
                                                         ) : (
-                                                            <Circle className="h-5 w-5 text-[#CBD5E1] group-hover:text-[#3B82F6] transition-colors" />
+                                                            <div className="h-6 w-6 rounded-full border-2 border-[#E0E0E0] group-hover:border-[#0D0D0D] transition-colors" />
                                                         )}
-                                                    </button>
-                                                    <span className={`text-sm leading-relaxed transition-colors ${item.completed ? 'text-[#166534] line-through opacity-70' : 'text-[#334155]'}`}>
+                                                    </div>
+                                                    <span className={`text-[13px] font-medium leading-relaxed transition-colors ${item.completed ? 'text-[#4A4A4A] line-through' : 'text-[#0D0D0D]'}`}>
                                                         {renderTaskWithLinks(item.task)}
                                                     </span>
                                                 </div>
@@ -286,51 +287,59 @@ export default function InteractiveRoadmap({ implicitSkills, pipelineId }: Inter
             </div>
             
             {/* Agent Chat Section */}
-            <div className="bg-white rounded-xl border border-[#E2E8F0] overflow-hidden shadow-sm mt-8">
-                <div className="bg-[#F8FAFC] p-4 border-b border-[#E2E8F0] flex items-center gap-3">
-                    <MessageSquare className="h-5 w-5 text-[#3B82F6]" />
-                    <div>
-                        <h3 className="font-bold text-[#0F172A] text-sm">Weekly Check-in Agent</h3>
-                        <p className="text-xs text-[#64748B]">Tell me what you learned this week, and I'll update your roadmap!</p>
+            <div className="bg-[#0D0D0D] rounded-xl overflow-hidden shadow-2xl mt-12">
+                <div className="px-10 py-8 border-b border-white/10 flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        <div className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/10 text-[#5BC0EB]">
+                            <MessageSquare className="h-5 w-5" />
+                        </div>
+                        <div>
+                            <h3 className="font-bold text-white text-sm uppercase tracking-widest">Progress Orchestrator</h3>
+                            <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mt-1">LOG YOUR ACHIEVEMENTS TO UPDATE THE ROADMAP</p>
+                        </div>
                     </div>
                 </div>
-                <div className="p-5 space-y-4">
+                <div className="p-10 space-y-8">
                     {chatReply && (
-                        <div className="bg-[#EFF6FF] text-[#1E3A8A] p-4 rounded-lg text-sm border border-[#BFDBFE]">
-                            <div className="font-bold mb-1 flex items-center gap-2">
-                                <Sparkles className="h-4 w-4" /> Agent Response
+                        <div className="bg-white/5 border border-white/10 p-8 rounded-xl">
+                            <div className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#5BC0EB] mb-4 flex items-center gap-3">
+                                <Sparkles className="h-3.5 w-3.5" /> AGENT ANALYSIS
                             </div>
-                            <p className="leading-relaxed">{chatReply.text}</p>
-                            <span className="text-[10px] text-[#60A5FA] block mt-2 text-right">
-                                {chatReply.time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            <p className="text-white text-[14px] leading-relaxed opacity-90">{chatReply.text}</p>
+                            <span className="text-[9px] font-bold text-white/20 block mt-6 uppercase tracking-widest">
+                                RECEIVED: {chatReply.time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </span>
                         </div>
                     )}
-                    <div className="flex gap-3">
+                    <div className="flex gap-4">
                         <textarea 
                             value={chatMessage}
                             onChange={e => setChatMessage(e.target.value)}
                             disabled={chatting}
-                            placeholder="e.g. 'I finished the freeCodeCamp Docker crash course...'"
-                            className="flex-1 border border-[#E2E8F0] rounded-lg p-3 text-sm focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6] outline-none resize-none disabled:opacity-50"
-                            rows={2}
+                            placeholder="Describe your learning progress (e.g. 'I completed the AWS Solutions Architect certification')..."
+                            className="flex-1 bg-white/5 border border-white/10 rounded-xl p-5 text-sm text-white placeholder:text-white/20 focus:border-[#5BC0EB] outline-none resize-none disabled:opacity-50"
+                            rows={3}
                         />
                         <button 
                             disabled={!chatMessage.trim() || chatting}
                             onClick={handleChat}
-                            className="bg-[#0F172A] hover:bg-[#1E293B] disabled:bg-[#94A3B8] text-white px-5 rounded-lg flex items-center justify-center transition-colors shadow-sm focus:ring-2 focus:ring-offset-2 focus:ring-[#0F172A]"
+                            className="bg-[#5BC0EB] hover:bg-white disabled:bg-white/10 text-[#0D0D0D] px-8 rounded-xl flex items-center justify-center transition-all group"
                         >
-                            {chatting ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
+                            {chatting ? <Loader2 className="h-6 w-6 animate-spin" /> : <Send className="h-6 w-6 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />}
                         </button>
                     </div>
                 </div>
             </div>
 
             {implicitSkills && implicitSkills.length > 0 && (
-                <div className="bg-white rounded-xl border border-[#E2E8F0] p-5 mt-6 shadow-sm">
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-[#64748B] mb-2">Inferred Masteries (Neo4j Graph Context)</h4>
-                    <div className="flex flex-wrap gap-1.5">
-                        {implicitSkills.map(s => <span key={s} className="bg-[#F8FAFC] border border-[#E2E8F0] text-[#475569] px-2 py-0.5 rounded shadow-sm text-[10px] font-bold uppercase">{s}</span>)}
+                <div className="bg-white rounded-xl border border-[#E0E0E0] p-8 mt-10">
+                    <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#4A4A4A] opacity-40 mb-6">INFERRED DOMAIN MASTERIES</h4>
+                    <div className="flex flex-wrap gap-2">
+                        {implicitSkills.map(s => (
+                            <span key={s} className="bg-[#F9F9F9] border border-[#E0E0E0] text-[#0D0D0D] px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest">
+                                {s}
+                            </span>
+                        ))}
                     </div>
                 </div>
             )}

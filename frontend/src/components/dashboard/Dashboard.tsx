@@ -7,7 +7,8 @@ import {
     Zap, 
     Clock, 
     Briefcase,
-    Activity
+    Activity,
+    ArrowUpRight
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Sidebar from './Sidebar';
@@ -50,8 +51,8 @@ export default function Dashboard() {
 
     if (loading) {
         return (
-            <div className="flex min-h-screen items-center justify-center bg-[#F1F5F9]">
-                <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#E2E8F0] border-t-[#3B82F6]" />
+            <div className="flex min-h-screen items-center justify-center bg-[#F9F9F9]">
+                <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#E0E0E0] border-t-[#5BC0EB]" />
             </div>
         );
     }
@@ -84,7 +85,7 @@ export default function Dashboard() {
             setNewRunJob('');
             refresh();
             navigate(`/dashboard?runId=${pipeline_id}`);
-        } catch (e: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+        } catch (e: any) {
             const detail = e.response?.data?.detail;
             if (detail && detail.code === "UPGRADE_REQUIRED") {
                 setShowNewRunModal(false);
@@ -96,34 +97,31 @@ export default function Dashboard() {
     }
 
     return (
-        <div className="min-h-screen bg-[#F8FAFC]" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+        <div className="min-h-screen bg-[#F9F9F9]" style={{ fontFamily: "'Inter', sans-serif" }}>
             <Sidebar />
 
             <main className="min-h-screen flex-1 bg-white ml-[280px]">
-                {/* Header */}
-                <header className="sticky top-0 z-20 flex h-20 w-full items-center justify-between border-b border-[#F1F5F9] bg-white/80 px-8 backdrop-blur-md">
+                {/* Clean Institutional Header */}
+                <header className="sticky top-0 z-20 flex h-20 w-full items-center justify-between border-b border-[#E0E0E0] bg-white/90 px-12 backdrop-blur-md">
                     <div className="flex items-center gap-4">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-                            <LayoutDashboard className="h-6 w-6" />
-                        </div>
                         <div>
-                            <h2 className="text-xl font-bold text-[#0F172A]">Overview</h2>
-                            <p className="text-xs text-[#64748B]">Your career status at a glance.</p>
+                            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#4A4A4A] opacity-60 block mb-0.5">[ OVERVIEW ]</span>
+                            <h2 className="text-xl font-bold tracking-tight text-[#0D0D0D]">Account Dashboard</h2>
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
                         <button
                             type="button"
                             onClick={() => setShowNewRunModal(true)}
-                            className="inline-flex items-center gap-2 rounded-xl bg-[#3B82F6] px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-blue-500/10 hover:bg-[#2563EB] transition-all"
+                            className="lp-btn-pill"
                         >
-                            <Play className="h-4 w-4 fill-current" />
                             New Analysis
+                            <span className="lp-btn-icon"><ArrowUpRight className="h-4 w-4" /></span>
                         </button>
                     </div>
                 </header>
 
-                <div className="p-8 max-w-6xl mx-auto space-y-10">
+                <div className="p-12 max-w-6xl mx-auto space-y-12">
                     {runs.length === 0 ? (
                         <EmptyState
                             onRunPipeline={() => setShowNewRunModal(true)}
@@ -131,89 +129,94 @@ export default function Dashboard() {
                         />
                     ) : (
                         <>
-                            {/* Compact Pipeline Status */}
+                            {/* Pipeline Status Section */}
                             {(isRunning || status === 'completed') && (
-                                <section className="flex items-center justify-between rounded-2xl border border-blue-100 bg-blue-50/50 p-6">
-                                    <div className="flex items-center gap-4">
-                                        <div className={`flex h-12 w-12 items-center justify-center rounded-full ${isRunning ? 'bg-blue-600 text-white animate-pulse' : 'bg-green-600 text-white'}`}>
-                                            <Activity className="h-6 w-6" />
+                                <section className="relative overflow-hidden rounded-xl border border-[#E0E0E0] bg-[#F9F9F9] p-8 transition-all hover:border-[#5BC0EB]">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-6">
+                                            <div className={`flex h-14 w-14 items-center justify-center rounded-lg ${isRunning ? 'bg-[#5BC0EB] text-white animate-pulse' : 'bg-[#0D0D0D] text-white'}`}>
+                                                <Activity className="h-7 w-7" />
+                                            </div>
+                                            <div>
+                                                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#4A4A4A] opacity-60 block mb-1">
+                                                    [ {status.toUpperCase()} ]
+                                                </span>
+                                                <h3 className="text-xl font-bold text-[#0D0D0D]">
+                                                    {selectedRun?.label || 'Career Analysis Pipeline'}
+                                                </h3>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <p className="text-xs font-bold uppercase tracking-wider text-blue-600 mb-0.5">{status}</p>
-                                            <h3 className="text-lg font-bold text-[#1E3A8A]">
-                                                {selectedRun?.label || 'Active Analysis'}
-                                            </h3>
+                                        <div className="flex items-center gap-10">
+                                             <PipelineTracker
+                                                currentStage={Math.max(1, currentStage)}
+                                                status={(status as 'running' | 'completed' | 'failed' | 'partial' | 'waiting_for_input') || 'completed'}
+                                                totalStages={7}
+                                            />
+                                            <div className="h-10 w-[1px] bg-[#E0E0E0]" />
+                                            <button 
+                                                onClick={() => navigate(`/dashboard/cv-analysis?runId=${selectedRunId}`)}
+                                                className="group flex items-center gap-2 text-sm font-bold text-[#0D0D0D] hover:text-[#5BC0EB] transition-colors"
+                                            >
+                                                View Analysis
+                                                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                                            </button>
                                         </div>
-                                    </div>
-                                    <div className="flex items-center gap-8">
-                                         <PipelineTracker
-                                            currentStage={Math.max(1, currentStage)}
-                                            status={(status as 'running' | 'completed' | 'failed' | 'partial' | 'waiting_for_input') || 'completed'}
-                                            totalStages={7}
-                                        />
-                                        <div className="h-10 w-[1px] bg-blue-200" />
-                                        <button 
-                                            onClick={() => navigate(`/dashboard/cv-analysis?runId=${selectedRunId}`)}
-                                            className="text-sm font-bold text-blue-600 hover:underline"
-                                        >
-                                            See Details
-                                        </button>
                                     </div>
                                 </section>
                             )}
 
-                            {/* Streamlined Quick Links */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                <QuickMetricCard 
-                                    title="CV Score" 
-                                    icon={Target}
-                                    color="blue"
-                                    onClick={() => navigate(`/dashboard/cv-analysis${selectedRunId ? `?runId=${selectedRunId}` : ''}`)}
-                                    value={data?.ats_score?.toString() ?? '--'}
-                                    subText="ATS Match Score"
-                                />
-                                <QuickMetricCard 
-                                    title="Job Matches" 
-                                    icon={Briefcase}
-                                    color="purple"
-                                    onClick={() => navigate(`/dashboard/job-search${selectedRunId ? `?runId=${selectedRunId}` : ''}`)}
-                                    value={(() => {
-                                        const marketData = (data as any)?.market_analysis?.market_analysis || {};
-                                        let count = 0;
-                                        Object.values(marketData).forEach((info: any) => {
-                                            if (info?.snippets) count += info.snippets.length;
-                                        });
-                                        return count > 0 ? count.toString() : "0";
-                                    })()}
-                                    subText="Tailored for you"
-                                />
-                                <QuickMetricCard 
-                                    title="Roadmap" 
-                                    icon={Zap}
-                                    color="orange"
-                                    onClick={() => navigate(`/dashboard/skills${selectedRunId ? `?runId=${selectedRunId}` : ''}`)}
-                                    value={(() => {
-                                        const phases = data?.skill_roadmap || [];
-                                        let completed = 0;
-                                        let total = 0;
-                                        phases.forEach((p: any) => {
-                                            const items = p.action_items || p.milestones || [];
-                                            total += items.length;
-                                            completed += items.filter((i: any) => i.completed).length;
-                                        });
-                                        return total > 0 ? `${completed}/${total}` : "--";
-                                    })()}
-                                    subText="Steps complete"
-                                />
+                            {/* Bento Grid Metrics */}
+                            <div>
+                                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#4A4A4A] opacity-60 block mb-6">[ QUICK METRICS ]</span>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <QuickMetricCard 
+                                        title="CV SCORE" 
+                                        icon={Target}
+                                        onClick={() => navigate(`/dashboard/cv-analysis${selectedRunId ? `?runId=${selectedRunId}` : ''}`)}
+                                        value={data?.ats_score?.toString() ?? '--'}
+                                        subText="ATS Match Performance"
+                                    />
+                                    <QuickMetricCard 
+                                        title="JOB MATCHES" 
+                                        icon={Briefcase}
+                                        onClick={() => navigate(`/dashboard/job-search${selectedRunId ? `?runId=${selectedRunId}` : ''}`)}
+                                        value={(() => {
+                                            const marketData = (data as any)?.market_analysis?.market_analysis || {};
+                                            let count = 0;
+                                            Object.values(marketData).forEach((info: any) => {
+                                                if (info?.snippets) count += info.snippets.length;
+                                            });
+                                            return count > 0 ? count.toString() : "0";
+                                        })()}
+                                        subText="Curated opportunities"
+                                    />
+                                    <QuickMetricCard 
+                                        title="ROADMAP" 
+                                        icon={Zap}
+                                        onClick={() => navigate(`/dashboard/skills${selectedRunId ? `?runId=${selectedRunId}` : ''}`)}
+                                        value={(() => {
+                                            const phases = data?.skill_roadmap || [];
+                                            let completed = 0;
+                                            let total = 0;
+                                            phases.forEach((p: any) => {
+                                                const items = p.action_items || p.milestones || [];
+                                                total += items.length;
+                                                completed += items.filter((i: any) => i.completed).length;
+                                            });
+                                            return total > 0 ? `${completed}/${total}` : "--";
+                                        })()}
+                                        subText="Action items completed"
+                                    />
+                                </div>
                             </div>
 
-                            {/* Recent Runs - Simplified */}
-                            <section className="space-y-4">
+                            {/* Recent Activity List */}
+                            <section className="space-y-6">
                                 <div className="flex items-center justify-between">
-                                    <h4 className="text-lg font-bold text-[#0F172A]">Recent Activity</h4>
-                                    <button onClick={() => navigate('/dashboard/pipeline-runs')} className="text-sm font-bold text-[#64748B] hover:text-blue-600 transition-colors">View Timeline</button>
+                                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#4A4A4A] opacity-60 block">[ RECENT ACTIVITY ]</span>
+                                    <button onClick={() => navigate('/dashboard/pipeline-runs')} className="text-xs font-bold text-[#4A4A4A] hover:text-[#0D0D0D] transition-colors border-b border-[#E0E0E0] pb-0.5">View All Runs</button>
                                 </div>
-                                <div className="grid grid-cols-1 gap-3">
+                                <div className="grid grid-cols-1 gap-4">
                                     {runs.slice(0, 3).map((run) => (
                                         <button 
                                             key={run.id}
@@ -221,22 +224,27 @@ export default function Dashboard() {
                                                 setSelectedRunId(run.id);
                                                 navigate(`/dashboard?runId=${run.id}`);
                                             }}
-                                            className={`flex items-center justify-between w-full p-4 rounded-2xl transition-all border ${run.id === selectedRunId ? 'bg-white border-blue-200 shadow-lg shadow-blue-500/5' : 'bg-transparent border-transparent hover:bg-[#F8FAFC]'}`}
+                                            className={`flex items-center justify-between w-full p-6 rounded-xl transition-all border ${run.id === selectedRunId ? 'bg-[#F9F9F9] border-[#0D0D0D]' : 'bg-white border-[#E0E0E0] hover:border-[#0D0D0D]'}`}
                                         >
-                                            <div className="flex items-center gap-4 text-left">
-                                                <div className={`h-10 w-10 flex items-center justify-center rounded-xl ${run.id === selectedRunId ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20' : 'bg-gray-100 text-gray-400'}`}>
-                                                    <Clock className="h-5 w-5" />
+                                            <div className="flex items-center gap-6 text-left">
+                                                <div className={`h-12 w-12 flex items-center justify-center rounded-lg transition-all ${run.id === selectedRunId ? 'bg-[#0D0D0D] text-white' : 'bg-[#F9F9F9] text-[#A0A0A0]'}`}>
+                                                    <Clock className="h-6 w-6" />
                                                 </div>
                                                 <div>
-                                                    <p className="text-sm font-bold text-[#0F172A]">{run.label || 'Career Analysis'}</p>
-                                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{run.created_at ? new Date(run.created_at).toLocaleDateString() : 'RECENT'}</p>
+                                                    <p className="text-base font-bold text-[#0D0D0D] tracking-tight">{run.label || 'Career Analysis'}</p>
+                                                    <p className="text-[10px] text-[#4A4A4A] font-bold uppercase tracking-[0.15em] opacity-60">{run.created_at ? new Date(run.created_at).toLocaleDateString() : 'RECENT'}</p>
                                                 </div>
                                             </div>
-                                            <div className="flex items-center gap-3">
+                                            <div className="flex items-center gap-6">
                                                 {run.ats_score && (
-                                                    <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded-md">{run.ats_score}%</span>
+                                                    <div className="text-right">
+                                                        <span className="block text-[10px] font-bold uppercase text-[#4A4A4A] opacity-60 mb-0.5">SCORE</span>
+                                                        <span className="text-sm font-bold text-[#0D0D0D] bg-[#F9F9F9] border border-[#E0E0E0] px-3 py-1 rounded-full">{run.ats_score}%</span>
+                                                    </div>
                                                 )}
-                                                <ArrowRight className={`h-4 w-4 transition-transform ${run.id === selectedRunId ? 'text-blue-600' : 'text-gray-300'}`} />
+                                                <div className={`h-8 w-8 flex items-center justify-center rounded-full border transition-all ${run.id === selectedRunId ? 'bg-[#0D0D0D] text-white border-[#0D0D0D]' : 'bg-white text-[#A0A0A0] border-[#E0E0E0]'}`}>
+                                                    <ArrowRight className="h-4 w-4" />
+                                                </div>
                                             </div>
                                         </button>
                                     ))}
@@ -247,39 +255,42 @@ export default function Dashboard() {
                 </div>
             </main>
 
-            {/* Reuse Modal logic */}
+            {/* Redesigned Modal matching institutional style */}
             {showNewRunModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0D0D0D]/60 backdrop-blur-sm p-4">
                     <motion.div
-                        initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        className="w-full max-w-xl rounded-[32px] border border-[#E2E8F0] bg-white p-10 shadow-2xl"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="w-full max-w-xl rounded-lg border border-[#E0E0E0] bg-white p-10 shadow-2xl"
                     >
-                        <h3 className="text-2xl font-bold text-[#0F172A] mb-2">New Analysis</h3>
-                        <p className="text-sm text-[#64748B] mb-8">Launch our AI to optimize your application.</p>
+                        <div className="mb-10">
+                            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#4A4A4A] opacity-60 block mb-2">[ NEW PIPELINE ]</span>
+                            <h3 className="text-2xl font-bold tracking-tight text-[#0D0D0D]">Launch Analysis</h3>
+                            <p className="text-sm text-[#4A4A4A] mt-2">Initialize our multi-agent pipeline to optimize your career path.</p>
+                        </div>
 
-                        <div className="space-y-6">
+                        <div className="space-y-8">
                             <div>
-                                <div className="flex items-center justify-between mb-3">
-                                    <label className="block text-xs font-bold uppercase tracking-widest text-[#94A3B8]">CV Data</label>
-                                    <div className="flex bg-[#F1F5F9] p-1 rounded-lg">
+                                <div className="flex items-center justify-between mb-4">
+                                    <label className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#0D0D0D]">RESUME INPUT</label>
+                                    <div className="flex gap-2 p-1 bg-[#F9F9F9] border border-[#E0E0E0] rounded-lg">
                                         <button 
                                             onClick={() => setUploadMode('file')}
-                                            className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${uploadMode === 'file' ? 'bg-white text-[#0F172A] shadow-sm' : 'text-[#64748B] hover:text-[#0F172A]'}`}
+                                            className={`px-4 py-1.5 text-[11px] font-bold rounded-md transition-all ${uploadMode === 'file' ? 'bg-white text-[#0D0D0D] shadow-sm' : 'text-[#4A4A4A] hover:text-[#0D0D0D]'}`}
                                         >
-                                            PDF File
+                                            PDF
                                         </button>
                                         <button 
                                             onClick={() => setUploadMode('text')}
-                                            className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${uploadMode === 'text' ? 'bg-white text-[#0F172A] shadow-sm' : 'text-[#64748B] hover:text-[#0F172A]'}`}
+                                            className={`px-4 py-1.5 text-[11px] font-bold rounded-md transition-all ${uploadMode === 'text' ? 'bg-white text-[#0D0D0D] shadow-sm' : 'text-[#4A4A4A] hover:text-[#0D0D0D]'}`}
                                         >
-                                            Paste Text
+                                            TEXT
                                         </button>
                                     </div>
                                 </div>
                                 
                                 {uploadMode === 'file' ? (
-                                    <div className="rounded-2xl border-2 border-dashed border-[#E2E8F0] bg-[#F8FAFC] p-6 hover:border-[#3B82F6] transition-all">
+                                    <div className="rounded-lg border-2 border-dashed border-[#E0E0E0] bg-[#F9F9F9] p-8 hover:border-[#5BC0EB] transition-all">
                                         <CVUpload 
                                             onResult={handleCvResult} 
                                             onLoading={handleCvLoading}
@@ -289,29 +300,35 @@ export default function Dashboard() {
                                     <textarea
                                         value={newRunCv}
                                         onChange={(e) => setNewRunCv(e.target.value)}
-                                        placeholder="Paste your CV content..."
-                                        className="w-full rounded-2xl border border-[#E2E8F0] bg-white p-4 text-sm text-[#0F172A] focus:border-[#3B82F6] transition-all outline-none min-h-[120px]"
+                                        placeholder="Paste content here..."
+                                        className="w-full rounded-lg border border-[#E0E0E0] bg-white p-5 text-sm text-[#0D0D0D] focus:border-[#5BC0EB] transition-all outline-none min-h-[160px] font-medium"
                                         rows={4}
                                     />
                                 )}
                             </div>
                             <div>
-                                <label className="block text-xs font-bold uppercase tracking-widest text-[#94A3B8] mb-3">Target Role</label>
+                                <label className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#0D0D0D] block mb-4">TARGET POSITION</label>
                                 <textarea
                                     value={newRunJob}
                                     onChange={(e) => setNewRunJob(e.target.value)}
-                                    placeholder="e.g. Frontend Developer at Vercel"
-                                    className="w-full rounded-2xl border border-[#E2E8F0] bg-white p-4 text-sm text-[#0F172A] focus:border-[#3B82F6] transition-all outline-none"
+                                    placeholder="e.g. Senior Software Engineer at Apple"
+                                    className="w-full rounded-lg border border-[#E0E0E0] bg-white p-5 text-sm text-[#0D0D0D] focus:border-[#5BC0EB] transition-all outline-none font-medium"
                                     rows={3}
                                 />
                             </div>
                         </div>
-                        {startError && <p className="mt-4 text-sm font-bold text-red-500">{startError}</p>}
-                        <div className="mt-10 flex gap-4">
+                        
+                        {startError && (
+                            <div className="mt-6 p-4 bg-red-50 border border-red-100 rounded-lg">
+                                <p className="text-[11px] font-bold text-red-600 uppercase tracking-wider">{startError}</p>
+                            </div>
+                        )}
+                        
+                        <div className="mt-12 flex gap-4">
                             <button
                                 type="button"
                                 onClick={() => setShowNewRunModal(false)}
-                                className="flex-1 rounded-2xl border border-[#E2E8F0] py-4 text-sm font-bold text-[#475569] hover:bg-[#F8FAFC]"
+                                className="flex-1 rounded-lg border border-[#E0E0E0] py-4 text-xs font-bold text-[#4A4A4A] uppercase tracking-widest hover:bg-[#F9F9F9] transition-all"
                             >
                                 Cancel
                             </button>
@@ -319,9 +336,9 @@ export default function Dashboard() {
                                 type="button"
                                 disabled={isCvLoading}
                                 onClick={handleNewPipelineRun}
-                                className={`flex-[2] rounded-2xl py-4 text-sm font-extrabold text-white transition-all ${isCvLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#0F172A] hover:shadow-xl'}`}
+                                className={`flex-[2] rounded-lg py-4 text-xs font-bold uppercase tracking-[0.2em] text-white transition-all ${isCvLoading ? 'bg-[#A0A0A0] cursor-not-allowed' : 'bg-[#0D0D0D] hover:bg-[#5BC0EB]'}`}
                             >
-                                {isCvLoading ? 'Processing CV...' : 'Start AI Agent'}
+                                {isCvLoading ? 'PROCESSING...' : 'INITIALIZE AGENT'}
                             </button>
                         </div>
                     </motion.div>
@@ -338,32 +355,25 @@ export default function Dashboard() {
 interface QuickMetricCardProps {
     title: string;
     icon: React.ElementType;
-    color: 'blue' | 'purple' | 'orange';
     onClick: () => void;
     value: string;
     subText: string;
 }
 
-function QuickMetricCard({ title, icon: Icon, color, onClick, value, subText }: QuickMetricCardProps) {
-    const colorMap: Record<'blue' | 'purple' | 'orange', string> = {
-        blue: 'text-blue-600 bg-blue-50',
-        purple: 'text-purple-600 bg-purple-50',
-        orange: 'text-orange-600 bg-orange-50',
-    };
-    
+function QuickMetricCard({ title, icon: Icon, onClick, value, subText }: QuickMetricCardProps) {
     return (
         <button 
             onClick={onClick}
-            className="group flex items-center gap-5 rounded-2xl border border-[#F1F5F9] bg-white p-5 text-left transition-all hover:shadow-xl hover:shadow-blue-500/5"
+            className="group flex flex-col gap-6 rounded-xl border border-[#E0E0E0] bg-white p-8 text-left transition-all hover:border-[#5BC0EB] hover:bg-[#F9F9F9]"
         >
-            <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl transition-all group-hover:scale-110 ${colorMap[color]}`}>
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-[#0D0D0D] text-white transition-all group-hover:bg-[#5BC0EB]">
                 <Icon className="h-6 w-6" />
             </div>
             <div>
-                <h4 className="text-xs font-bold uppercase tracking-widest text-[#94A3B8] mb-0.5">{title}</h4>
-                <div className="flex items-center gap-2">
-                    <span className="text-xl font-extrabold text-[#0F172A]">{value}</span>
-                    <span className="text-[10px] font-bold text-[#64748B]">{subText}</span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#4A4A4A] opacity-60 block mb-2">{title}</span>
+                <div className="flex items-baseline gap-3">
+                    <span className="text-3xl font-bold text-[#0D0D0D] tracking-tight">{value}</span>
+                    <span className="text-[11px] font-bold text-[#4A4A4A] opacity-60">{subText}</span>
                 </div>
             </div>
         </button>
