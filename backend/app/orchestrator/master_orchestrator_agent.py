@@ -170,16 +170,16 @@ class MasterOrchestratorAgent:
         try:
             # Save CV version
             if state.get("optimised_cv"):
-                # Get the next version number for this user
+                # Get the next version number for this user with a lock to avoid race conditions
                 from sqlalchemy import select, func
-                stmt = select(func.count(CVVersion.id)).where(CVVersion.user_id == user_id)
-                count_res = await session.execute(stmt)
-                version_count = count_res.scalar() or 0
+                stmt = select(func.max(CVVersion.version_number)).where(CVVersion.user_id == user_id).with_for_update()
+                max_res = await session.execute(stmt)
+                current_max = max_res.scalar() or 0
                 
                 cv_version = CVVersion(
                     user_id=user_id,
                     pipeline_id=pipeline_id,
-                    version_number=version_count + 1,
+                    version_number=current_max + 1,
                     cv_text=state.get("cv_raw", ""),
                     ats_score=state.get("ats_score"),
                     match_score=state.get("skill_match_score"),  # GraphRAG score

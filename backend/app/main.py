@@ -1,13 +1,23 @@
 import sys
 import asyncio
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
+from app.core.http_client import HttpClient
 
 if sys.platform == 'win32':
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 load_dotenv()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    yield
+    # Close HTTP session on shutdown
+    await HttpClient.close_session()
+
+app = FastAPI(title="AI Career Partner", lifespan=lifespan)
 
 from app.routers import auth  
 from app.routers import cv
@@ -16,8 +26,6 @@ from app.routers import interview
 
 # Import models so SQLModel creates the tables
 from app.models import user, resume, job, profile, task_state, pipeline, cv_history, job_market, interview_roadmap, preference, esco  # noqa: F401
-
-app = FastAPI(title="AI Career Partner")
 
 app.add_middleware(
     CORSMiddleware,

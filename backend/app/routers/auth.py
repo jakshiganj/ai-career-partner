@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+import os
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -105,7 +106,8 @@ async def forgot_password(body: ForgotPasswordRequest, session: AsyncSession = D
     await session.commit()
 
     # Send reset email
-    reset_link = f"http://localhost:5173/reset-password?token={token}"
+    frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
+    reset_link = f"{frontend_url}/reset-password?token={token}"
     await send_password_reset_email(to_email=user.email, reset_link=reset_link)
 
     return generic_msg

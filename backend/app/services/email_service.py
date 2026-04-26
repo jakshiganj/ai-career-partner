@@ -1,8 +1,28 @@
 import os
 import smtplib
+import asyncio
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from dotenv import load_dotenv
+
+def _send_email_sync(to_email: str, subject: str, html_content: str, gmail_address: str, gmail_password: str) -> bool:
+    """Synchronous helper for SMTP operations."""
+    try:
+        msg = MIMEMultipart()
+        msg['From'] = f"AI Career Partner <{gmail_address}>"
+        msg['To'] = to_email
+        msg['Subject'] = subject
+        msg.attach(MIMEText(html_content, 'html'))
+
+        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server.starttls()
+        server.login(gmail_address, gmail_password)
+        server.send_message(msg)
+        server.quit()
+        return True
+    except Exception as e:
+        print(f"[EMAIL_SERVICE] ❌ SMTP Error: {e}")
+        return False
 
 async def send_digest_email(to_email: str, subject: str, digest_data: dict) -> bool:
     """
@@ -42,26 +62,10 @@ async def send_digest_email(to_email: str, subject: str, digest_data: dict) -> b
         </html>
         """
 
-        # Create the email message
-        msg = MIMEMultipart()
-        msg['From'] = f"AI Career Partner <{gmail_address}>"
-        msg['To'] = to_email
-        msg['Subject'] = subject
-        
-        # Attach the HTML body
-        msg.attach(MIMEText(html_content, 'html'))
-
-        # Connect to Gmail SMTP server
-        server = smtplib.SMTP('smtp.gmail.com', 587)
-        server.starttls()  # Secure the connection
-        
-        # Login and send
-        server.login(gmail_address, gmail_password)
-        server.send_message(msg)
-        server.quit()
-
-        print(f"[EMAIL_SERVICE] ✅ Email sent successfully via Gmail to {to_email}")
-        return True
+        success = await asyncio.to_thread(_send_email_sync, to_email, subject, html_content, gmail_address, gmail_password)
+        if success:
+            print(f"[EMAIL_SERVICE] ✅ Email sent successfully via Gmail to {to_email}")
+        return success
     except Exception as e:
         print(f"[EMAIL_SERVICE] ❌ Failed to send email via Gmail: {e}")
         return False
@@ -122,21 +126,11 @@ async def send_password_reset_email(to_email: str, reset_link: str) -> bool:
         </html>
         """
 
-        msg = MIMEMultipart()
-        msg['From'] = f"AI Career Partner <{gmail_address}>"
-        msg['To'] = to_email
-        msg['Subject'] = "Reset Your Password — AI Career Partner"
-
-        msg.attach(MIMEText(html_content, 'html'))
-
-        server = smtplib.SMTP('smtp.gmail.com', 587)
-        server.starttls()
-        server.login(gmail_address, gmail_password)
-        server.send_message(msg)
-        server.quit()
-
-        print(f"[EMAIL_SERVICE] ✅ Password reset email sent to {to_email}")
-        return True
+        subject = "Reset Your Password — AI Career Partner"
+        success = await asyncio.to_thread(_send_email_sync, to_email, subject, html_content, gmail_address, gmail_password)
+        if success:
+            print(f"[EMAIL_SERVICE] ✅ Password reset email sent to {to_email}")
+        return success
     except Exception as e:
         print(f"[EMAIL_SERVICE] ❌ Failed to send password reset email: {e}")
         return False
