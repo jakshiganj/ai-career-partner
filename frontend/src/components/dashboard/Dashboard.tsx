@@ -197,10 +197,10 @@ export default function Dashboard() {
                                             const phases = data?.skill_roadmap || [];
                                             let completed = 0;
                                             let total = 0;
-                                            phases.forEach((p) => {
+                                            phases.forEach((p: any) => {
                                                 const items = p.action_items || p.milestones || [];
                                                 total += items.length;
-                                                completed += items.filter((i) => (i as { completed: boolean }).completed).length;
+                                                completed += items.filter((i: any) => i.completed).length;
                                             });
                                             return total > 0 ? `${completed}/${total}` : "--";
                                         })()}

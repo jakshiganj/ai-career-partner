@@ -61,8 +61,8 @@ export default function JobSearchPage() {
                 title: string;
                 company: string;
                 match_score: number;
-                tier: 'Realistic' | 'Stretch' | 'Reach';
-                missing_skills: string[];
+                tier: string;
+                missing_skills?: string[];
                 salary_min?: number;
                 salary_max?: number;
                 url?: string;
@@ -71,8 +71,8 @@ export default function JobSearchPage() {
                 title: j.title,
                 company: j.company,
                 match_score: j.match_score,
-                tier: j.tier,
-                missing_skills: j.missing_skills,
+                tier: j.tier as "Realistic" | "Stretch" | "Reach",
+                missing_skills: j.missing_skills ?? [],
                 salary_min: j.salary_min,
                 salary_max: j.salary_max,
                 url: j.url,

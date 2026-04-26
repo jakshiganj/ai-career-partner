@@ -198,10 +198,10 @@ export default function CVOptimisationCard({
     const handleDownloadDOCX = async () => {
         setIsExporting(true);
         try {
-            // @ts-expect-error - html-to-docx may not be in types
+            // @ts-ignore - html-to-docx may not be in types
             let docxModule;
             try {
-                // @ts-expect-error - dynamic import
+                // @ts-ignore - dynamic import
                 docxModule = await import('html-to-docx');
             } catch {
                 console.warn("html-to-docx not supported in browser context directly, falling back to msword blob");
