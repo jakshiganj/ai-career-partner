@@ -2,7 +2,7 @@ import './AuthPages.css';
 import { useState, useEffect } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Sparkles, ArrowRight, CheckCircle, XCircle, KeyRound } from 'lucide-react';
+import { Sparkles, ArrowRight, CheckCircle, XCircle } from 'lucide-react';
 import { verifyResetToken, resetPassword } from '../api/auth';
 
 export default function ResetPasswordPage() {

@@ -26,6 +26,25 @@ async def get_current_roadmap(
         
     return roadmap
 
+@router.get("/pipeline/{pipeline_id}")
+async def get_roadmap_by_pipeline(
+    pipeline_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session)
+):
+    """Fetches the roadmap associated with a specific pipeline run."""
+    query = select(SkillRoadmap).where(
+        SkillRoadmap.user_id == current_user.id,
+        SkillRoadmap.pipeline_id == pipeline_id
+    )
+    res = await session.execute(query)
+    roadmap = res.scalar_one_or_none()
+    
+    if not roadmap:
+        raise HTTPException(status_code=404, detail="No roadmap found for this pipeline run")
+        
+    return roadmap
+
 @router.patch("/{roadmap_id}")
 async def update_roadmap(
     roadmap_id: uuid.UUID,

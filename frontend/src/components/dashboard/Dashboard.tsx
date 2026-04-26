@@ -16,7 +16,7 @@ import { useDashboardData } from '../../hooks/useDashboardData';
 import EmptyState from './EmptyState';
 import { runPipeline } from '../../api/pipeline';
 import CVUpload from '../CVUpload';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import PricingModal from '../ui/PricingModal';
 
 export default function Dashboard() {
@@ -38,6 +38,15 @@ export default function Dashboard() {
     const [newRunCv, setNewRunCv] = useState('');
     const [newRunJob, setNewRunJob] = useState('');
     const [startError, setStartError] = useState<string | null>(null);
+    const [isCvLoading, setIsCvLoading] = useState(false);
+
+    const handleCvLoading = useCallback((loadingVal: boolean) => {
+        setIsCvLoading(loadingVal);
+    }, []);
+
+    const handleCvResult = useCallback((_id: number, _fb: any, redactedText: string) => {
+        setNewRunCv(redactedText);
+    }, []);
 
     if (loading) {
         return (
@@ -54,8 +63,12 @@ export default function Dashboard() {
     const data = runResult ?? (dashboardSummary ? mapDashboardToResult(dashboardSummary) : null);
 
     async function handleNewPipelineRun() {
-        if (!newRunCv.trim() || !newRunJob.trim()) {
-            setStartError('Please enter both CV text and job description.');
+        if (!newRunCv.trim()) {
+            setStartError('Please provide your CV (upload PDF or paste text).');
+            return;
+        }
+        if (!newRunJob.trim()) {
+            setStartError('Please enter the target role or job description.');
             return;
         }
         setStartError(null);
@@ -164,7 +177,14 @@ export default function Dashboard() {
                                     icon={Briefcase}
                                     color="purple"
                                     onClick={() => navigate(`/dashboard/job-search${selectedRunId ? `?runId=${selectedRunId}` : ''}`)}
-                                    value="12"
+                                    value={(() => {
+                                        const marketData = (data as any)?.market_analysis?.market_analysis || {};
+                                        let count = 0;
+                                        Object.values(marketData).forEach((info: any) => {
+                                            if (info?.snippets) count += info.snippets.length;
+                                        });
+                                        return count > 0 ? count.toString() : "0";
+                                    })()}
                                     subText="Tailored for you"
                                 />
                                 <QuickMetricCard 
@@ -172,7 +192,17 @@ export default function Dashboard() {
                                     icon={Zap}
                                     color="orange"
                                     onClick={() => navigate(`/dashboard/skills${selectedRunId ? `?runId=${selectedRunId}` : ''}`)}
-                                    value="4/10"
+                                    value={(() => {
+                                        const phases = data?.skill_roadmap || [];
+                                        let completed = 0;
+                                        let total = 0;
+                                        phases.forEach((p: any) => {
+                                            const items = p.action_items || p.milestones || [];
+                                            total += items.length;
+                                            completed += items.filter((i: any) => i.completed).length;
+                                        });
+                                        return total > 0 ? `${completed}/${total}` : "--";
+                                    })()}
                                     subText="Steps complete"
                                 />
                             </div>
@@ -230,17 +260,37 @@ export default function Dashboard() {
 
                         <div className="space-y-6">
                             <div>
-                                <label className="block text-xs font-bold uppercase tracking-widest text-[#94A3B8] mb-3">CV Data</label>
+                                <div className="flex items-center justify-between mb-3">
+                                    <label className="block text-xs font-bold uppercase tracking-widest text-[#94A3B8]">CV Data</label>
+                                    <div className="flex bg-[#F1F5F9] p-1 rounded-lg">
+                                        <button 
+                                            onClick={() => setUploadMode('file')}
+                                            className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${uploadMode === 'file' ? 'bg-white text-[#0F172A] shadow-sm' : 'text-[#64748B] hover:text-[#0F172A]'}`}
+                                        >
+                                            PDF File
+                                        </button>
+                                        <button 
+                                            onClick={() => setUploadMode('text')}
+                                            className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${uploadMode === 'text' ? 'bg-white text-[#0F172A] shadow-sm' : 'text-[#64748B] hover:text-[#0F172A]'}`}
+                                        >
+                                            Paste Text
+                                        </button>
+                                    </div>
+                                </div>
+                                
                                 {uploadMode === 'file' ? (
                                     <div className="rounded-2xl border-2 border-dashed border-[#E2E8F0] bg-[#F8FAFC] p-6 hover:border-[#3B82F6] transition-all">
-                                        <CVUpload onResult={(_id, _fb, redactedText) => setNewRunCv(redactedText)} />
+                                        <CVUpload 
+                                            onResult={handleCvResult} 
+                                            onLoading={handleCvLoading}
+                                        />
                                     </div>
                                 ) : (
                                     <textarea
                                         value={newRunCv}
                                         onChange={(e) => setNewRunCv(e.target.value)}
                                         placeholder="Paste your CV content..."
-                                        className="w-full rounded-2xl border border-[#E2E8F0] bg-white p-4 text-sm text-[#0F172A] focus:border-[#3B82F6] transition-all outline-none"
+                                        className="w-full rounded-2xl border border-[#E2E8F0] bg-white p-4 text-sm text-[#0F172A] focus:border-[#3B82F6] transition-all outline-none min-h-[120px]"
                                         rows={4}
                                     />
                                 )}
@@ -267,10 +317,11 @@ export default function Dashboard() {
                             </button>
                             <button
                                 type="button"
+                                disabled={isCvLoading}
                                 onClick={handleNewPipelineRun}
-                                className="flex-[2] rounded-2xl bg-[#0F172A] py-4 text-sm font-extrabold text-white hover:shadow-xl transition-all"
+                                className={`flex-[2] rounded-2xl py-4 text-sm font-extrabold text-white transition-all ${isCvLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#0F172A] hover:shadow-xl'}`}
                             >
-                                Start AI Agent
+                                {isCvLoading ? 'Processing CV...' : 'Start AI Agent'}
                             </button>
                         </div>
                     </motion.div>

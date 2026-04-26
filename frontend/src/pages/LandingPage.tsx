@@ -8,14 +8,13 @@ import {
   Sparkles,
   FileText,
   Brain,
-  Target,
   MessageSquare,
   TrendingUp,
   Zap,
   X,
 } from 'lucide-react';
 
-const ease = [0.16, 1, 0.3, 1];
+const ease = [0.16, 1, 0.3, 1] as const;
 
 function Reveal({ children, delay = 0, className = '' }: { children: React.ReactNode; delay?: number; className?: string }) {
   return (

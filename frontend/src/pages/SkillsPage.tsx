@@ -21,9 +21,6 @@ export default function SkillsPage() {
     const data = runResult ?? null;
     const selectedRun = runs.find((r) => r.id === runId);
 
-    // Pass the per-run roadmap phases from state_json
-    const pipelineRoadmap = Array.isArray(data?.skill_roadmap) ? (data.skill_roadmap as unknown as RoadmapPhase[]) : undefined;
-
     return (
         <div className="min-h-screen bg-[#F8FAFC]" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
             <Sidebar />
@@ -50,7 +47,7 @@ export default function SkillsPage() {
                     )}
                     <InteractiveRoadmap
                         implicitSkills={data?.implicit_skills ?? undefined}
-                        pipelineRoadmap={pipelineRoadmap}
+                        pipelineId={runId ?? undefined}
                     />
                 </div>
             </main>

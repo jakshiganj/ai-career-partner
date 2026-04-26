@@ -1,4 +1,5 @@
 import json
+import asyncio
 from app.agents.gemini_client import gemini_client
 
 class RoadmapAgent:
@@ -47,7 +48,9 @@ class RoadmapAgent:
         
         for attempt in range(3):
             try:
-                response_text = gemini_client.generate_content(
+                # generate_content is blocking, offload to thread
+                response_text = await asyncio.to_thread(
+                    gemini_client.generate_content,
                     model='gemini-2.5-flash', 
                     prompt=prompt,
                     config={"system_instruction": system_instruction}

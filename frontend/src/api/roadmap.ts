@@ -29,6 +29,11 @@ export async function getCurrentRoadmap(): Promise<SkillRoadmapResponse> {
     return res.data;
 }
 
+export async function getRoadmapByPipelineId(pipelineId: string): Promise<SkillRoadmapResponse> {
+    const res = await client.get(`/roadmap/pipeline/${pipelineId}`);
+    return res.data;
+}
+
 export async function updateRoadmap(id: string, roadmap: RoadmapPhase[]): Promise<SkillRoadmapResponse> {
     const res = await client.patch(`/roadmap/${id}`, roadmap);
     return res.data;

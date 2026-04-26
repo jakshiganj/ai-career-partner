@@ -19,11 +19,14 @@ class MarketConnectorAgent:
         search_results_text = "No search results available."
         
         try:
-            with DDGS() as ddgs:
-                search_results = list(ddgs.text(query, max_results=3))
-                if search_results:
-                    snippets = [r['body'] for r in search_results]
-                    search_results_text = "\n".join(snippets)
+            def run_ddgs():
+                with DDGS() as ddgs:
+                    return list(ddgs.text(query, max_results=3))
+            
+            search_results = await asyncio.to_thread(run_ddgs)
+            if search_results:
+                snippets = [r['body'] for r in search_results]
+                search_results_text = "\n".join(snippets)
         except Exception as e:
             print(f"DDGS Salary search failed: {e}")
             
@@ -52,7 +55,8 @@ class MarketConnectorAgent:
         }
 
         try:
-            response_text = gemini_client.generate_content(
+            response_text = await asyncio.to_thread(
+                gemini_client.generate_content,
                 model='gemini-2.5-flash', 
                 prompt=prompt,
                 config={"system_instruction": system_instruction}
