@@ -56,7 +56,17 @@ export default function JobSearchPage() {
     const jobMatches: JobMatchItem[] = data
         ? runResult
             ? buildJobMatchesFromState(runResult)
-            : (dashboardSummary?.job_matches ?? []).map((j: any) => ({
+            : (dashboardSummary?.job_matches ?? []).map((j: {
+                id: string;
+                title: string;
+                company: string;
+                match_score: number;
+                tier: 'Realistic' | 'Stretch' | 'Reach';
+                missing_skills: string[];
+                salary_min?: number;
+                salary_max?: number;
+                url?: string;
+            }) => ({
                 id: j.id,
                 title: j.title,
                 company: j.company,

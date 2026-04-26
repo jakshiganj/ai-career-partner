@@ -1,8 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { 
-    Play, 
     ArrowRight, 
-    LayoutDashboard, 
     Target, 
     Zap, 
     Clock, 
@@ -45,7 +43,7 @@ export default function Dashboard() {
         setIsCvLoading(loadingVal);
     }, []);
 
-    const handleCvResult = useCallback((_id: number, _fb: any, redactedText: string) => {
+    const handleCvResult = useCallback((_id: number, _fb: unknown, redactedText: string) => {
         setNewRunCv(redactedText);
     }, []);
 
@@ -85,9 +83,10 @@ export default function Dashboard() {
             setNewRunJob('');
             refresh();
             navigate(`/dashboard?runId=${pipeline_id}`);
-        } catch (e: any) {
-            const detail = e.response?.data?.detail;
-            if (detail && detail.code === "UPGRADE_REQUIRED") {
+        } catch (e: unknown) {
+            const error = e as { response?: { data?: { detail?: string | { code?: string } } } };
+            const detail = error.response?.data?.detail;
+            if (detail && typeof detail !== 'string' && detail.code === "UPGRADE_REQUIRED") {
                 setShowNewRunModal(false);
                 setShowPricingModal(true);
             } else {
@@ -181,9 +180,9 @@ export default function Dashboard() {
                                         icon={Briefcase}
                                         onClick={() => navigate(`/dashboard/job-search${selectedRunId ? `?runId=${selectedRunId}` : ''}`)}
                                         value={(() => {
-                                            const marketData = (data as any)?.market_analysis?.market_analysis || {};
+                                            const marketData = (data as { market_analysis?: { market_analysis?: Record<string, { snippets?: unknown[] }> } })?.market_analysis?.market_analysis || {};
                                             let count = 0;
-                                            Object.values(marketData).forEach((info: any) => {
+                                            Object.values(marketData).forEach((info) => {
                                                 if (info?.snippets) count += info.snippets.length;
                                             });
                                             return count > 0 ? count.toString() : "0";
@@ -198,10 +197,10 @@ export default function Dashboard() {
                                             const phases = data?.skill_roadmap || [];
                                             let completed = 0;
                                             let total = 0;
-                                            phases.forEach((p: any) => {
+                                            phases.forEach((p) => {
                                                 const items = p.action_items || p.milestones || [];
                                                 total += items.length;
-                                                completed += items.filter((i: any) => i.completed).length;
+                                                completed += items.filter((i) => (i as { completed: boolean }).completed).length;
                                             });
                                             return total > 0 ? `${completed}/${total}` : "--";
                                         })()}

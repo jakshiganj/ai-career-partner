@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import client from '../api/client';
-import { Mic, Keyboard, MessageSquare, Lightbulb, Play, Square, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Mic, Keyboard, MessageSquare, Lightbulb, Square, ArrowRight, ShieldCheck } from 'lucide-react';
 import Sidebar, { SIDEBAR_WIDTH } from '../components/dashboard/Sidebar';
 
 interface Message {

@@ -1,4 +1,4 @@
-import { CheckCircle2, XCircle, Check, AlertCircle, ArrowUpRight } from 'lucide-react';
+import { Check, AlertCircle, ArrowUpRight } from 'lucide-react';
 
 type CardStatus = 'Complete' | 'In Progress' | 'Not Run' | 'Failed';
 

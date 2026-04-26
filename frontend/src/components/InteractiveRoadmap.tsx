@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { CheckCircle2, Circle, Clock, Target, Check, ChevronDown, ChevronUp, Sparkles, Loader2, MessageSquare, Send, ArrowUpRight } from 'lucide-react';
+import { Clock, Target, Check, ChevronDown, ChevronUp, Sparkles, Loader2, MessageSquare, Send } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { getCurrentRoadmap, updateRoadmap, pivotRoadmap, chatRoadmap, getRoadmapByPipelineId } from '../api/roadmap';
-import type { ActionItem, SkillRoadmapResponse, RoadmapPhase } from '../api/roadmap';
+import type { ActionItem, SkillRoadmapResponse } from '../api/roadmap';
 
 interface InteractiveRoadmapProps {
     implicitSkills?: string[];
