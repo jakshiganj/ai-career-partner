@@ -28,27 +28,27 @@ export default function PipelineTracker({
     const progressPercent = status === 'completed' ? 100 : ((currentStage - 1) / totalStages) * 100;
 
     return (
-        <div className="flex flex-col gap-2 min-w-[240px]">
+        <div className="flex flex-col gap-3 min-w-[240px]">
             <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-[#0F172A] uppercase tracking-widest">
+                <span className="text-[10px] font-bold text-[#0D0D0D] uppercase tracking-[0.15em]">
                     {currentName}
                 </span>
-                <span className="text-[10px] font-bold text-[#64748B] tabular-nums">
+                <span className="text-[10px] font-bold text-[#4A4A4A] opacity-60 tabular-nums">
                     {status === 'completed' ? totalStages : Math.max(0, currentStage - 1)} / {totalStages}
                 </span>
             </div>
             
-            {/* Slim Progress Bar */}
-            <div className="relative h-1.5 w-full rounded-full bg-[#F1F5F9] overflow-hidden">
+            {/* Slim Institutional Progress Bar */}
+            <div className="relative h-1 w-full rounded-full bg-[#E0E0E0] overflow-hidden">
                 <motion.div 
                     initial={{ width: 0 }}
                     animate={{ width: `${progressPercent}%` }}
-                    className={`h-full ${status === 'completed' ? 'bg-[#16A34A]' : 'bg-[#3B82F6]'}`}
+                    className={`h-full ${status === 'completed' ? 'bg-[#0D0D0D]' : 'bg-[#5BC0EB]'}`}
                 />
             </div>
 
-            {/* Stage Markers (Optional, very small dots) */}
-            <div className="flex justify-between px-0.5 mt-0.5">
+            {/* Stage Markers (Subtle dots) */}
+            <div className="flex justify-between px-0.5 mt-1">
                 {STAGES.map((s) => {
                     const isPassed = s.num < currentStage || status === 'completed';
                     const isCurrent = s.num === currentStage && isRunning;
@@ -56,10 +56,10 @@ export default function PipelineTracker({
                     return (
                         <div 
                             key={s.num}
-                            className={`h-1 w-1 rounded-full transition-colors ${
-                                isPassed ? 'bg-[#3B82F6]' : 
-                                isCurrent ? 'bg-blue-400' : 
-                                'bg-[#E2E8F0]'
+                            className={`h-1 w-1 rounded-full transition-all duration-300 ${
+                                isPassed ? 'bg-[#0D0D0D]' : 
+                                isCurrent ? 'bg-[#5BC0EB] scale-150 shadow-[0_0_8px_rgba(91,192,235,0.6)]' : 
+                                'bg-[#E0E0E0]'
                             }`}
                         />
                     );

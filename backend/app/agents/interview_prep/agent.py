@@ -1,4 +1,5 @@
 import uuid
+import asyncio
 
 sessions = {}
 
@@ -47,7 +48,8 @@ async def generate_interview_questions(job_description: str, cv_text: str, tier:
     """
     for attempt in range(3):
         try:
-            response_text = gemini_client.generate_content(model='gemini-2.5-flash', prompt=prompt)
+            # generate_content is blocking, offload to thread
+            response_text = await asyncio.to_thread(gemini_client.generate_content, model='gemini-2.5-flash', prompt=prompt)
             clean_text = response_text.replace("```json", "").replace("```", "").strip()
             questions = json.loads(clean_text)
             if isinstance(questions, list):
@@ -105,7 +107,8 @@ async def process_interview_message(session_id: str, user_message: str) -> str:
     
     try:
         # Call Gemini (using 2.5-flash for speed)
-        response_text = gemini_client.generate_content(model='gemini-2.5-flash', prompt=prompt)
+        # generate_content is blocking, offload to thread
+        response_text = await asyncio.to_thread(gemini_client.generate_content, model='gemini-2.5-flash', prompt=prompt)
         
         # Clean up response if it includes "INTERVIEWER:" prefix
         clean_response = response_text.replace("INTERVIEWER:", "").strip()

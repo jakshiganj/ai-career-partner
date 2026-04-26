@@ -1,6 +1,10 @@
+import './AuthPages.css';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { Sparkles, ArrowRight } from 'lucide-react';
 import { signup } from '../api/auth';
+import GoogleLoginButton from '../components/GoogleLoginButton';
 import LinkedInLoginButton from '../components/LinkedInLoginButton';
 
 export default function SignupPage() {
@@ -27,85 +31,119 @@ export default function SignupPage() {
     }
 
     return (
-        <div className="auth-page">
-            <div className="auth-card">
-                <div className="auth-logo">
-                    <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>🚀</div>
-                    <h2 className="gradient-text">Create Account</h2>
-                    <p className="text-sm text-muted" style={{ marginTop: '0.35rem' }}>
-                        Start your AI-powered career journey
+        <div className="auth-page-root">
+            {/* Left panel — branding */}
+            <div className="auth-brand-panel">
+                <div className="auth-brand-glow" />
+                <div className="auth-brand-content">
+                    <Link to="/" className="auth-logo">
+                        <div className="auth-logo-mark"><Sparkles className="w-5 h-5" /></div>
+                        CareerAI
+                    </Link>
+                    <h2 className="auth-brand-heading">
+                        Start your AI-powered career journey today.
+                    </h2>
+                    <p className="auth-brand-sub">
+                        Upload your CV, get instant skill analysis, matched jobs, and a personalized roadmap.
                     </p>
+                    <div className="auth-brand-features">
+                        {['Multi-agent AI pipeline', 'ESCO skill graph mapping', 'Real-time interview prep'].map(f => (
+                            <div key={f} className="auth-brand-feature">
+                                <span className="auth-brand-feature-dot" />
+                                {f}
+                            </div>
+                        ))}
+                    </div>
                 </div>
+            </div>
 
-                <div className="mb-6">
-                    <LinkedInLoginButton />
-                </div>
-
-                <div className="relative flex py-2 items-center mb-6">
-                    <div className="flex-grow border-t border-subtle"></div>
-                    <span className="flex-shrink-0 mx-4 text-muted text-xs">OR EMAIL SIGNUP</span>
-                    <div className="flex-grow border-t border-subtle"></div>
-                </div>
-
-                <form className="auth-form" onSubmit={handleSubmit} id="signup-form">
-                    <div className="form-group">
-                        <label className="form-label" htmlFor="signup-name">Full Name</label>
-                        <input
-                            id="signup-name"
-                            type="text"
-                            className="form-input"
-                            placeholder="Jane Smith"
-                            value={fullName}
-                            onChange={e => setFullName(e.target.value)}
-                            required
-                        />
+            {/* Right panel — form */}
+            <div className="auth-form-panel">
+                <motion.div
+                    className="auth-form-card"
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                >
+                    <div className="auth-form-header">
+                        <h1 className="auth-form-title">Create an account</h1>
+                        <p className="auth-form-subtitle">Get started with your free career analysis.</p>
                     </div>
 
-                    <div className="form-group">
-                        <label className="form-label" htmlFor="signup-email">Email</label>
-                        <input
-                            id="signup-email"
-                            type="email"
-                            className="form-input"
-                            placeholder="you@example.com"
-                            value={email}
-                            onChange={e => setEmail(e.target.value)}
-                            required
-                            autoComplete="email"
-                        />
+                    {/* Social login */}
+                    <div className="auth-social-row">
+                        <div className="auth-social-btn">
+                            <GoogleLoginButton minimal />
+                        </div>
+                        <div className="auth-social-btn">
+                            <LinkedInLoginButton minimal />
+                        </div>
                     </div>
 
-                    <div className="form-group">
-                        <label className="form-label" htmlFor="signup-password">Password</label>
-                        <input
-                            id="signup-password"
-                            type="password"
-                            className="form-input"
-                            placeholder="Min. 8 characters"
-                            value={password}
-                            onChange={e => setPassword(e.target.value)}
-                            required
-                            minLength={8}
-                            autoComplete="new-password"
-                        />
+                    <div className="auth-divider-row">
+                        <span className="auth-divider-line" />
+                        <span className="auth-divider-text">or continue with email</span>
+                        <span className="auth-divider-line" />
                     </div>
 
-                    {error && <div className="alert alert-error">{error}</div>}
+                    <form onSubmit={handleSubmit} className="auth-form">
+                        <div className="auth-field">
+                            <label htmlFor="fullName">Full name</label>
+                            <input
+                                id="fullName"
+                                type="text"
+                                placeholder="Jane Smith"
+                                value={fullName}
+                                onChange={e => setFullName(e.target.value)}
+                                required
+                            />
+                        </div>
 
-                    <button
-                        id="signup-submit"
-                        type="submit"
-                        className="btn btn-primary btn-full btn-lg"
-                        disabled={loading}
-                    >
-                        {loading ? <><span className="spinner" /> Creating account…</> : 'Create Account'}
-                    </button>
-                </form>
+                        <div className="auth-field">
+                            <label htmlFor="email">Email</label>
+                            <input
+                                id="email"
+                                type="email"
+                                placeholder="you@example.com"
+                                value={email}
+                                onChange={e => setEmail(e.target.value)}
+                                required
+                            />
+                        </div>
 
-                <p className="auth-divider" style={{ marginTop: '1.5rem' }}>
-                    Already have an account?{' '}
-                    <Link to="/login" className="auth-link">Sign in</Link>
-                </p>
+                        <div className="auth-field">
+                            <label htmlFor="password">Password</label>
+                            <input
+                                id="password"
+                                type="password"
+                                placeholder="Minimum 8 characters"
+                                value={password}
+                                onChange={e => setPassword(e.target.value)}
+                                required
+                                minLength={8}
+                            />
+                        </div>
+
+                        {error && (
+                            <div className="auth-error">{error}</div>
+                        )}
+
+                        <button type="submit" className="auth-submit" disabled={loading}>
+                            {loading ? (
+                                <span className="auth-spinner" />
+                            ) : (
+                                <>
+                                    Create account
+                                    <ArrowRight className="w-4 h-4" />
+                                </>
+                            )}
+                        </button>
+                    </form>
+
+                    <p className="auth-switch">
+                        Already have an account? <Link to="/login">Sign in</Link>
+                    </p>
+                </motion.div>
             </div>
         </div>
     );

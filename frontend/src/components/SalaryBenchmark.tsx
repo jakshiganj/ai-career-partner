@@ -6,10 +6,8 @@ interface Props {
 }
 
 export default function SalaryBenchmark({ min, max, median, userExpected }: Props) {
-    // Normalize values for the visual bar (0 to 100%)
     const range = max - min;
-    // Handle edge cases where min == max or missing data
-    if (range <= 0) return <div className="text-sm text-muted mb-2">Fixed Salary: ${min.toLocaleString()}</div>;
+    if (range <= 0) return <div className="text-[11px] font-bold uppercase tracking-widest text-[#0D0D0D]">Fixed Valuation: LKR {min.toLocaleString()}</div>;
 
     const medianPercent = ((median - min) / range) * 100;
 
@@ -21,46 +19,47 @@ export default function SalaryBenchmark({ min, max, median, userExpected }: Prop
     }
 
     return (
-        <div className="salary-benchmark-container px-2">
-            <div className="flex justify-between text-xs text-secondary mb-1">
-                <span>${min.toLocaleString()}</span>
-                <span className="font-semibold text-text">${median.toLocaleString()}</span>
-                <span>${max.toLocaleString()}</span>
+        <div className="salary-benchmark-container" style={{ fontFamily: "'Inter', sans-serif" }}>
+            <div className="flex justify-between text-[11px] font-bold tracking-widest text-[#0D0D0D] mb-4">
+                <span className="opacity-40">LKR {(min / 1000).toFixed(0)}K</span>
+                <span className="text-[#5BC0EB]">LKR {(median / 1000).toFixed(0)}K</span>
+                <span className="opacity-40">LKR {(max / 1000).toFixed(0)}K</span>
             </div>
 
-            <div className="relative w-full h-3 bg-elevated rounded-full overflow-hidden border border-subtle">
-                {/* Gradient representing standard distribution */}
-                <div className="absolute inset-y-0 left-0 w-full" style={{
-                    background: 'linear-gradient(90deg, rgba(34,197,94,0.2) 0%, rgba(34,197,94,0.6) 50%, rgba(34,197,94,0.2) 100%)'
+            <div className="relative w-full h-4 bg-white rounded-lg border border-[#E0E0E0] overflow-visible">
+                {/* Visual Distribution Gradient */}
+                <div className="absolute inset-y-0 left-0 w-full rounded-lg" style={{
+                    background: 'linear-gradient(90deg, rgba(91,192,235,0.05) 0%, rgba(91,192,235,0.2) 50%, rgba(91,192,235,0.05) 100%)'
                 }}></div>
 
                 {/* Median Marker */}
-                <div className="absolute top-0 h-full w-[2px] bg-success z-10" style={{ left: `${medianPercent}%` }}></div>
+                <div className="absolute top-[-4px] bottom-[-4px] w-[3px] bg-[#5BC0EB] z-10 shadow-[0_0_10px_rgba(91,192,235,0.5)]" style={{ left: `${medianPercent}%` }}>
+                    <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-[9px] font-bold text-[#5BC0EB] whitespace-nowrap tracking-widest">MARKET MEDIAN</div>
+                </div>
 
-                {/* User Expectation Marker (Feature 6 req) */}
+                {/* User Expectation Marker */}
                 {userPercent >= 0 && (
                     <div
-                        className="absolute top-0 h-full w-[4px] bg-accent z-20 shadow-sm"
+                        className="absolute top-[-8px] bottom-[-8px] w-[5px] bg-[#0D0D0D] z-20 shadow-xl"
                         style={{ left: `${userPercent}%` }}
-                        title={`Your Expected: $${userExpected?.toLocaleString()}`}
                     >
-                        {/* Tooltip triangle */}
-                        <div className="absolute -top-4 -translate-x-1/2 left-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-accent"></div>
+                        <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[9px] font-bold text-[#0D0D0D] whitespace-nowrap tracking-widest">YOUR INDEX</div>
                     </div>
                 )}
             </div>
 
-            <div className="flex justify-between mt-2 text-[10px] text-muted uppercase">
-                <span>Entry</span>
+            <div className="flex justify-between mt-8 text-[9px] font-bold uppercase tracking-[0.2em] text-[#4A4A4A] opacity-40">
+                <span>Entry Level</span>
                 <span>Market Average</span>
-                <span>Senior</span>
+                <span>Executive</span>
             </div>
 
             {userExpected && (
-                <div className="mt-2 text-xs text-center">
-                    Your Requirement: <span className="font-bold text-accent">${userExpected.toLocaleString()}</span>
-                    {userExpected > max && <span className="text-warning ml-2">(Above Market)</span>}
-                    {userExpected < min && <span className="text-error ml-2">(Below Market)</span>}
+                <div className="mt-10 pt-6 border-t border-[#E0E0E0] text-center">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-[#4A4A4A] opacity-60">TARGET REQUISITION:</span>
+                    <span className="ml-3 text-[12px] font-bold text-[#0D0D0D]">LKR {userExpected.toLocaleString()}</span>
+                    {userExpected > max && <span className="ml-3 rounded bg-[#EE6C4D] px-2 py-0.5 text-[8px] font-bold text-white uppercase tracking-widest">Premium Threshold</span>}
+                    {userExpected < min && <span className="ml-3 rounded bg-[#F4D35E] px-2 py-0.5 text-[8px] font-bold text-[#0D0D0D] uppercase tracking-widest">Low Requisition</span>}
                 </div>
             )}
         </div>

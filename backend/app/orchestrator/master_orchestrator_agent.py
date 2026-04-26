@@ -74,30 +74,34 @@ class MasterOrchestratorAgent:
         """Background execution — runs the LangGraph pipeline and persists results."""
         from app.core.database import async_session
         
+        # 1. Initial fetch - use a short-lived session
         async with async_session() as session:
-            self.session = session
             run = await session.get(PipelineRun, run_id)
-            
-            try:
-                async with AsyncPostgresSaver.from_conn_string(self.db_url) as checkpointer:
-                    await checkpointer.setup()
-                    graph = build_graph(checkpointer=checkpointer)
-                    config = {"configurable": {"thread_id": str(run_id)}}
-                    
-                    # Stream events so we can broadcast WebSocket updates per node
-                    async for event in graph.astream_events(initial_state, config=config, version="v2"):
-                        if event["event"] == "on_chain_end":
-                            node_name = event.get("name", "")
-                            node_output = event.get("data", {}).get("output", {})
-                            
-                            if isinstance(node_output, dict):
-                                # Sync to DB and broadcast WebSocket after each node
-                                await self._sync_state(run, node_output)
-                    
-                    # Get final state
-                    final_state = await graph.aget_state(config)
-                    final = final_state.values
-                    
+            if not run:
+                print(f"[ERROR] Pipeline run {run_id} not found.")
+                return
+
+        try:
+            async with AsyncPostgresSaver.from_conn_string(self.db_url) as checkpointer:
+                await checkpointer.setup()
+                graph = build_graph(checkpointer=checkpointer)
+                config = {"configurable": {"thread_id": str(run_id)}}
+                
+                # Stream events so we can broadcast WebSocket updates per node
+                # Note: We don't hold the DB session open here during the long-running graph!
+                async for event in graph.astream_events(initial_state, config=config, version="v2"):
+                    if event["event"] == "on_chain_end":
+                        node_output = event.get("data", {}).get("output", {})
+                        if isinstance(node_output, dict) and node_output:
+                            # Sync to DB and broadcast WebSocket after each node - uses its own session inside
+                            await self._sync_state(run_id, node_output)
+                
+                # 2. Final persistence
+                final_state = await graph.aget_state(config)
+                final = final_state.values
+                
+                async with async_session() as session:
+                    run = await session.get(PipelineRun, run_id)
                     # Persist to dedicated tables
                     await self._persist_to_tables(run, final, session)
                     
@@ -109,47 +113,54 @@ class MasterOrchestratorAgent:
                     session.add(run)
                     await session.commit()
                 
-            except Exception as e:
-                import traceback
-                traceback.print_exc()
-                run.status = "failed"
-                
-                # Properly update state_json for SQLAlchemy JSONB mutation detection
-                new_state = dict(run.state_json or {})
-                new_state["error_log"] = new_state.get("error_log", []) + [str(e)]
-                new_state["status"] = "failed"
-                run.state_json = new_state
-                
-                session.add(run)
-                await session.commit()
-
-    async def _sync_state(self, run: PipelineRun, node_output: dict):
-        """Update pipeline_runs row and broadcast WebSocket after each node completes."""
-        if "current_stage" in node_output:
-            run.current_stage = node_output["current_stage"]
-        if "status" in node_output:
-            run.status = node_output["status"]
-        
-        # Merge node output into existing state_json
-        run.state_json = {**run.state_json, **node_output}
-        self.session.add(run)
-        await self.session.commit()
-        
-        # Broadcast WebSocket
-        try:
-            from app.routers.pipeline import manager
-            user_id = str(run.user_id)
-            if user_id in manager.active_connections:
-                payload = {
-                    "type": "STATE_UPDATE",
-                    "status": node_output.get("status", "running"),
-                    "current_stage": node_output.get("current_stage"),
-                    "messages": node_output.get("messages", [])
-                }
-                aws = [ws.send_json(payload) for ws in manager.active_connections[user_id]]
-                await asyncio.gather(*aws, return_exceptions=True)
         except Exception as e:
-            print(f"WS broadcast failed: {e}")
+            import traceback
+            traceback.print_exc()
+            async with async_session() as session:
+                run = await session.get(PipelineRun, run_id)
+                if run:
+                    run.status = "failed"
+                    new_state = dict(run.state_json or {})
+                    new_state["error_log"] = new_state.get("error_log", []) + [str(e)]
+                    new_state["status"] = "failed"
+                    run.state_json = new_state
+                    session.add(run)
+                    await session.commit()
+
+    async def _sync_state(self, run_id: str, node_output: dict):
+        """Update pipeline_runs row and broadcast WebSocket after each node completes."""
+        from app.core.database import async_session
+        
+        async with async_session() as session:
+            run = await session.get(PipelineRun, run_id)
+            if not run:
+                return
+                
+            if "current_stage" in node_output:
+                run.current_stage = node_output["current_stage"]
+            if "status" in node_output:
+                run.status = node_output["status"]
+            
+            # Merge node output into existing state_json
+            run.state_json = {**run.state_json, **node_output}
+            session.add(run)
+            await session.commit()
+            
+            # Broadcast WebSocket
+            try:
+                from app.routers.pipeline import manager
+                user_id = str(run.user_id)
+                if user_id in manager.active_connections:
+                    payload = {
+                        "type": "STATE_UPDATE",
+                        "status": node_output.get("status", "running"),
+                        "current_stage": node_output.get("current_stage"),
+                        "messages": node_output.get("messages", [])
+                    }
+                    aws = [ws.send_json(payload) for ws in manager.active_connections[user_id]]
+                    await asyncio.gather(*aws, return_exceptions=True)
+            except Exception as ws_err:
+                print(f"WebSocket broadcast error: {ws_err}")
 
     async def _persist_to_tables(self, run, state: dict, session: AsyncSession):
         """Persist pipeline results to dedicated PostgreSQL tables."""
@@ -159,9 +170,16 @@ class MasterOrchestratorAgent:
         try:
             # Save CV version
             if state.get("optimised_cv"):
+                # Get the next version number for this user with a lock to avoid race conditions
+                from sqlalchemy import select, func
+                stmt = select(func.max(CVVersion.version_number)).where(CVVersion.user_id == user_id).with_for_update()
+                max_res = await session.execute(stmt)
+                current_max = max_res.scalar() or 0
+                
                 cv_version = CVVersion(
                     user_id=user_id,
                     pipeline_id=pipeline_id,
+                    version_number=current_max + 1,
                     cv_text=state.get("cv_raw", ""),
                     ats_score=state.get("ats_score"),
                     match_score=state.get("skill_match_score"),  # GraphRAG score

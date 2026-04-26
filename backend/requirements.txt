@@ -17,6 +17,7 @@ google-genai         # Google Gemini API (New SDK)
 sentence-transformers # Text embeddings
 google-adk            # Google Agent Development Kit
 langgraph             # State machine for agents
+langgraph-checkpoint-postgres # Postgres checkpoint for langgraph
 langchain-google-genai # LangChain integration for Gemini
 pytest                # Testing framework
 neo4j                 # Graph Database driver

@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Target, MessageSquare, Brain, Award, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
+import { Target, MessageSquare, Brain, Award, Sparkles, ChevronDown, ChevronUp, Hexagon } from 'lucide-react';
 import { useState } from 'react';
 
 export interface InterviewReportData {
@@ -23,113 +23,94 @@ export default function InterviewReport({ report }: Props) {
     if (!report) return null;
 
     return (
-        <div className="mx-auto w-full" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+        <div className="mx-auto w-full" style={{ fontFamily: "'Inter', sans-serif" }}>
             {/* Header section with overall score */}
-            <div className="mb-8 overflow-hidden rounded-[24px] border border-[#E2E8F0] bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative">
-                {/* Decorative gradient blob */}
-                <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-gradient-to-br from-blue-400/20 to-indigo-500/20 blur-3xl" />
-                
-                <div className="relative z-10 p-8 sm:p-10 flex flex-col sm:flex-row items-center justify-between gap-8">
-                    <div>
-                        <div className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-600 mb-4">
-                            <Sparkles className="h-3.5 w-3.5" />
-                            Session Analysis Complete
+            <div className="mb-12 overflow-hidden rounded-xl border border-[#E0E0E0] bg-white p-12">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-12">
+                    <div className="flex-1">
+                        <div className="inline-flex items-center gap-3 rounded-lg border border-[#E0E0E0] bg-[#F9F9F9] px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest text-[#0D0D0D] mb-6">
+                            <Hexagon className="h-3.5 w-3.5 text-[#5BC0EB] fill-current" />
+                            Analytical Synthesis Complete
                         </div>
-                        <h2 className="text-3xl font-bold text-[#0F172A] mb-2 tracking-tight">AI Interview Report</h2>
-                        <p className="text-[#64748B] max-w-md">Your performance has been evaluated across key dimensions based on your responses.</p>
+                        <h2 className="text-4xl font-bold text-[#0D0D0D] mb-4 tracking-tight">Technical & Behavioral Performance</h2>
+                        <p className="text-[13px] font-medium text-[#4A4A4A] opacity-60 leading-relaxed max-w-xl">
+                            The following metrics represent an algorithmic evaluation of your linguistic structure, logical consistency, and experiential depth recorded during the simulation.
+                        </p>
                     </div>
                     
                     <div className="flex shrink-0 flex-col items-center">
-                        <div className="relative flex h-32 w-32 items-center justify-center rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 shadow-xl shadow-blue-500/20">
-                            <div className="absolute inset-1 rounded-full bg-white flex flex-col items-center justify-center">
-                                <span className="text-4xl font-extrabold text-[#0F172A] tracking-tighter">{report.overall_score.toFixed(1)}</span>
-                                <span className="text-xs font-medium text-[#64748B] uppercase tracking-widest mt-1">Overall</span>
+                        <div className="relative flex h-40 w-40 items-center justify-center rounded-xl bg-[#0D0D0D] shadow-2xl">
+                            <div className="text-center">
+                                <span className="text-5xl font-bold text-white tracking-tighter tabular-nums">{report.overall_score.toFixed(1)}</span>
+                                <span className="block text-[10px] font-bold text-[#5BC0EB] uppercase tracking-[0.2em] mt-2">Overall Index</span>
                             </div>
-                            {/* Decorative ring */}
-                            <svg className="absolute inset-0 h-full w-full -rotate-90 transform" viewBox="0 0 100 100">
-                                <circle cx="50" cy="50" r="48" fill="transparent" stroke="currentColor" strokeWidth="4" className="text-blue-100/20" />
-                                <circle cx="50" cy="50" r="48" fill="transparent" stroke="url(#gradient)" strokeWidth="4" strokeDasharray={`${(report.overall_score / 10) * 301.59} 301.59`} strokeLinecap="round" className="text-white drop-shadow-sm" />
-                                <defs>
-                                    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                                        <stop offset="0%" stopColor="#60A5FA" />
-                                        <stop offset="100%" stopColor="#A78BFA" />
-                                    </linearGradient>
-                                </defs>
-                            </svg>
+                            {/* Institutional accent corners */}
+                            <div className="absolute top-2 left-2 w-2 h-2 border-t border-l border-[#5BC0EB]" />
+                            <div className="absolute bottom-2 right-2 w-2 h-2 border-b border-r border-[#5BC0EB]" />
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Bento Grid layout */}
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+            {/* Main Report Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
                 
-                {/* Score Breakdown (Left Column) */}
-                <div className="md:col-span-5 flex flex-col gap-4">
+                {/* Metric breakdown (Left Column) */}
+                <div className="lg:col-span-4 space-y-4">
+                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#4A4A4A] opacity-60 block mb-6">QUANTITATIVE INDICES</span>
                     {[
-                        { label: 'Relevance', val: report.relevance, icon: Target, desc: 'Addressed the prompt directly' },
-                        { label: 'Clarity', val: report.clarity, icon: MessageSquare, desc: 'Clear and structured delivery' },
-                        { label: 'Depth', val: report.depth, icon: Brain, desc: 'Technical & experiential depth' },
-                        { label: 'STAR Format', val: report.star_compliance, icon: Award, desc: 'Used Situation, Task, Action, Result' }
+                        { label: 'Relevance', val: report.relevance, icon: Target, desc: 'Contextual Alignment' },
+                        { label: 'Clarity', val: report.clarity, icon: MessageSquare, desc: 'Linguistic Structure' },
+                        { label: 'Depth', val: report.depth, icon: Brain, desc: 'Cognitive Complexity' },
+                        { label: 'STAR Format', val: report.star_compliance, icon: Award, desc: 'Methodological Fidelity' }
                     ].map((dim, idx) => (
-                        <motion.div 
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: idx * 0.1 }}
-                            key={dim.label} 
-                            className="rounded-[20px] border border-[#E2E8F0] bg-white p-5 shadow-sm transition-shadow hover:shadow-md"
-                        >
-                            <div className="flex items-center justify-between mb-3">
-                                <div className="flex items-center gap-3">
-                                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 border border-slate-100 text-slate-600">
-                                        <dim.icon className="h-5 w-5 text-indigo-500" />
+                        <div key={dim.label} className="rounded-xl border border-[#E0E0E0] bg-white p-6 transition-all hover:border-[#0D0D0D] group">
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="flex items-center gap-4">
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#F9F9F9] border border-[#E0E0E0] group-hover:bg-[#0D0D0D] group-hover:text-white transition-all">
+                                        <dim.icon className="h-5 w-5" />
                                     </div>
                                     <div>
-                                        <h4 className="font-bold text-[#0F172A]">{dim.label}</h4>
-                                        <p className="text-[11px] font-medium text-[#64748B] uppercase tracking-wider mt-0.5">{dim.desc}</p>
+                                        <h4 className="text-[13px] font-bold text-[#0D0D0D] uppercase tracking-tight">{dim.label}</h4>
+                                        <p className="text-[9px] font-bold text-[#4A4A4A] opacity-40 uppercase tracking-widest mt-1">{dim.desc}</p>
                                     </div>
                                 </div>
-                                <div className="text-xl font-extrabold text-[#0F172A]">{Number(dim.val).toFixed(1)}</div>
+                                <div className="text-lg font-bold text-[#0D0D0D] tabular-nums">{Number(dim.val).toFixed(1)}</div>
                             </div>
-                            <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                            <div className="h-1 w-full overflow-hidden rounded-full bg-[#F0F0F0]">
                                 <motion.div
                                     initial={{ width: 0 }}
                                     animate={{ width: `${(dim.val / 10) * 100}%` }}
                                     transition={{ duration: 1, ease: 'easeOut', delay: idx * 0.1 }}
-                                    className="h-full rounded-full bg-gradient-to-r from-blue-500 to-indigo-500"
+                                    className="h-full rounded-full bg-[#5BC0EB]"
                                 />
                             </div>
-                        </motion.div>
+                        </div>
                     ))}
                 </div>
 
-                {/* Feedback & Tips (Right Column) */}
-                <div className="md:col-span-7 flex flex-col gap-6">
-                    <div className="h-full rounded-[24px] border border-[#E2E8F0] bg-white p-6 shadow-sm sm:p-8">
-                        <div className="mb-6 flex items-center gap-3">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-50 text-indigo-600">
-                                <Sparkles className="h-4 w-4" />
-                            </div>
-                            <h3 className="text-lg font-bold text-[#0F172A]">Detailed Feedback</h3>
+                {/* Qualitative Feedback (Right Column) */}
+                <div className="lg:col-span-8 space-y-10">
+                    <div className="rounded-xl border border-[#E0E0E0] bg-white p-10">
+                        <div className="mb-8 flex items-center gap-3">
+                            <Sparkles className="h-4 w-4 text-[#5BC0EB]" />
+                            <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#0D0D0D]">Strategic Feedback</h3>
                         </div>
-                        <p className="text-[15px] leading-relaxed text-[#475569] whitespace-pre-wrap font-medium">
-                            {report.feedback}
-                        </p>
+                        <div className="prose prose-sm max-w-none">
+                            <p className="text-[14px] leading-[1.8] text-[#4A4A4A] font-medium whitespace-pre-wrap italic pl-8 border-l-2 border-[#5BC0EB]/30">
+                                "{report.feedback}"
+                            </p>
+                        </div>
                     </div>
 
                     {report.tips && Object.keys(report.tips).length > 0 && (
-                        <div className="rounded-[24px] border border-blue-100 bg-gradient-to-br from-blue-50/80 to-indigo-50/50 p-6 sm:p-8">
-                            <h3 className="text-lg font-bold text-[#0F172A] mb-5">Actionable Tips</h3>
-                            <div className="space-y-4">
+                        <div className="rounded-xl bg-[#0D0D0D] p-10 text-white shadow-xl">
+                            <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#5BC0EB] mb-8">OPTIMIZATION PROTOCOLS</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {Object.entries(report.tips).map(([dim, tip]) => (
-                                    <div key={dim} className="flex gap-4 bg-white/60 p-4 rounded-[16px] border border-white">
-                                        <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-600">
-                                            <span className="text-xs font-bold">✓</span>
-                                        </div>
-                                        <div>
-                                            <h5 className="text-sm font-bold capitalize text-[#0F172A] mb-1">{dim.replace('_', ' ')}</h5>
-                                            <p className="text-sm text-[#475569] leading-relaxed">{tip}</p>
-                                        </div>
+                                    <div key={dim} className="p-6 rounded-lg bg-white/5 border border-white/10 hover:border-[#5BC0EB]/40 transition-all">
+                                        <h5 className="text-[10px] font-bold uppercase tracking-widest text-[#5BC0EB] mb-3">{dim.replace('_', ' ')}</h5>
+                                        <p className="text-[12px] text-white/60 leading-relaxed font-medium">{tip}</p>
                                     </div>
                                 ))}
                             </div>
@@ -138,24 +119,24 @@ export default function InterviewReport({ report }: Props) {
                 </div>
             </div>
 
-            {/* Transcript Accordion */}
+            {/* Transcript System */}
             {report.transcript && (
-                <div className="mt-6 rounded-[24px] border border-[#E2E8F0] bg-white overflow-hidden shadow-sm">
+                <div className="mt-12 rounded-xl border border-[#E0E0E0] bg-white overflow-hidden">
                     <button 
                         onClick={() => setTranscriptOpen(!transcriptOpen)}
-                        className="flex w-full items-center justify-between p-6 text-left hover:bg-slate-50 transition-colors"
+                        className="flex w-full items-center justify-between p-8 text-left hover:bg-[#F9F9F9] transition-all"
                     >
-                        <div className="flex items-center gap-4">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-[14px] bg-slate-100 border border-slate-200 text-slate-600">
-                                <MessageSquare className="h-6 w-6 text-slate-700" />
+                        <div className="flex items-center gap-6">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-[#0D0D0D] text-white">
+                                <MessageSquare className="h-5 w-5" />
                             </div>
                             <div>
-                                <h3 className="text-base font-bold text-[#0F172A]">Session Transcript</h3>
-                                <p className="text-xs font-medium text-[#64748B] uppercase tracking-wider mt-1">Review the conversation verbatim</p>
+                                <h3 className="text-sm font-bold text-[#0D0D0D] uppercase tracking-tight">Linguistic Transcript</h3>
+                                <p className="text-[10px] font-bold text-[#4A4A4A] opacity-40 uppercase tracking-widest mt-1">Verbatim Neural Extraction</p>
                             </div>
                         </div>
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-500 shadow-inner">
-                            {transcriptOpen ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+                        <div className={`flex h-10 w-10 items-center justify-center rounded-lg border border-[#E0E0E0] transition-all ${transcriptOpen ? 'bg-[#0D0D0D] border-[#0D0D0D] text-white' : 'text-[#4A4A4A]'}`}>
+                            {transcriptOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                         </div>
                     </button>
                     
@@ -163,20 +144,28 @@ export default function InterviewReport({ report }: Props) {
                         <motion.div 
                             initial={{ height: 0, opacity: 0 }}
                             animate={{ height: 'auto', opacity: 1 }}
-                            className="border-t border-[#E2E8F0] bg-slate-50/50 p-6 sm:p-8"
+                            className="border-t border-[#E0E0E0] bg-[#F9F9F9] p-10"
                         >
-                            <div className="space-y-6 font-mono text-[13px] leading-relaxed max-h-[600px] overflow-y-auto pr-2">
+                            <div className="space-y-8 max-h-[700px] overflow-y-auto pr-6 custom-scrollbar">
                                 {report.transcript.split('\n').map((line, i) => {
                                     if (!line.trim()) return null;
                                     const isInterviewer = line.startsWith('INTERVIEWER:');
                                     return (
-                                        <div key={i} className={`p-5 rounded-[20px] ${isInterviewer ? 'bg-white border border-[#E2E8F0] shadow-sm ml-0 mr-12' : 'bg-blue-600 text-white ml-12 mr-0 shadow-md'}`}>
-                                            <span className={`block text-[10px] font-extrabold mb-2 tracking-widest uppercase opacity-80 ${isInterviewer ? 'text-indigo-600' : 'text-blue-200'}`}>
-                                                {isInterviewer ? 'Interviewer' : 'You'}
-                                            </span>
-                                            <span className={isInterviewer ? 'text-[#334155]' : 'text-blue-50'}>
-                                                {line.replace(/^(INTERVIEWER|CANDIDATE):\s*/, '')}
-                                            </span>
+                                        <div key={i} className={`flex gap-8 ${isInterviewer ? 'flex-row' : 'flex-row-reverse'}`}>
+                                            <div className={`max-w-[80%] p-8 rounded-xl ${
+                                                isInterviewer 
+                                                ? 'bg-white border border-[#E0E0E0] text-[#4A4A4A]' 
+                                                : 'bg-[#0D0D0D] text-white shadow-xl'
+                                            }`}>
+                                                <span className={`block text-[9px] font-bold mb-4 tracking-[0.2em] uppercase ${
+                                                    isInterviewer ? 'text-[#5BC0EB]' : 'text-[#5BC0EB]'
+                                                }`}>
+                                                    {isInterviewer ? '[ SYSTEM_AGENT ]' : '[ CANDIDATE ]'}
+                                                </span>
+                                                <p className="text-[13px] leading-relaxed font-medium">
+                                                    {line.replace(/^(INTERVIEWER|CANDIDATE):\s*/, '')}
+                                                </p>
+                                            </div>
                                         </div>
                                     )
                                 })}

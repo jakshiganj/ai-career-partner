@@ -17,6 +17,9 @@ export interface PipelineRunSummary {
 
 export interface PipelineRunsResponse {
     runs: PipelineRunSummary[];
+    total: number;
+    skip: number;
+    limit: number;
 }
 
 /** Full pipeline state as returned by GET /api/pipeline/:id/result (state_json). */
@@ -66,8 +69,13 @@ export async function runPipeline(payload: PipelineRunPayload) {
     return data as { status: string; pipeline_id: string };
 }
 
-export async function getPipelineRuns(limit = 8): Promise<PipelineRunsResponse> {
-    const { data } = await client.get<PipelineRunsResponse>('/pipeline/runs', { params: { limit } });
+export async function getPipelineRuns(skip = 0, limit = 10): Promise<PipelineRunsResponse> {
+    const { data } = await client.get<PipelineRunsResponse>('/pipeline/runs', { params: { skip, limit } });
+    return data;
+}
+
+export async function deletePipelineRun(pipelineId: string) {
+    const { data } = await client.delete(`/pipeline/${pipelineId}`);
     return data;
 }
 

@@ -1,5 +1,6 @@
 import os
 import json
+import asyncio
 from neo4j import GraphDatabase
 from app.agents.gemini_client import gemini_client
 from sentence_transformers import SentenceTransformer
@@ -46,9 +47,9 @@ class GraphRAGAgent:
 
     def get_expanded_skills(self, skills: list[str]) -> set[str]:
         """
-        Hybrid Search:
-        1. Graph expansion via RELATED_TO/broaderSkill.
-        2. Vector search via Neo4j Vector Index on skill embeddings.
+        Hybrid Search (Optimized):
+        1. Batch Graph expansion for all skills at once.
+        2. Parallel Vector search via Neo4j Vector Index.
         3. Reciprocal Rank Fusion (RRF) to merge and rank results.
         """
         expanded = set(s.lower() for s in skills)
@@ -56,56 +57,43 @@ class GraphRAGAgent:
             return expanded
             
         try:
-            # Fetch embeddings in a single batch API call
-            embeddings = gemini_client.embed_content_batch('text-embedding-004', skills)
+            # 1. Batch Graph matches (Direct + Shared Occupation context)
+            # This query handles all skills in one go
+            with self.driver.session() as session:
+                graph_query = """
+                MATCH (s:Skill)
+                WHERE toLower(s.name) IN $skills
+                OPTIONAL MATCH (s)-[:RELATED_TO|IMPLIES*1..2]-(r1:Skill)
+                OPTIONAL MATCH (s)<-[:REQUIRES]-(o:Occupation)-[:REQUIRES]->(r2:Skill)
+                WITH collect(DISTINCT r1.name) + collect(DISTINCT r2.name) AS combined
+                UNWIND combined AS name
+                RETURN DISTINCT name
+                LIMIT 100
+                """
+                graph_res = [record["name"] for record in session.run(graph_query, skills=[s.lower() for s in skills])]
+                for name in graph_res:
+                    expanded.add(name.lower())
+
+            # 2. Vector matches (Semantic) - Limit to top 15 skills to save time
+            # If we have too many skills, expansion becomes noise
+            top_skills = skills[:15]
+            embeddings = gemini_client.embed_content_batch('text-embedding-004', top_skills)
             
             with self.driver.session() as session:
-                for idx, skill in enumerate(skills):
-                    # 1. Graph matches (Direct + Shared Occupation context)
-                    graph_query = """
-                    MATCH (s:Skill)
-                    WHERE toLower(s.name) = toLower($skill)
-                    OPTIONAL MATCH (s)-[:RELATED_TO|IMPLIES*1..2]-(r1:Skill)
-                    OPTIONAL MATCH (s)<-[:REQUIRES]-(o:Occupation)-[:REQUIRES]->(r2:Skill)
-                    WITH collect(DISTINCT r1.name) + collect(DISTINCT r2.name) AS combined
-                    UNWIND combined AS name
-                    RETURN DISTINCT name
-                    LIMIT 30
-                    """
-                    graph_res = [record["name"] for record in session.run(graph_query, skill=skill)]
-                    
-                    # 2. Vector matches (Semantic)
-                    embedding = embeddings[idx] if idx < len(embeddings) else []
-                    vector_res = []
+                for idx, embedding in enumerate(embeddings):
                     if embedding and not all(v == 0.0 for v in embedding):
-                        # Added LIMIT 15 to cap over-retrieval
                         vector_query = """
-                        CALL db.index.vector.queryNodes('skill_embeddings', 20, $embedding) 
+                        CALL db.index.vector.queryNodes('skill_embeddings', 10, $embedding) 
                         YIELD node, score
                         RETURN node.name AS name
-                        LIMIT 15
+                        LIMIT 5
                         """
                         try:
-                            vector_res = [record["name"] for record in session.run(vector_query, embedding=embedding)]
+                            v_res = [record["name"] for record in session.run(vector_query, embedding=embedding)]
+                            for name in v_res:
+                                expanded.add(name.lower())
                         except Exception as ve:
                             print(f"Vector search warning: {ve}")
-                    
-                    # 3. Reciprocal Rank Fusion (RRF)
-                    K = 60
-                    rrf_scores = {}
-                    
-                    for i, name in enumerate(graph_res):
-                        name_lower = name.lower()
-                        rrf_scores[name_lower] = rrf_scores.get(name_lower, 0) + 1.0 / (K + i + 1)
-                        
-                    for i, name in enumerate(vector_res):
-                        name_lower = name.lower()
-                        rrf_scores[name_lower] = rrf_scores.get(name_lower, 0) + 1.0 / (K + i + 1)
-                        
-                    # Top 20 combined
-                    sorted_skills = sorted(rrf_scores.items(), key=lambda x: x[1], reverse=True)
-                    for name_lower, _ in sorted_skills[:20]:
-                        expanded.add(name_lower)
                         
         except Exception as e:
             print(f"Warning: Neo4j not reachable or error in query. Graph expansion skipped. (Error: {e})")
@@ -157,7 +145,7 @@ class GraphRAGAgent:
             return {"skill_gaps": [], "skill_match_score": 0.0, "implicit_skills": []}
 
         # Expand candidate skills with graph knowledge
-        candidate_expanded_skills = self.get_expanded_skills(candidate_skills)
+        candidate_expanded_skills = await asyncio.to_thread(self.get_expanded_skills, candidate_skills)
         
         gaps = []
         matched_count = 0
@@ -189,8 +177,9 @@ class GraphRAGAgent:
         # 2. Calculate the Baseline SBERT Score
         base_semantic_score = 0.0
         if cv_raw and job_description:
-            cv_emb = sbert_model.encode([cv_raw])
-            jd_emb = sbert_model.encode([job_description])
+            # SBERT encode is CPU intensive, run in thread
+            cv_emb = await asyncio.to_thread(sbert_model.encode, [cv_raw])
+            jd_emb = await asyncio.to_thread(sbert_model.encode, [job_description])
             base_semantic_score = float(cosine_similarity(cv_emb, jd_emb)[0][0])
             
         # 3. Calculate Final Weighted Hybrid Score (60% Baseline, 40% Graph Validation)

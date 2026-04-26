@@ -1,4 +1,5 @@
 import json
+import asyncio
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.agents.gemini_client import gemini_client
 from app.retrieval.graph_rag import fetch_skill_context
@@ -13,7 +14,8 @@ async def analyze_cv_with_gemini(cv_text: str, session: AsyncSession = None) -> 
     # 1. Quick LLM call to extract top 3-5 keywords
     extract_prompt = f"Extract the top 5 most important technical skills from this CV as a simple comma-separated list without extras:\n{cv_text[:2000]}"
     try:
-        keywords_str = gemini_client.generate_content('gemini-2.5-flash', extract_prompt)
+        # generate_content is blocking, offload to thread
+        keywords_str = await asyncio.to_thread(gemini_client.generate_content, 'gemini-2.5-flash', extract_prompt)
     except Exception:
         keywords_str = "Python, React, SQL"
         
@@ -50,7 +52,9 @@ async def analyze_cv_with_gemini(cv_text: str, session: AsyncSession = None) -> 
     
     for attempt in range(3):
         try:
-            response_text = gemini_client.generate_content(
+            # generate_content is blocking, offload to thread
+            response_text = await asyncio.to_thread(
+                gemini_client.generate_content,
                 model='gemini-2.5-flash', 
                 prompt=cv_text,
                 config={"system_instruction": system_instruction}

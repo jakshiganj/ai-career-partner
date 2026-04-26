@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import client from '../api/client';
 import InterviewReport from '../components/InterviewReport';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, FileText, Share2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { InterviewReportData } from '../components/InterviewReport';
 import Sidebar, { SIDEBAR_WIDTH } from '../components/dashboard/Sidebar';
@@ -27,41 +27,60 @@ export default function InterviewReportPage() {
     }, []);
 
     return (
-        <div className="flex min-h-screen bg-[#F8FAFC]">
+        <div className="flex min-h-screen bg-[#F9F9F9]" style={{ fontFamily: "'Inter', sans-serif" }}>
             <Sidebar />
 
-            <main className="flex-1 min-h-screen relative overflow-hidden py-12 sm:py-20" style={{ marginLeft: SIDEBAR_WIDTH, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-                {/* Ambient background blur blobs */}
-                <div className="absolute top-0 right-0 -mr-48 -mt-48 h-[600px] w-[600px] rounded-full bg-blue-200/20 blur-[120px] pointer-events-none" />
-                <div className="absolute bottom-0 left-0 -ml-48 -mb-48 h-[600px] w-[600px] rounded-full bg-indigo-200/20 blur-[120px] pointer-events-none" />
-                
-                <div className="relative z-10 mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-                    <motion.button 
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.3 }}
-                        onClick={() => navigate('/dashboard')}
-                        className="mb-8 inline-flex items-center gap-2 rounded-full border border-[#F1F5F9] bg-white/80 backdrop-blur-sm px-6 py-3 text-sm font-bold text-[#475569] shadow-sm hover:bg-white hover:text-[#0F172A] hover:shadow-lg transition-all group"
-                    >
-                        <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
-                        Back to Overview
-                    </motion.button>
-                    
+            <main className="flex-1 flex flex-col bg-white" style={{ marginLeft: SIDEBAR_WIDTH }}>
+                {/* Institutional Header */}
+                <header className="sticky top-0 z-20 flex h-20 w-full items-center justify-between border-b border-[#E0E0E0] bg-white/90 px-12 backdrop-blur-md">
+                    <div className="flex items-center gap-8">
+                        <button 
+                            onClick={() => navigate('/dashboard')}
+                            className="flex h-10 w-10 items-center justify-center rounded-lg border border-[#E0E0E0] text-[#0D0D0D] hover:bg-[#0D0D0D] hover:text-white transition-all"
+                        >
+                            <ArrowLeft className="h-4 w-4" />
+                        </button>
+                        <div>
+                            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#4A4A4A] opacity-60 block mb-0.5">[ ANALYTICS ]</span>
+                            <h2 className="text-xl font-bold tracking-tight text-[#0D0D0D]">Evaluation Dossier</h2>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                        <button className="flex items-center gap-2 rounded-lg border border-[#E0E0E0] px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-[#4A4A4A] hover:bg-[#F9F9F9] transition-all">
+                            <FileText className="h-3.5 w-3.5" /> Export PDF
+                        </button>
+                        <button className="flex items-center gap-2 rounded-lg bg-[#0D0D0D] px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-white hover:bg-[#5BC0EB] transition-all">
+                            <Share2 className="h-3.5 w-3.5" /> Secure Share
+                        </button>
+                    </div>
+                </header>
+
+                <div className="p-12 max-w-6xl mx-auto w-full">
                     {loading ? (
-                        <div className="flex h-64 items-center justify-center rounded-3xl border border-[#F1F5F9] bg-white p-8 shadow-sm">
-                            <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" />
+                        <div className="flex h-96 flex-col items-center justify-center rounded-xl border border-[#E0E0E0] bg-white p-12">
+                            <div className="h-10 w-10 animate-spin rounded-full border-2 border-[#E0E0E0] border-t-[#5BC0EB]" />
+                            <p className="mt-6 text-[10px] font-bold uppercase tracking-[0.2em] text-[#4A4A4A] opacity-40">Synthesizing Results...</p>
                         </div>
                     ) : report ? (
-                        <InterviewReport report={report} />
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.5 }}
+                        >
+                            <InterviewReport report={report} />
+                        </motion.div>
                     ) : (
-                        <div className="flex h-64 flex-col items-center justify-center rounded-3xl border border-[#F1F5F9] bg-white p-8 text-center shadow-sm">
-                            <h3 className="text-xl font-bold text-[#0F172A]">No report available</h3>
-                            <p className="mt-2 text-sm font-medium text-[#64748B]">Complete an interview session to generate a report.</p>
+                        <div className="flex h-96 flex-col items-center justify-center rounded-xl border border-[#E0E0E0] bg-[#F9F9F9] p-12 text-center">
+                            <div className="h-16 w-16 border border-dashed border-[#E0E0E0] rounded-full flex items-center justify-center mb-6">
+                                <FileText className="h-6 w-6 text-[#E0E0E0]" />
+                            </div>
+                            <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-[#0D0D0D]">No Analysis Found</h3>
+                            <p className="mt-3 text-[11px] font-medium text-[#4A4A4A] opacity-60 uppercase tracking-widest">Execute a simulation to generate an evaluation dossier.</p>
                             <button 
                                 onClick={() => navigate('/interview')}
-                                className="mt-8 rounded-xl bg-blue-600 px-6 py-3 text-sm font-bold text-white hover:bg-blue-700 shadow-lg shadow-blue-500/20"
+                                className="mt-10 rounded-lg bg-[#0D0D0D] px-10 py-4 text-[11px] font-bold uppercase tracking-widest text-white hover:bg-[#5BC0EB] transition-all"
                             >
-                                Start Interview Now
+                                START SIMULATION
                             </button>
                         </div>
                     )}

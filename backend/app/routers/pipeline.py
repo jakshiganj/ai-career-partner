@@ -30,28 +30,55 @@ def _run_label_from_state(state_json: dict) -> str:
     jd = (state_json or {}).get("job_description") or ""
     if not jd:
         return "Untitled run"
-    # Use first line or first 50 chars
-    first_line = jd.strip().split("\n")[0].strip()
-    if len(first_line) > 50:
-        return first_line[:47] + "..."
-    return first_line or "Untitled run"
+    
+    # Try to find a better title by skipping common generic headers
+    lines = [l.strip() for l in jd.split("\n") if l.strip()]
+    generic_headers = {
+        "about the role", "about the job", "job description", "the role", 
+        "position summary", "key responsibilities", "role description",
+        "**about the role**", "**job description**", "job title:", "**job title:**"
+    }
+    
+    selected_line = "Untitled run"
+    for line in lines:
+        clean_line = line.lower().rstrip(':')
+        if clean_line not in generic_headers and len(line) > 3:
+            # Strip markdown bold/italics if present
+            selected_line = line.replace("**", "").replace("__", "").replace("#", "").strip()
+            # If it looks like "Job Title: DevOps Engineer", just take the title part
+            if ":" in selected_line and any(h in selected_line.lower() for h in ["job title", "position"]):
+                selected_line = selected_line.split(":", 1)[1].strip()
+            break
+
+    if len(selected_line) > 50:
+        return selected_line[:47] + "..."
+    return selected_line or "Untitled run"
 
 
 @router.get("/runs")
 async def list_pipeline_runs(
-    limit: int = 8,
+    skip: int = 0,
+    limit: int = 10,
     current_user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ):
-    """List previous pipeline runs for the current user (for dashboard sidebar)."""
+    """List previous pipeline runs for the current user with pagination."""
+    # Get total count
+    count_q = select(func.count()).select_from(PipelineRun).where(PipelineRun.user_id == current_user.id)
+    count_res = await session.execute(count_q)
+    total = count_res.scalar()
+
+    # Get paginated runs
     q = (
         select(PipelineRun)
         .where(PipelineRun.user_id == current_user.id)
         .order_by(desc(PipelineRun.created_at))
+        .offset(skip)
         .limit(limit)
     )
     res = await session.execute(q)
     runs = res.scalars().all()
+    
     out = []
     for r in runs:
         state = r.state_json or {}
@@ -63,7 +90,28 @@ async def list_pipeline_runs(
             "status": r.status,
             "current_stage": r.current_stage,
         })
-    return {"runs": out}
+    return {
+        "runs": out,
+        "total": total,
+        "skip": skip,
+        "limit": limit
+    }
+
+@router.delete("/{pipeline_id}")
+async def delete_pipeline_run(
+    pipeline_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+):
+    """Delete a specific pipeline run."""
+    run = await session.get(PipelineRun, pipeline_id)
+    if not run or run.user_id != current_user.id:
+        raise HTTPException(status_code=404, detail="Pipeline run not found")
+    
+    await session.delete(run)
+    await session.commit()
+    return {"status": "deleted"}
+
 
 class PipelineStartOptions(BaseModel):
     run_interview_prep: bool = True

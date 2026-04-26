@@ -8,6 +8,7 @@ class UserBase(SQLModel):
     full_name: str
     is_active: bool = Field(default=True)
     tier: str = Field(default="free")
+    auth_provider: Optional[str] = Field(default="email")  # "email", "google", "linkedin"
     stripe_customer_id: Optional[str] = Field(default=None)
     stripe_subscription_id: Optional[str] = Field(default=None)
 
@@ -24,3 +25,5 @@ class User(UserBase, table=True):
     id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
     password_hash: str
     created_at: datetime = Field(default_factory=datetime.utcnow)
+    reset_token: Optional[str] = Field(default=None)
+    reset_token_expires: Optional[datetime] = Field(default=None)

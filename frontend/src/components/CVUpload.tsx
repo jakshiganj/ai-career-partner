@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import axios from 'axios';
 import * as pdfjsLib from 'pdfjs-dist';
 
@@ -10,9 +10,10 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
 
 interface Props {
     onResult?: (cvId: number, feedback: unknown, preview: string) => void;
+    onLoading?: (isLoading: boolean) => void;
 }
 
-export default function CVUpload({ onResult }: Props) {
+export default function CVUpload({ onResult, onLoading }: Props) {
     const inputRef = useRef<HTMLInputElement>(null);
     const [dragActive, setDragActive] = useState(false);
     const [uploading, setUploading] = useState(false);
@@ -120,6 +121,10 @@ export default function CVUpload({ onResult }: Props) {
     }
 
     const isLoading = uploading || analyzing;
+
+    useEffect(() => {
+        onLoading?.(isLoading);
+    }, [isLoading, onLoading]);
 
     return (
         <div className="w-full">

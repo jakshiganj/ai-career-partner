@@ -1,4 +1,4 @@
-import { FileText, Sparkles } from 'lucide-react';
+import { FileText, Sparkles, ArrowUpRight } from 'lucide-react';
 
 interface EmptyStateProps {
     onRunPipeline?: () => void;
@@ -16,32 +16,38 @@ const FEATURES = [
 
 export default function EmptyState({ onRunPipeline, onTriggerFeature }: EmptyStateProps) {
     return (
-        <div className="flex flex-col items-center justify-center rounded-xl border border-[#E2E8F0] bg-white p-12 text-center shadow-sm">
-            <div className="relative mb-6 flex h-24 w-24 items-center justify-center rounded-2xl bg-[#F1F5F9]">
-                <FileText className="h-10 w-10 text-[#94A3B8]" />
-                <Sparkles className="absolute -right-1 -top-1 h-6 w-6 text-[#3B82F6]" />
+        <div className="flex flex-col items-center justify-center rounded-xl border border-[#E0E0E0] bg-[#F9F9F9] p-16 text-center">
+            <div className="relative mb-8 flex h-28 w-28 items-center justify-center rounded-lg bg-white border border-[#E0E0E0]">
+                <FileText className="h-12 w-12 text-[#A0A0A0]" />
+                <div className="absolute -right-2 -top-2 h-10 w-10 flex items-center justify-center rounded-full bg-[#5BC0EB] text-white shadow-lg">
+                    <Sparkles className="h-5 w-5" />
+                </div>
             </div>
-            <h2 className="text-xl font-bold text-[#0F172A]">No analysis yet</h2>
-            <p className="mt-2 max-w-md text-sm text-[#64748B]">
-                Upload your CV and a job description to run your first pipeline analysis, or trigger
-                individual features below.
+            
+            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#4A4A4A] opacity-60 block mb-2">[ INITIAL STATE ]</span>
+            <h2 className="text-2xl font-bold tracking-tight text-[#0D0D0D]">No Analysis Results</h2>
+            <p className="mt-4 max-w-sm text-sm text-[#4A4A4A] leading-relaxed">
+                Your career pipeline is currently idle. Initialize a new analysis run to generate data-driven insights and job matches.
             </p>
+            
             {onRunPipeline && (
                 <button
                     type="button"
                     onClick={onRunPipeline}
-                    className="mt-6 inline-flex items-center gap-2 rounded-lg bg-[#3B82F6] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#2563EB]"
+                    className="mt-10 lp-btn-pill"
                 >
-                    New Pipeline Run
+                    Start Analysis Run
+                    <span className="lp-btn-icon"><ArrowUpRight className="h-4 w-4" /></span>
                 </button>
             )}
-            <div className="mt-8 flex flex-wrap justify-center gap-2">
+            
+            <div className="mt-12 flex flex-wrap justify-center gap-2">
                 {FEATURES.map((name) => (
                     <button
                         key={name}
                         type="button"
                         onClick={() => onTriggerFeature?.(name)}
-                        className="rounded-lg border border-[#E2E8F0] bg-white px-3 py-2 text-sm font-medium text-[#475569] hover:bg-[#F8FAFC] hover:border-[#CBD5E1]"
+                        className="rounded-lg border border-[#E0E0E0] bg-white px-4 py-2 text-xs font-bold uppercase tracking-widest text-[#4A4A4A] hover:bg-[#0D0D0D] hover:text-white hover:border-[#0D0D0D] transition-all"
                     >
                         {name}
                     </button>
