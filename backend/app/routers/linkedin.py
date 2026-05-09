@@ -94,5 +94,6 @@ async def linkedin_callback(code: str, state: str, session: AsyncSession = Depen
         jwt_token = create_access_token(data={"sub": user.email})
         
         # 5. Redirect back to frontend with the token
-        redirect_url = f"http://localhost:5173/dashboard?token={jwt_token}&user_id={user.id}"
+        frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
+        redirect_url = f"{frontend_url}/dashboard?token={jwt_token}&user_id={user.id}"
         return RedirectResponse(redirect_url)

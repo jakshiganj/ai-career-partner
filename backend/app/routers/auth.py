@@ -106,7 +106,7 @@ async def forgot_password(body: ForgotPasswordRequest, session: AsyncSession = D
     await session.commit()
 
     # Send reset email
-    frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
+    frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
     reset_link = f"{frontend_url}/reset-password?token={token}"
     await send_password_reset_email(to_email=user.email, reset_link=reset_link)
 

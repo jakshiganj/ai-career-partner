@@ -37,9 +37,16 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="AI Career Partner", lifespan=lifespan)
 
+import os as _os
+
+_cors_origins = ["http://localhost:5173", "http://localhost:3000"]
+_frontend_url = _os.getenv("FRONTEND_URL")
+if _frontend_url and _frontend_url not in _cors_origins:
+    _cors_origins.append(_frontend_url)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],
+    allow_origins=_cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -72,4 +79,14 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 @app.get("/")
 async def root():
-    return {"message": "System Online. Go to /static/demo.html for the Agent Demo."}
+    return {
+        "status": "online",
+        "message": "AI Career Partner API is running.",
+        "documentation": "/docs"
+    }
+
+
+@app.get("/health")
+async def health_check():
+    """Simple health check for Docker/Kubernetes."""
+    return {"status": "healthy"}
