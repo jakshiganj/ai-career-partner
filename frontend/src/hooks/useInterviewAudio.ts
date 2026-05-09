@@ -20,7 +20,7 @@ export function useInterviewAudio() {
 
     const audioCtxRef = useRef<AudioContext | null>(null);
     const mediaStreamRef = useRef<MediaStream | null>(null);
-    const processorRef = useRef<ScriptProcessorNode | null>(null);
+    const workletNodeRef = useRef<AudioWorkletNode | null>(null);
 
     const playCtxRef = useRef<AudioContext | null>(null);
     const nextPlayTimeRef = useRef<number>(0);
@@ -73,27 +73,58 @@ export function useInterviewAudio() {
             const audioCtx = new AudioContext({ sampleRate: 16000 });
             audioCtxRef.current = audioCtx;
 
-            const source = audioCtx.createMediaStreamSource(stream);
-            const processor = audioCtx.createScriptProcessor(4096, 1, 1);
-            processorRef.current = processor;
+            await audioCtx.audioWorklet.addModule('/audio-processor.js');
+            const workletNode = new AudioWorkletNode(audioCtx, 'pcm-processor');
+            workletNodeRef.current = workletNode;
 
-            processor.onaudioprocess = (e) => {
+            let frameCount = 0;
+            let sumVolume = 0;
+            let pcmChunks: Int16Array[] = [];
+            let pcmLength = 0;
+
+            workletNode.port.onmessage = (e) => {
                 if (ws.readyState !== WebSocket.OPEN) return;
-                const inputData = e.inputBuffer.getChannelData(0);
-                const volume = inputData.reduce((a, b) => a + Math.abs(b), 0) / inputData.length;
-                if (volume > 0.01) {
-                    stopAllPlayback();
+                const { buffer, volume } = e.data;
+                const incomingInt16 = new Int16Array(buffer);
+                
+                sumVolume += volume;
+                frameCount++;
+                
+                pcmChunks.push(incomingInt16);
+                pcmLength += incomingInt16.length;
+
+                // Transmit over WebSocket only when we accumulate >= 4096 samples (~250ms).
+                // This drastically reduces network overhead (from 125 msgs/sec to ~4 msgs/sec)
+                // and perfectly matches the chunk size the backend VAD expects.
+                if (pcmLength >= 4096) {
+                    const avgVolume = sumVolume / frameCount;
+                    
+                    // Slightly raised threshold to 0.03 to avoid breathing/fan noise interruptions
+                    if (avgVolume > 0.03) {
+                        stopAllPlayback();
+                    }
+                    
+                    // Flatten chunks into a single ArrayBuffer
+                    const outBuffer = new Int16Array(pcmLength);
+                    let offset = 0;
+                    for (const chunk of pcmChunks) {
+                        outBuffer.set(chunk, offset);
+                        offset += chunk.length;
+                    }
+                    
+                    ws.send(outBuffer.buffer);
+                    
+                    // Reset accumulators
+                    pcmChunks = [];
+                    pcmLength = 0;
+                    sumVolume = 0;
+                    frameCount = 0;
                 }
-                const int16Array = new Int16Array(inputData.length);
-                for (let i = 0; i < inputData.length; i++) {
-                    const s = Math.max(-1, Math.min(1, inputData[i]));
-                    int16Array[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
-                }
-                ws.send(int16Array.buffer);
             };
 
-            source.connect(processor);
-            processor.connect(audioCtx.destination);
+            const source = audioCtx.createMediaStreamSource(stream);
+            source.connect(workletNode);
+            workletNode.connect(audioCtx.destination);
         } catch (err) {
             console.error("Microphone access failed", err);
             addMsg('system', "Microphone access failed. Text mode only.");
@@ -102,7 +133,10 @@ export function useInterviewAudio() {
     }
 
     function cleanupAudio() {
-        if (processorRef.current && audioCtxRef.current) processorRef.current.disconnect();
+        if (workletNodeRef.current) {
+            workletNodeRef.current.disconnect();
+            workletNodeRef.current = null;
+        }
         if (audioCtxRef.current) { audioCtxRef.current.close(); audioCtxRef.current = null; }
         if (playCtxRef.current) { playCtxRef.current.close(); playCtxRef.current = null; }
         if (mediaStreamRef.current) { mediaStreamRef.current.getTracks().forEach(t => t.stop()); mediaStreamRef.current = null; }
