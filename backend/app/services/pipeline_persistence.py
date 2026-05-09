@@ -82,7 +82,7 @@ async def persist_to_tables(run, state: dict, session: AsyncSession):
                     import re
                     val = re.sub(r'[^\d]', '', val)
                 return int(val)
-            except: return None
+            except (ValueError, TypeError): return None
 
         # Save salary benchmark
         sb_data = state.get("salary_benchmarks") or {}

@@ -19,6 +19,8 @@ class ConnectionManager:
         if user_id in self.active_connections:
             try:
                 self.active_connections[user_id].remove(websocket)
+                if not self.active_connections[user_id]:
+                    del self.active_connections[user_id]
             except ValueError:
                 pass
 

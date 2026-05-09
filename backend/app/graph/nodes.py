@@ -13,7 +13,12 @@ async def ingest_node(state: AgentState) -> dict:
     if not state.get("job_description") or len(state.get("job_description", "").strip()) < 5:
         missing.append("job_description")
     if missing:
-        return {"status": "waiting_for_input", "missing_fields": missing, "current_stage": 1, "messages": [f"Stage 1: Missing required inputs: {missing}"]}
+        return {
+            "status": "waiting_for_input",
+            "missing_fields": missing,
+            "current_stage": 1,
+            "messages": [f"Stage 1: Missing required inputs: {missing}"]
+        }
     return {"status": "running", "current_stage": 1, "messages": ["Stage 1: Inputs validated successfully"]}
 
 async def classify_node(state: AgentState) -> dict:
@@ -37,7 +42,13 @@ async def roadmap_node(state: AgentState) -> dict:
             "messages": ["Stage 5: Skill roadmap generated successfully"]
         }
     except Exception as e:
-        return {"current_stage": 5, "error_log": state.get("error_log", []) + [f"Roadmap failed: {e}"], "messages": ["Stage 5: Failed to generate roadmap"]}
+        import traceback
+        error_msg = f"Roadmap failed: {e}\n{traceback.format_exc()}"
+        return {
+            "current_stage": 5, 
+            "error_log": state.get("error_log", []) + [error_msg], 
+            "messages": ["Stage 5: Failed to generate roadmap"]
+        }
 
 async def interview_prep_node(state: AgentState) -> dict:
     print(f"[Stage 6] INTERVIEW PREP — Generating question bank")
@@ -54,7 +65,13 @@ async def interview_prep_node(state: AgentState) -> dict:
             "messages": ["Stage 6: Interview preparation materials ready"]
         }
     except Exception as e:
-        return {"current_stage": 6, "error_log": state.get("error_log", []) + [f"Interview prep failed: {e}"], "messages": ["Stage 6: Failed to generate interview prep"]}
+        import traceback
+        error_msg = f"Interview prep failed: {e}\n{traceback.format_exc()}"
+        return {
+            "current_stage": 6, 
+            "error_log": state.get("error_log", []) + [error_msg], 
+            "messages": ["Stage 6: Failed to generate interview prep"]
+        }
 
 async def persist_node(state: AgentState) -> dict:
     print(f"[Stage 7] PERSIST")
