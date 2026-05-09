@@ -9,7 +9,7 @@ class JobMatch(SQLModel, table=True):
 
     id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
     user_id: uuid.UUID = Field(foreign_key="users.id", ondelete="CASCADE")
-    pipeline_id: Optional[uuid.UUID] = Field(foreign_key="pipeline_runs.id")
+    pipeline_id: Optional[uuid.UUID] = Field(default=None, foreign_key="pipeline_runs.id", ondelete="CASCADE")
     job_title: Optional[str] = None
     company: Optional[str] = None
     match_score: Optional[float] = None

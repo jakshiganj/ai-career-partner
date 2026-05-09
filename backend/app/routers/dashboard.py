@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select, desc
 from app.core.database import get_session
 from app.core.security import get_current_user
+from app.core.logging import get_logger
 from app.models.user import User
 from app.models.pipeline import PipelineRun
 from app.models.cv_history import CVVersion
@@ -13,8 +14,10 @@ from app.services.dashboard_service import (
     build_job_cards_from_db, 
     assemble_dashboard_data
 )
+from app.schemas.response import DashboardSummary
 
 router = APIRouter()
+logger = get_logger(__name__)
 
 @router.post("/test-digest")
 async def trigger_test_digest(
@@ -24,13 +27,14 @@ async def trigger_test_digest(
     """
     Manually triggers the DigestAgent to send a weekly summary email to the current user.
     """
+    logger.info(f"Triggering manual digest for user: {current_user.email}")
     from app.agents.digest_agent import DigestAgent
     agent = DigestAgent()
     result = await agent.run(current_user.id, session)
     return result
 
 
-@router.get("/")
+@router.get("/", response_model=DashboardSummary)
 async def get_dashboard_summary(
     current_user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session)
@@ -40,6 +44,7 @@ async def get_dashboard_summary(
     Reads from both state_json (live) and dedicated tables (persisted).
     """
     user_id = current_user.id
+    logger.info(f"Fetching dashboard summary for user: {current_user.email}")
     
     # 1. Pipeline Status
     latest_run_query = select(PipelineRun).where(PipelineRun.user_id == user_id).order_by(desc(PipelineRun.created_at)).limit(1)
@@ -65,7 +70,7 @@ async def get_dashboard_summary(
     jm_res = await session.execute(job_matches_query)
     db_job_matches = jm_res.scalars().all()
 
-    # 5. Persisted skill roadmap — prefer one linked to THIS pipeline run
+    # 5. Persisted skill roadmap
     db_roadmap = None
     if latest_run:
         roadmap_query = select(SkillRoadmap).where(
@@ -75,25 +80,22 @@ async def get_dashboard_summary(
         rm_res = await session.execute(roadmap_query)
         db_roadmap = rm_res.scalar_one_or_none()
     
-    # Fall back to the most recent roadmap if current run has none
     if not db_roadmap:
         fallback_query = select(SkillRoadmap).where(SkillRoadmap.user_id == user_id).order_by(desc(SkillRoadmap.created_at)).limit(1)
         fb_res = await session.execute(fallback_query)
         db_roadmap = fb_res.scalar_one_or_none()
 
-    # 6. Salary benchmarks (from dedicated table)
+    # 6. Salary benchmarks
     salary_query = select(SalaryBenchmark).order_by(desc(SalaryBenchmark.scraped_at)).limit(5)
     sal_res = await session.execute(salary_query)
     db_salaries = sal_res.scalars().all()
 
     state_json = latest_run.state_json if latest_run else {}
 
-    # Build job cards: prefer live market_analysis data, supplement with DB matches
     job_cards = build_job_cards_from_market(state_json)
     if not job_cards and db_job_matches:
         job_cards = build_job_cards_from_db(db_job_matches)
 
-    # Roadmap: prefer current run's state_json (freshest), then DB row
     roadmap_data = state_json.get("skill_roadmap", []) or (db_roadmap.roadmap if db_roadmap and db_roadmap.roadmap else [])
 
     return assemble_dashboard_data(

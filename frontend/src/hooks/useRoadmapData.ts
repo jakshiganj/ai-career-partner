@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
 import { getCurrentRoadmap, updateRoadmap, pivotRoadmap, chatRoadmap, getRoadmapByPipelineId } from '../api/roadmap';
 import type { ActionItem, SkillRoadmapResponse } from '../api/roadmap';
+import { useToast } from '../components/ui/Toast';
 
 interface DetailedSkill {
     name: string;
@@ -36,6 +37,7 @@ export function useRoadmapData(pipelineId?: string) {
     const [chatReply, setChatReply] = useState<{ text: string, time: Date } | null>(null);
     const [chatting, setChatting] = useState(false);
     const [expandedPhase, setExpandedPhase] = useState<number>(0);
+    const { success: toastSuccess, error: toastError, info: toastInfo } = useToast();
 
     useEffect(() => {
         let intervalId: number;
@@ -106,6 +108,9 @@ export function useRoadmapData(pipelineId?: string) {
                 origin: { y: 0.6 },
                 colors: ['#5BC0EB', '#0D0D0D', '#F4D35E', '#EE6C4D']
             });
+            toastSuccess('Congratulations! You have mastered this phase!');
+        } else if (isCompleting) {
+            toastInfo(`Marked as completed`);
         }
         
         try {
@@ -123,9 +128,10 @@ export function useRoadmapData(pipelineId?: string) {
             setDbRoadmap(migrateRoadmap(updated));
             setConstraint('');
             setExpandedPhase(0);
+            toastSuccess('Roadmap pivoted successfully!');
         } catch (e) {
             console.error("Failed to pivot roadmap", e);
-            alert("Pivot failed. Make sure you haven't checked off all tasks.");
+            toastError("Pivot failed. Make sure you haven't checked off all tasks.");
         } finally {
             setPivoting(false);
         }
@@ -139,9 +145,10 @@ export function useRoadmapData(pipelineId?: string) {
             setDbRoadmap(migrateRoadmap(roadmap));
             setChatReply({ text: reply, time: new Date() });
             setChatMessage('');
+            toastSuccess('Coach responded!');
         } catch (e) {
             console.error("Failed to chat with roadmap", e);
-            alert("Chat failed. Our agent might be taking a break.");
+            toastError("Chat failed. Our agent might be taking a break.");
         } finally {
             setChatting(false);
         }

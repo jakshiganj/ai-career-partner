@@ -29,7 +29,7 @@ export default function Sidebar() {
             const token = localStorage.getItem('token') || localStorage.getItem('access_token');
             if (!token) return;
             try {
-                const res = await fetch('http://localhost:8000/auth/me', {
+                const res = await fetch('http://localhost:8000/api/auth/me', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (res.ok) {

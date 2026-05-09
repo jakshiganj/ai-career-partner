@@ -13,7 +13,7 @@ export default function GoogleLoginButton({ minimal = false }: GoogleLoginButton
         setError(null);
         try {
             const backendUrl = 'http://localhost:8000';
-            window.location.href = `${backendUrl}/auth/google/login`;
+            window.location.href = `${backendUrl}/api/auth/google/login`;
         } catch (e: unknown) {
             const err = e as Error;
             setError(err.message || 'An error occurred during Google sign-in');

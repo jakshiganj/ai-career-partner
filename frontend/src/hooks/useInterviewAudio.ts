@@ -73,7 +73,33 @@ export function useInterviewAudio() {
             const audioCtx = new AudioContext({ sampleRate: 16000 });
             audioCtxRef.current = audioCtx;
 
-            await audioCtx.audioWorklet.addModule('/audio-processor.js');
+            // Use Blob to bypass Nginx/Vite MIME type issues for AudioWorklet
+            const workletCode = `
+            class PCMProcessor extends AudioWorkletProcessor {
+                process(inputs, outputs, parameters) {
+                    const input = inputs[0];
+                    if (input && input.length > 0) {
+                        const inputChannel = input[0];
+                        const length = inputChannel.length;
+                        const int16Array = new Int16Array(length);
+                        let sum = 0;
+                        for (let i = 0; i < length; i++) {
+                            const s = Math.max(-1, Math.min(1, inputChannel[i]));
+                            int16Array[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+                            sum += Math.abs(inputChannel[i]);
+                        }
+                        const volume = sum / length;
+                        this.port.postMessage({ buffer: int16Array.buffer, volume: volume }, [int16Array.buffer]);
+                    }
+                    return true;
+                }
+            }
+            registerProcessor('pcm-processor', PCMProcessor);
+            `;
+            const blob = new Blob([workletCode], { type: 'application/javascript' });
+            const workletUrl = URL.createObjectURL(blob);
+
+            await audioCtx.audioWorklet.addModule(workletUrl);
             const workletNode = new AudioWorkletNode(audioCtx, 'pcm-processor');
             workletNodeRef.current = workletNode;
 
@@ -125,9 +151,10 @@ export function useInterviewAudio() {
             const source = audioCtx.createMediaStreamSource(stream);
             source.connect(workletNode);
             workletNode.connect(audioCtx.destination);
-        } catch (err) {
+        } catch (err: any) {
             console.error("Microphone access failed", err);
-            addMsg('system', "Microphone access failed. Text mode only.");
+            const errorMessage = err?.message || String(err);
+            addMsg('system', `Microphone access failed (${errorMessage}). Text mode only. If you are accessing via an IP address (HTTP), browsers block microphones. Use localhost or HTTPS.`);
             setAudioMode(false);
         }
     }
@@ -149,8 +176,12 @@ export function useInterviewAudio() {
             const res = await client.post('/interview/start', {});
             const newSessionId = res.data.session_id;
 
-            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const wsUrl = `${protocol}//${window.location.host}/api/interview/ws/${newSessionId}`;
+            const baseURL = client.defaults.baseURL || '';
+            const apiHost = baseURL.replace(/^https?:\/\//, '').split('/')[0] || window.location.host;
+            const protocol = baseURL.startsWith('https') ? 'wss:' : 'ws:';
+            
+            // Backend prefix for interview is /api/interview
+            const wsUrl = `${protocol}//${apiHost}/api/interview/ws/${newSessionId}`;
             const ws = new WebSocket(wsUrl);
             ws.binaryType = "arraybuffer";
 

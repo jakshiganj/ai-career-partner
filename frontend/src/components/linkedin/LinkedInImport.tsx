@@ -22,7 +22,7 @@ export default function LinkedInImport({ onImportComplete }: Props) {
             const top = window.screen.height / 2 - height / 2;
 
             const popup = window.open(
-                `${backendUrl}/auth/linkedin/login`,
+                `${backendUrl}/api/auth/linkedin/login`,
                 'LinkedIn Login',
                 `width=${width},height=${height},top=${top},left=${left}`
             );

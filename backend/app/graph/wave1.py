@@ -13,6 +13,9 @@ from app.agents.cover_letter_agent import CoverLetterAgent
 from app.agents.job_classifier_agent import JobClassifierAgent
 from app.agents.market_trends.market_connector_agent import MarketConnectorAgent
 from app.agents.graph_rag.agent import graph_rag_agent
+from app.core.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 async def analyse_node(state: AgentState) -> dict:
@@ -21,7 +24,7 @@ async def analyse_node(state: AgentState) -> dict:
     CV Critique, Cover Letter, and Job Classifier concurrently!
     (Everything here only depends on initial Inputs)
     """
-    print(f"[Stage 2] ANALYSE — Wave 1 Parallel Execution")
+    logger.info("[PIPELINE] Stage 2: ANALYSE — Wave 1 Parallel Execution")
     
     cv_raw = state.get("cv_raw", "")
     job_description = state.get("job_description", "")

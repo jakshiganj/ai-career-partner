@@ -13,7 +13,7 @@ export default function LinkedInLoginButton({ minimal = false }: LinkedInLoginBu
         setError(null);
         try {
             const backendUrl = 'http://localhost:8000';
-            window.location.href = `${backendUrl}/auth/linkedin/login`;
+            window.location.href = `${backendUrl}/api/auth/linkedin/login`;
         } catch (e: unknown) {
             const err = e as Error;
             setError(err.message || 'An error occurred during LinkedIn connect');

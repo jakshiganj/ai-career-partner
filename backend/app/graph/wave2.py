@@ -9,6 +9,9 @@ from app.graph.state import AgentState
 from app.agents.cv_creator.agent import cv_creator_agent
 from app.agents.roadmap_agent import RoadmapAgent
 from app.agents.interview_prep.agent import generate_interview_questions
+from app.core.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 async def optimise_node(state: AgentState) -> dict:
@@ -16,7 +19,7 @@ async def optimise_node(state: AgentState) -> dict:
     Stage 3 (Wave 2): Run CV Creator, Skill Roadmap, and Interview Prep concurrently!
     (Everything here depends on Wave 1 outcomes)
     """
-    print(f"[Stage 3] OPTIMISE — Wave 2 Parallel Execution")
+    logger.info("[PIPELINE] Stage 3: OPTIMISE — Wave 2 Parallel Execution")
     
     cv_raw = state.get("cv_raw", "")
     job_description = state.get("job_description", "")

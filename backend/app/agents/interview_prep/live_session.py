@@ -159,8 +159,8 @@ class LiveInterviewSession:
         """Sends candidate audio: 16kHz PCM 16-bit Mono"""
         if self.is_connected and self.session:
             try:
-                # Using session.send() for consistency across input types
-                await self.session.send(input={"mime_type": "audio/pcm;rate=16000", "data": pcm_data})
+                # Official SDK pattern for streaming audio to trigger VAD
+                await self.session.send_realtime_input(audio={"mime_type": "audio/pcm;rate=16000", "data": pcm_data})
             except Exception as e:
                 import traceback
                 traceback.print_exc()

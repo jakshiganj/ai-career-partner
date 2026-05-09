@@ -9,10 +9,12 @@ import DashboardPage from './pages/dashboard/DashboardPage';
 import InterviewPage from './pages/interview/InterviewPage';
 import InterviewReportPage from './pages/interview/InterviewReportPage';
 import LandingPage from './pages/landing/LandingPage';
+import { ToastProvider } from './components/ui/Toast';
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <ToastProvider>
+      <BrowserRouter>
       <Routes>
         {/* Public routes — no navbar */}
         <Route path="/" element={<LandingPage />} />
@@ -83,5 +85,6 @@ export default function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
+  </ToastProvider>
   );
 }

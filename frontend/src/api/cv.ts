@@ -1,15 +1,27 @@
 import client from './client';
 
-export async function uploadCV(file: File) {
-    const form = new FormData();
-    form.append('file', file);
-    const { data } = await client.post('/cv/upload', form, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-    });
-    return data as { message: string; cv_id: number; text_preview: string };
+export interface CVUploadResponse {
+    message: string;
+    cv_id: string;
+    text_preview: string;
 }
 
-export async function analyzeCV(cvId: number) {
-    const { data } = await client.post(`/cv/analyze/${cvId}`);
-    return data as { cv_id: number; ai_feedback: string };
+export interface CVAnalysisResponse {
+    cv_id: string;
+    ai_feedback: string;
+}
+
+/**
+ * Uploads CV text to the backend.
+ * NOTE: Text extraction and PII redaction should happen on the client-side
+ * before calling this, to ensure privacy and efficiency.
+ */
+export async function uploadCV(text: string): Promise<CVUploadResponse> {
+    const { data } = await client.post<CVUploadResponse>('/cv/upload', { text });
+    return data;
+}
+
+export async function analyzeCV(cvId: string): Promise<CVAnalysisResponse> {
+    const { data } = await client.post<CVAnalysisResponse>(`/cv/analyze/${cvId}`);
+    return data;
 }

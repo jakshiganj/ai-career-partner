@@ -4,6 +4,7 @@ import Sidebar, { SIDEBAR_WIDTH } from '../../components/dashboard/Sidebar';
 import { CheckCircle2, Clock, AlertCircle, Play, Trash2, ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 import { getPipelineRuns, deletePipelineRun, type PipelineRunSummary } from '../../api/pipeline';
 import ConfirmModal from '../../components/ui/ConfirmModal';
+import { useToast } from '../../components/ui/Toast';
 
 const PAGE_SIZE = 10;
 
@@ -16,6 +17,7 @@ export default function PipelineRunsPage() {
     const [deletingId, setDeletingId] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [runToDelete, setRunToDelete] = useState<string | null>(null);
+    const { success: toastSuccess, error: toastError } = useToast();
 
     const fetchPage = useCallback(async (page: number) => {
         setLoading(true);
@@ -48,6 +50,7 @@ export default function PipelineRunsPage() {
             await deletePipelineRun(runToDelete);
             setIsModalOpen(false);
             setRunToDelete(null);
+            toastSuccess('Pipeline run deleted successfully');
             
             // If we're on a page that becomes empty after deletion, go to previous page
             const newTotal = total - 1;
@@ -59,7 +62,7 @@ export default function PipelineRunsPage() {
             }
         } catch (error) {
             console.error('Failed to delete run:', error);
-            alert('Failed to delete pipeline run. Please try again.');
+            toastError('Failed to delete pipeline run. Please try again.');
         } finally {
             setDeletingId(null);
         }

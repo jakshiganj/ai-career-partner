@@ -7,17 +7,22 @@ from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 
 from app.core.http_client import HttpClient
+from app.core.logging import setup_logging, get_logger
+
+# Initialize logging
+setup_logging()
+logger = get_logger("app.main")
 
 # Import all routers
 from app.routers import (
-    auth, cv, matcher, interview, agents,
+    auth, cv, interview,
     pipeline, cv_versions, linkedin, google_auth,
-    scrape, preferences, dashboard, roadmap, payment,
+    preferences, dashboard, roadmap, payment,
 )
 
 # Import models so SQLModel creates the tables
 from app.models import (  # noqa: F401
-    user, resume, job, profile, task_state,
+    user, profile, task_state,
     pipeline as pipeline_model, cv_history,
     job_market, interview_roadmap, preference, esco,
 )
@@ -52,18 +57,31 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ── Error Handling ───────────────────────────────────────────────────
+from fastapi import Request
+from fastapi.responses import JSONResponse
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    """Catch-all for any unhandled exceptions."""
+    logger.error(f"Unhandled error: {exc}", exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={
+            "detail": "Internal server error. Please check backend logs.",
+            "type": type(exc).__name__
+        }
+    )
+
 # ── Router Registration ──────────────────────────────────────────────
 _ROUTERS = [
-    (auth.router,        "/auth",            "Authentication"),
-    (cv.router,          "/cv",              "CV Operations"),
-    (matcher.router,     "/jobs",            "Job Matcher"),
+    (auth.router,        "/api/auth",        "Authentication"),
+    (cv.router,          "/api/cv",          "CV Operations"),
     (interview.router,   "/api/interview",   "Interview Coach"),
-    (agents.router,      "/agents",          "Agent API"),
     (pipeline.router,    "/api/pipeline",    "Orchestrator Pipeline"),
     (cv_versions.router, "/api/cv-versions", "CV Versions"),
-    (linkedin.router,    "/auth",            "LinkedIn OAuth"),
-    (google_auth.router, "/auth",            "Google OAuth"),
-    (scrape.router,      "/api/linkedin",    "LinkedIn Scrape"),
+    (linkedin.router,    "/api/auth",        "LinkedIn OAuth"),
+    (google_auth.router, "/api/auth",        "Google OAuth"),
     (preferences.router, "/api/preferences", "User Settings"),
     (dashboard.router,   "/api/dashboard",   "Dashboard"),
     (roadmap.router,     "/api/roadmap",     "Skill Roadmap"),
