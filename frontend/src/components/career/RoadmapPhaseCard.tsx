@@ -66,7 +66,9 @@ export default function RoadmapPhaseCard({
                             <h4 className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#4A4A4A] opacity-40 mb-4">COMPETENCY FOCUS</h4>
                             <div className="flex flex-wrap gap-2">
                                 {phase.skills_covered.map((skill, sIdx) => {
-                                    const skillName = typeof skill === 'string' ? skill : (skill as any).name || 'Skill';
+                                    const skillName = typeof skill === 'string' 
+                                        ? skill 
+                                        : (skill as Record<string, unknown>).name as string || 'Skill';
                                     return (
                                         <span key={sIdx} className="px-3 py-1.5 bg-[#F9F9F9] border border-[#E0E0E0] text-[#0D0D0D] text-[10px] font-bold uppercase tracking-widest rounded-lg">
                                             {skillName}

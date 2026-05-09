@@ -3,13 +3,20 @@ import confetti from 'canvas-confetti';
 import { getCurrentRoadmap, updateRoadmap, pivotRoadmap, chatRoadmap, getRoadmapByPipelineId } from '../api/roadmap';
 import type { ActionItem, SkillRoadmapResponse } from '../api/roadmap';
 
+interface DetailedSkill {
+    name: string;
+    [key: string]: unknown;
+}
+
 function migrateRoadmap(data: SkillRoadmapResponse): SkillRoadmapResponse {
     const migratedRoadmap = data.roadmap.map(phase => ({
         ...phase,
         // Flatten skills if they are objects { name, why_it_matters, ... }
         skills_covered: phase.skills_covered?.map(s => {
-            if (typeof s === 'object' && s !== null && 'name' in s) return (s as any).name;
-            return s;
+            if (typeof s === 'object' && s !== null && 'name' in s) {
+                return (s as unknown as DetailedSkill).name;
+            }
+            return s as string;
         }),
         action_items: phase.action_items?.map(item => {
             if (typeof item === 'string') return { task: item, completed: false };
@@ -44,7 +51,7 @@ export function useRoadmapData(pipelineId?: string) {
                     
                     try {
                         data = await getRoadmapByPipelineId(pipelineId);
-                    } catch (e) {
+                    } catch {
                         // Not ready
                     }
 
