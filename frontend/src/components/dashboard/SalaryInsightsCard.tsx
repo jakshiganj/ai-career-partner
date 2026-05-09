@@ -1,5 +1,5 @@
 import { DollarSign } from 'lucide-react';
-import SalaryBenchmark from '../SalaryBenchmark';
+import SalaryBenchmark from '../career/SalaryBenchmark';
 
 type CardStatus = 'Complete' | 'In Progress' | 'Not Run' | 'Failed';
 

@@ -10,49 +10,20 @@ Endpoints:
 """
 import os
 import uuid
-from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select, desc, func
-from pydantic import BaseModel
 
 from app.core.database import get_session
 from app.core.security import get_current_user
+from app.core.ws_manager import manager
 from app.models.user import User
 from app.models.pipeline import PipelineRun, PipelineState
 from app.orchestrator.master_orchestrator_agent import MasterOrchestratorAgent
+from app.schemas.pipeline import PipelineStartRequest, PipelineInputRequest
+from app.services.pipeline_service import format_run_for_api
 
 router = APIRouter()
-
-
-def _run_label_from_state(state_json: dict) -> str:
-    """Extract a short label for the run from state (e.g. job title or job description snippet)."""
-    jd = (state_json or {}).get("job_description") or ""
-    if not jd:
-        return "Untitled run"
-    
-    # Try to find a better title by skipping common generic headers
-    lines = [l.strip() for l in jd.split("\n") if l.strip()]
-    generic_headers = {
-        "about the role", "about the job", "job description", "the role", 
-        "position summary", "key responsibilities", "role description",
-        "**about the role**", "**job description**", "job title:", "**job title:**"
-    }
-    
-    selected_line = "Untitled run"
-    for line in lines:
-        clean_line = line.lower().rstrip(':')
-        if clean_line not in generic_headers and len(line) > 3:
-            # Strip markdown bold/italics if present
-            selected_line = line.replace("**", "").replace("__", "").replace("#", "").strip()
-            # If it looks like "Job Title: DevOps Engineer", just take the title part
-            if ":" in selected_line and any(h in selected_line.lower() for h in ["job title", "position"]):
-                selected_line = selected_line.split(":", 1)[1].strip()
-            break
-
-    if len(selected_line) > 50:
-        return selected_line[:47] + "..."
-    return selected_line or "Untitled run"
 
 
 @router.get("/runs")
@@ -79,19 +50,8 @@ async def list_pipeline_runs(
     res = await session.execute(q)
     runs = res.scalars().all()
     
-    out = []
-    for r in runs:
-        state = r.state_json or {}
-        out.append({
-            "id": str(r.id),
-            "label": _run_label_from_state(state),
-            "created_at": r.created_at.isoformat() if r.created_at else None,
-            "ats_score": state.get("ats_score"),
-            "status": r.status,
-            "current_stage": r.current_stage,
-        })
     return {
-        "runs": out,
+        "runs": [format_run_for_api(r) for r in runs],
         "total": total,
         "skip": skip,
         "limit": limit
@@ -112,15 +72,6 @@ async def delete_pipeline_run(
     await session.commit()
     return {"status": "deleted"}
 
-
-class PipelineStartOptions(BaseModel):
-    run_interview_prep: bool = True
-    tone: str = "formal"
-
-class PipelineStartRequest(BaseModel):
-    cv_text: str
-    job_description: str
-    options: Optional[PipelineStartOptions] = None
 
 @router.post("/start", status_code=202)
 async def start_pipeline(
@@ -204,11 +155,6 @@ async def resume_pipeline(
     await orchestrator.resume_pipeline(pipeline_id)
     return {"pipeline_id": pipeline_id, "status": "resumed"}
 
-class PipelineInputRequest(BaseModel):
-    job_description: Optional[str] = None
-    cv_raw: Optional[str] = None
-    skills: Optional[List[str]] = None
-
 @router.patch("/{pipeline_id}/input")
 async def provide_pipeline_input(
     pipeline_id: uuid.UUID,
@@ -251,26 +197,6 @@ async def provide_pipeline_input(
     
     return {"status": "resumed"}
 
-# Very simple connection manager for the demo
-class ConnectionManager:
-    def __init__(self):
-        self.active_connections: dict[str, list[WebSocket]] = {}
-
-    async def connect(self, websocket: WebSocket, user_id: str):
-        await websocket.accept()
-        if user_id not in self.active_connections:
-            self.active_connections[user_id] = []
-        self.active_connections[user_id].append(websocket)
-        await websocket.send_json({"type": "CONNECTED", "status": "Idle"})
-
-    def disconnect(self, websocket: WebSocket, user_id: str):
-        if user_id in self.active_connections:
-            try:
-                self.active_connections[user_id].remove(websocket)
-            except ValueError:
-                pass
-
-manager = ConnectionManager()
 
 @router.websocket("/ws/{user_id}")
 async def pipeline_websocket(websocket: WebSocket, user_id: str):
