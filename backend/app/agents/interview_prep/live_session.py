@@ -12,9 +12,6 @@ class LiveInterviewSession:
     Following: https://docs.cloud.google.com/vertex-ai/generative-ai/docs/live-api/get-started-sdk
     """
     def __init__(self, job_description: str, cv_text: str, frontend_ws):
-        # GA Model for 2.5 Flash
-        self.model = os.getenv("GEMINI_LIVE_MODEL", "gemini-live-2.5-flash-native-audio")
-        
         # Model: Prefer preview for stability if 2.5 flash native audio is closing early
         self.model = os.getenv("GEMINI_LIVE_MODEL", "gemini-2.0-flash-live-preview-04-09")
         
@@ -69,11 +66,9 @@ class LiveInterviewSession:
                 self.session = session
                 self.is_connected = True
                 
-                # Initiation pattern matching test_vertex_live.py
+                # Initiation pattern matching standard SDK
                 print(f"> Initializing session with {self.model}...")
-                await session.send_client_content(
-                    turns=Content(role="user", parts=[Part(text="Hi, I am ready to start the interview.")])
-                )
+                await session.send(input="Hi, I am ready to start the interview.", end_of_turn=True)
 
                 while self.is_connected:
                     try:
