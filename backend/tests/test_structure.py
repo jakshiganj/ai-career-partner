@@ -13,8 +13,9 @@ def test_imports():
 
 def test_graph_compilation():
     """Verify that the LangGraph compiles successfully."""
-    from app.graph.graph import app_graph
-    assert app_graph is not None
+    from app.graph.graph import build_graph
+    app = build_graph()
+    assert app is not None
 
 if __name__ == "__main__":
     test_imports()

@@ -38,7 +38,7 @@ export function useRoadmapData(pipelineId?: string) {
     const [expandedPhase, setExpandedPhase] = useState<number>(0);
 
     useEffect(() => {
-        let intervalId: NodeJS.Timeout;
+        let intervalId: number;
 
         const fetchRoadmap = async () => {
             try {
