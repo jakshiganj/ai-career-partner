@@ -3,13 +3,30 @@ import asyncio
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
+
 from app.core.http_client import HttpClient
+
+# Import all routers
+from app.routers import (
+    auth, cv, matcher, interview, agents,
+    pipeline, cv_versions, linkedin, google_auth,
+    scrape, preferences, dashboard, roadmap, payment,
+)
+
+# Import models so SQLModel creates the tables
+from app.models import (  # noqa: F401
+    user, resume, job, profile, task_state,
+    pipeline as pipeline_model, cv_history,
+    job_market, interview_roadmap, preference, esco,
+)
 
 if sys.platform == 'win32':
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 load_dotenv()
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -17,15 +34,8 @@ async def lifespan(app: FastAPI):
     # Close HTTP session on shutdown
     await HttpClient.close_session()
 
+
 app = FastAPI(title="AI Career Partner", lifespan=lifespan)
-
-from app.routers import auth  
-from app.routers import cv
-from app.routers import matcher
-from app.routers import interview
-
-# Import models so SQLModel creates the tables
-from app.models import user, resume, job, profile, task_state, pipeline, cv_history, job_market, interview_roadmap, preference, esco  # noqa: F401
 
 app.add_middleware(
     CORSMiddleware,
@@ -35,47 +45,31 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include the Auth Router
-app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
-app.include_router(cv.router, prefix="/cv", tags=["CV Operations"])
-app.include_router(matcher.router, prefix="/jobs", tags=["Job Matcher"])
-app.include_router(interview.router, prefix="/api/interview", tags=["Interview Coach"])
+# ── Router Registration ──────────────────────────────────────────────
+_ROUTERS = [
+    (auth.router,        "/auth",            "Authentication"),
+    (cv.router,          "/cv",              "CV Operations"),
+    (matcher.router,     "/jobs",            "Job Matcher"),
+    (interview.router,   "/api/interview",   "Interview Coach"),
+    (agents.router,      "/agents",          "Agent API"),
+    (pipeline.router,    "/api/pipeline",    "Orchestrator Pipeline"),
+    (cv_versions.router, "/api/cv-versions", "CV Versions"),
+    (linkedin.router,    "/auth",            "LinkedIn OAuth"),
+    (google_auth.router, "/auth",            "Google OAuth"),
+    (scrape.router,      "/api/linkedin",    "LinkedIn Scrape"),
+    (preferences.router, "/api/preferences", "User Settings"),
+    (dashboard.router,   "/api/dashboard",   "Dashboard"),
+    (roadmap.router,     "/api/roadmap",     "Skill Roadmap"),
+    (payment.router,     "/api/payment",     "Payment & Subscriptions"),
+]
 
-from app.routers import agents
-app.include_router(agents.router, prefix="/agents", tags=["Agent API"])
+for router, prefix, tag in _ROUTERS:
+    app.include_router(router, prefix=prefix, tags=[tag])
 
-from app.routers import pipeline
-app.include_router(pipeline.router, prefix="/api/pipeline", tags=["Orchestrator Pipeline"])
-
-from app.routers import cv_versions
-app.include_router(cv_versions.router, prefix="/api/cv-versions", tags=["CV Versions"])
-
-from app.routers import linkedin
-app.include_router(linkedin.router, prefix="/auth", tags=["LinkedIn OAuth"])
-
-from app.routers import google_auth
-app.include_router(google_auth.router, prefix="/auth", tags=["Google OAuth"])
-
-from app.routers import scrape
-app.include_router(scrape.router, prefix="/api/linkedin", tags=["LinkedIn Scrape"])
-
-from app.routers import preferences
-app.include_router(preferences.router, prefix="/api/preferences", tags=["User Settings"])
-
-from app.routers import dashboard
-app.include_router(dashboard.router, prefix="/api/dashboard", tags=["Dashboard"])
-
-from app.routers import roadmap
-app.include_router(roadmap.router, prefix="/api/roadmap", tags=["Skill Roadmap"])
-
-from app.routers import payment
-app.include_router(payment.router, prefix="/api/payment", tags=["Payment & Subscriptions"])
-
-from fastapi.staticfiles import StaticFiles
-
+# ── Static Files & Root ──────────────────────────────────────────────
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# Root endpoint (Trigger Reload)
+
 @app.get("/")
 async def root():
     return {"message": "System Online. Go to /static/demo.html for the Agent Demo."}

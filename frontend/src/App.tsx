@@ -1,14 +1,14 @@
 import './index.css';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import ProtectedRoute from './components/ProtectedRoute';
-import LoginPage from './pages/LoginPage';
-import SignupPage from './pages/SignupPage';
-import ForgotPasswordPage from './pages/ForgotPasswordPage';
-import ResetPasswordPage from './pages/ResetPasswordPage';
-import DashboardPage from './pages/DashboardPage';
-import InterviewPage from './pages/InterviewPage';
-import InterviewReportPage from './pages/InterviewReportPage';
-import LandingPage from './pages/LandingPage';
+import ProtectedRoute from './components/auth/ProtectedRoute';
+import LoginPage from './pages/auth/LoginPage';
+import SignupPage from './pages/auth/SignupPage';
+import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
+import ResetPasswordPage from './pages/auth/ResetPasswordPage';
+import DashboardPage from './pages/dashboard/DashboardPage';
+import InterviewPage from './pages/interview/InterviewPage';
+import InterviewReportPage from './pages/interview/InterviewReportPage';
+import LandingPage from './pages/landing/LandingPage';
 
 export default function App() {
   return (
