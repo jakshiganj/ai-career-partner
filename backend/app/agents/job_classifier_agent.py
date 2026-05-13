@@ -14,16 +14,16 @@ class JobClassifierAgent:
         Analyze the candidate's CV against the target Job Description.
         
         Classify the job into exactly one of three tiers for this candidate:
-        - "Safety": The candidate clearly exceeds the requirements.
         - "Realistic": The candidate meets most core requirements.
-        - "Reach": The candidate is missing key requirements and it would be a stretch.
+        - "Stretch": The candidate is missing some requirements but has strong potential.
+        - "Reach": The candidate is missing many key requirements.
         
         Return ONLY valid JSON in this exact format:
         {
             "match_score": 65,
-            "tier": "Reach",
-            "reasoning": "Candidate lacks the required 5 years of system design experience, but has strong fundamentals.",
-            "missing_skills": ["System Architecture", "Kafka"]
+            "tier": "Stretch",
+            "reasoning": "Candidate has strong fundamentals but lacks specific experience in X and Y.",
+            "missing_skills": ["Skill A", "Skill B"]
         }
         """
         

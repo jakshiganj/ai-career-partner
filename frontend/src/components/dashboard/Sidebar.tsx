@@ -11,7 +11,8 @@ import {
     Briefcase, 
     GraduationCap,
     ClipboardCheck,
-    ChevronRight
+    ChevronRight,
+    CreditCard
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -84,7 +85,7 @@ export default function Sidebar() {
                         CareerAI
                     </span>
                     <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#4A4A4A]">
-                        {tier === 'pro' ? 'PRO MEMBER' : 'STANDARD'}
+                        {tier === 'premium' ? 'PREMIUM MEMBER' : tier === 'pro' ? 'PRO MEMBER' : 'FREE TIER'}
                     </span>
                 </div>
             </div>
@@ -130,6 +131,17 @@ export default function Sidebar() {
                         [ PREFERENCES ]
                     </span>
                     <div className="space-y-1">
+                        <Link
+                            to="/dashboard/billing"
+                            className={`flex w-full items-center gap-3 rounded-lg px-4 py-3.5 text-left text-[13px] font-semibold transition-all duration-200 ${
+                                isActive('/dashboard/billing') 
+                                ? 'bg-[#F9F9F9] text-[#0D0D0D]' 
+                                : 'text-[#4A4A4A] hover:bg-[#F9F9F9] hover:text-[#0D0D0D]'
+                            }`}
+                        >
+                            <CreditCard className={`h-4.5 w-4.5 shrink-0 ${isActive('/dashboard/billing') ? 'text-[#5BC0EB]' : 'text-[#A0A0A0]'}`} />
+                            Billing & Plans
+                        </Link>
                         <button
                             type="button"
                             className="flex w-full items-center gap-3 rounded-lg px-4 py-3.5 text-left text-[13px] font-semibold text-[#4A4A4A] transition-all duration-200 hover:bg-[#F9F9F9] hover:text-[#0D0D0D]"

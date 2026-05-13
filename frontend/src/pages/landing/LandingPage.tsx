@@ -11,6 +11,7 @@ import ServicesSection from './sections/ServicesSection';
 import ProcessSection from './sections/ProcessSection';
 import TestimonialsSection from './sections/TestimonialsSection';
 import FAQSection from './sections/FAQSection';
+import PricingSection from './sections/PricingSection';
 import CTASection from './sections/CTASection';
 import Footer from './sections/Footer';
 
@@ -51,6 +52,7 @@ export default function LandingPage() {
                     <nav className="lp-nav-links">
                         <a href="#features">Features</a>
                         <a href="#services">Services</a>
+                        <a href="#pricing">Pricing</a>
                         <a href="#testimonials">Testimonials</a>
                     </nav>
                     <div className="lp-nav-actions">
@@ -70,6 +72,7 @@ export default function LandingPage() {
                 <ServicesSection />
                 <ProcessSection />
                 <TestimonialsSection />
+                <PricingSection />
                 <FAQSection />
                 <CTASection />
             </main>

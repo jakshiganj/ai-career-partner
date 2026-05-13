@@ -28,13 +28,32 @@ export default function CVUpload({ onResult, onLoading }: Props) {
     const { success: toastSuccess, error: toastError } = useToast();
 
     // Client-side PII Redaction
-    const redactPII = (text: string) => {
-        // Redact standard Emails
-        let redacted = text.replace(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/gi, '[REDACTED_EMAIL]');
-        // Redact standard Phone Numbers (basic formatting)
-        redacted = redacted.replace(/(\+?\d{1,3}[\s-]?)?\(?\d{3}\)?[\s-]?\d{3}[\s-]?\d{4}/g, '[REDACTED_PHONE]');
-        // Transformers.js NER step would go here if running fully locally in pure browser (skipped here to save 20mb payload constraint)
-        return redacted;
+    const redactPII = (text: string): Promise<string> => {
+        return new Promise((resolve) => {
+            // 1. Basic Regex for speed (Emails/Phones)
+            let redacted = text.replace(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/gi, '[REDACTED_EMAIL]');
+            redacted = redacted.replace(/(\+?\d{1,3}[\s-]?)?\(?\d{3}\)?[\s-]?\d{3}[\s-]?\d{4}/g, '[REDACTED_PHONE]');
+
+            // 2. Transformers.js for Deep NER (Names/Locations)
+            const worker = new Worker(new URL('../../workers/pii-worker.ts', import.meta.url), { type: 'module' });
+            
+            worker.onmessage = (event) => {
+                const { status, redactedText, data, error: workerError } = event.data;
+                if (status === 'progress') {
+                    // Update progress if we had a state for it
+                    console.log(`Model Loading: ${data.progress || 0}%`);
+                } else if (status === 'complete') {
+                    worker.terminate();
+                    resolve(redactedText);
+                } else if (status === 'error') {
+                    console.error('Worker error:', workerError);
+                    worker.terminate();
+                    resolve(redacted); // Fallback to regex-only if worker fails
+                }
+            };
+
+            worker.postMessage({ text: redacted });
+        });
     }
 
     async function extractTextFromPDF(file: File): Promise<string> {
@@ -49,7 +68,7 @@ export default function CVUpload({ onResult, onLoading }: Props) {
                     for (let i = 1; i <= pdf.numPages; i++) {
                         const page = await pdf.getPage(i);
                         const content = await page.getTextContent();
-                        const pageText = content.items.map((item: unknown) => (item as { str?: string }).str ?? '').join(' ');
+                        const pageText = content.items.map((item: any) => item.str ?? '').join(' ');
                         fullText += pageText + '\n';
                     }
                     resolve(fullText);
@@ -84,9 +103,11 @@ export default function CVUpload({ onResult, onLoading }: Props) {
             }
 
             // 2. Client-Side Redaction (Transformers.js / Regex)
-            const redactedText = redactPII(rawText);
+            setAnalyzing(true); // Show "Analyzing..." during NER
+            const redactedText = await redactPII(rawText);
+            setAnalyzing(false);
 
-            // 3. Send securely redacted text to backend endpoint via service
+            // 3. Send securely redacted text to backend
             const { uploadCV } = await import('../../api/cv');
             const res = await uploadCV(redactedText);
 
@@ -94,9 +115,8 @@ export default function CVUpload({ onResult, onLoading }: Props) {
             toastSuccess('CV uploaded and redacted successfully!');
             onResult?.(res.cv_id, null, redactedText);
 
-        } catch (e: unknown) {
-            const axiosError = e as { response?: { data?: { detail?: string } }, message?: string };
-            const msg = axiosError?.response?.data?.detail ?? axiosError.message ?? 'Upload failed.';
+        } catch (e: any) {
+            const msg = e.response?.data?.detail ?? e.message ?? 'Upload failed.';
             toastError(msg);
             setError(msg);
             setUploading(false);

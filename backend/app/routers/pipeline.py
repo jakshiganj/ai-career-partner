@@ -96,7 +96,7 @@ async def start_pipeline(
     """
     logger.info(f"Starting pipeline for user: {current_user.email}")
     
-    if current_user.tier != "pro":
+    if current_user.tier not in ["pro", "premium"]:
         # Check current run count
         count_q = select(func.count()).select_from(PipelineRun).where(PipelineRun.user_id == current_user.id)
         res = await session.execute(count_q)

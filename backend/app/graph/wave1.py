@@ -99,7 +99,7 @@ async def analyse_node(state: AgentState) -> dict:
         updates["job_tier"] = "Stretch"
     else:
         tier = classify_res.get("tier", "Stretch")
-        updates["job_tier"] = tier if tier in ["Safety", "Realistic", "Reach"] else "Stretch"
+        updates["job_tier"] = tier if tier in ["Realistic", "Stretch", "Reach"] else "Stretch"
         
     return updates
 

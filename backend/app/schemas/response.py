@@ -106,3 +106,18 @@ class SkillRoadmapResponse(BaseModel):
 class RoadmapChatResponse(BaseModel):
     reply: str
     roadmap: SkillRoadmapResponse
+
+# ─── Subscription & Payment Models ──────────────────────────────────────────
+
+class SubscriptionStatusResponse(BaseModel):
+    tier: str
+    status: Optional[str] = None
+    current_period_end: Optional[datetime] = None
+    cancel_at_period_end: bool = False
+    stripe_customer_id: Optional[str] = None
+
+class CreateCheckoutRequest(BaseModel):
+    tier: str  # "pro" or "premium"
+
+class PortalSessionResponse(BaseModel):
+    url: str
