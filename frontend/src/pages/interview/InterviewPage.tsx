@@ -11,7 +11,7 @@ export default function InterviewPage() {
     const {
         messages, input, setInput,
         connected, audioMode, sessionEnded,
-        messagesEndRef,
+        scrollContainerRef,
         connect, disconnect, sendMessage, handleKeyDown,
     } = useInterviewAudio();
 
@@ -61,7 +61,7 @@ export default function InterviewPage() {
                             onInputChange={setInput}
                             onSend={sendMessage}
                             onKeyDown={handleKeyDown}
-                            messagesEndRef={messagesEndRef}
+                            scrollContainerRef={scrollContainerRef}
                         />
                     </div>
 

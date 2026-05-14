@@ -9,12 +9,12 @@ interface SessionTranscriptProps {
     onInputChange: (value: string) => void;
     onSend: () => void;
     onKeyDown: (e: React.KeyboardEvent) => void;
-    messagesEndRef: React.RefObject<HTMLDivElement | null>;
+    scrollContainerRef: React.RefObject<HTMLDivElement | null>;
 }
 
 export default function SessionTranscript({
     messages, connected, audioMode, input,
-    onInputChange, onSend, onKeyDown, messagesEndRef,
+    onInputChange, onSend, onKeyDown, scrollContainerRef,
 }: SessionTranscriptProps) {
     return (
         <div className="h-72 bg-white rounded-xl border border-[#E0E0E0] p-10 overflow-hidden flex flex-col">
@@ -26,7 +26,10 @@ export default function SessionTranscript({
                 <span className="text-[9px] font-bold uppercase tracking-widest text-[#4A4A4A] opacity-40">Secure Feed</span>
             </div>
 
-            <div className="flex-1 overflow-y-auto space-y-6 pr-4 custom-scrollbar">
+            <div 
+                ref={scrollContainerRef}
+                className="flex-1 overflow-y-auto space-y-6 pr-4 custom-scrollbar"
+            >
                 {messages.length === 0 && (
                     <div className="flex flex-col items-center justify-center h-full opacity-30">
                         <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#0D0D0D]">Ready for Input</p>
@@ -48,7 +51,6 @@ export default function SessionTranscript({
                         </p>
                     </div>
                 ))}
-                <div ref={messagesEndRef} />
             </div>
 
             {connected && (

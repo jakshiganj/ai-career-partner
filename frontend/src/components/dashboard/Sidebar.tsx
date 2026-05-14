@@ -30,7 +30,8 @@ export default function Sidebar() {
             const token = localStorage.getItem('token') || localStorage.getItem('access_token');
             if (!token) return;
             try {
-                const res = await fetch('http://localhost:8000/api/auth/me', {
+                const apiBase = import.meta.env.VITE_API_URL || 'https://ai-career-backend-560579918305.asia-southeast1.run.app/api';
+                const res = await fetch(`${apiBase}/auth/me`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (res.ok) {

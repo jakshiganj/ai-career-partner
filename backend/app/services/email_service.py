@@ -4,6 +4,9 @@ import asyncio
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from dotenv import load_dotenv
+from app.core.logging import get_logger
+
+logger = get_logger(__name__)
 
 def _send_email_sync(to_email: str, subject: str, html_content: str, gmail_address: str, gmail_password: str) -> bool:
     """Synchronous helper for SMTP operations."""
@@ -21,7 +24,7 @@ def _send_email_sync(to_email: str, subject: str, html_content: str, gmail_addre
         server.quit()
         return True
     except Exception as e:
-        print(f"[EMAIL_SERVICE] ❌ SMTP Error: {e}")
+        logger.error(f"[EMAIL_SERVICE] SMTP Error: {e}")
         return False
 
 async def send_digest_email(to_email: str, subject: str, digest_data: dict) -> bool:
@@ -29,11 +32,13 @@ async def send_digest_email(to_email: str, subject: str, digest_data: dict) -> b
     Sends the weekly digest email using Gmail SMTP.
     """
     load_dotenv()
-    gmail_address = os.getenv("GMAIL_ADDRESS")
-    gmail_password = os.getenv("GMAIL_APP_PASSWORD")
+    _gmail_address = os.getenv("GMAIL_ADDRESS")
+    _gmail_password = os.getenv("GMAIL_APP_PASSWORD")
+    gmail_address = _gmail_address.strip() if _gmail_address else None
+    gmail_password = _gmail_password.strip() if _gmail_password else None
     
     if not gmail_address or not gmail_password:
-        print("[EMAIL_SERVICE] ⚠️ GMAIL_ADDRESS or GMAIL_APP_PASSWORD not found in environment.")
+        logger.warning("[EMAIL_SERVICE] GMAIL_ADDRESS or GMAIL_APP_PASSWORD not found in environment.")
         return False
         
     try:
@@ -64,10 +69,10 @@ async def send_digest_email(to_email: str, subject: str, digest_data: dict) -> b
 
         success = await asyncio.to_thread(_send_email_sync, to_email, subject, html_content, gmail_address, gmail_password)
         if success:
-            print(f"[EMAIL_SERVICE] ✅ Email sent successfully via Gmail to {to_email}")
+            logger.info(f"[EMAIL_SERVICE] Email sent successfully via Gmail to {to_email}")
         return success
     except Exception as e:
-        print(f"[EMAIL_SERVICE] ❌ Failed to send email via Gmail: {e}")
+        logger.error(f"[EMAIL_SERVICE] Failed to send email via Gmail: {e}")
         return False
 
 
@@ -76,11 +81,13 @@ async def send_password_reset_email(to_email: str, reset_link: str) -> bool:
     Sends a password reset email with a branded HTML template using Gmail SMTP.
     """
     load_dotenv()
-    gmail_address = os.getenv("GMAIL_ADDRESS")
-    gmail_password = os.getenv("GMAIL_APP_PASSWORD")
+    _gmail_address = os.getenv("GMAIL_ADDRESS")
+    _gmail_password = os.getenv("GMAIL_APP_PASSWORD")
+    gmail_address = _gmail_address.strip() if _gmail_address else None
+    gmail_password = _gmail_password.strip() if _gmail_password else None
 
     if not gmail_address or not gmail_password:
-        print("[EMAIL_SERVICE] ⚠️ GMAIL_ADDRESS or GMAIL_APP_PASSWORD not found in environment.")
+        logger.warning("[EMAIL_SERVICE] GMAIL_ADDRESS or GMAIL_APP_PASSWORD not found in environment.")
         return False
 
     try:
@@ -129,8 +136,8 @@ async def send_password_reset_email(to_email: str, reset_link: str) -> bool:
         subject = "Reset Your Password — AI Career Partner"
         success = await asyncio.to_thread(_send_email_sync, to_email, subject, html_content, gmail_address, gmail_password)
         if success:
-            print(f"[EMAIL_SERVICE] ✅ Password reset email sent to {to_email}")
+            logger.info(f"[EMAIL_SERVICE] Password reset email sent to {to_email}")
         return success
     except Exception as e:
-        print(f"[EMAIL_SERVICE] ❌ Failed to send password reset email: {e}")
+        logger.error(f"[EMAIL_SERVICE] Failed to send password reset email: {e}")
         return False

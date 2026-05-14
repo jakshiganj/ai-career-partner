@@ -120,8 +120,8 @@ async def forgot_password(body: ForgotPasswordRequest, session: AsyncSession = D
     await session.commit()
 
     # Send reset email
-    frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
-    reset_link = f"{frontend_url}/reset-password?token={token}"
+    from app.core.config import settings
+    reset_link = f"{settings.FRONTEND_URL}/reset-password?token={token}"
     try:
         await send_password_reset_email(to_email=user.email, reset_link=reset_link)
         logger.info(f"Password reset email sent to: {user.email}")

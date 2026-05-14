@@ -1,10 +1,12 @@
+from dotenv import load_dotenv
+load_dotenv()
+
 import sys
 import asyncio
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from dotenv import load_dotenv
 
 from app.core.http_client import HttpClient
 from app.core.logging import setup_logging, get_logger
@@ -30,8 +32,6 @@ from app.models import (  # noqa: F401
 if sys.platform == 'win32':
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
-load_dotenv()
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -42,20 +42,23 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="AI Career Partner", lifespan=lifespan)
 
-import os as _os
-
-_cors_origins = ["http://localhost:5173", "http://localhost:3000"]
-_frontend_url = _os.getenv("FRONTEND_URL")
-if _frontend_url and _frontend_url not in _cors_origins:
-    _cors_origins.append(_frontend_url)
+from app.core.config import settings
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=_cors_origins,
+    allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Fix for HTTPS protocol behind Cloud Run proxy
+@app.middleware("http")
+async def fix_protocol(request: Request, call_next):
+    logger.info(f"Request: {request.method} {request.url}")
+    if request.headers.get("x-forwarded-proto") == "https":
+        request.scope["scheme"] = "https"
+    return await call_next(request)
 
 # ── Error Handling ───────────────────────────────────────────────────
 from fastapi import Request

@@ -1,0 +1,9 @@
+.gcloudignore
+.git
+.gitignore
+.dockerignore
+node_modules/
+dist/
+.cache/
+playwright-report/
+test-results/

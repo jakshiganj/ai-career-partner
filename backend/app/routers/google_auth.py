@@ -11,22 +11,20 @@ from app.models.preference import UserPreference
 from app.core.security import create_access_token
 from app.core.http_client import get_http_session
 from app.core.logging import get_logger
+from app.core.config import settings
 
 router = APIRouter()
 logger = get_logger(__name__)
 
+# OAuth Config derived from settings
 GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
 GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v2/userinfo"
 
-# Environment-based redirect URIs
-REDIRECT_URI = os.getenv("GOOGLE_OAUTH_REDIRECT_URI", "http://localhost:8000/api/auth/google/callback")
-FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
-
 @router.get("/google/login")
 async def google_login():
     """Redirects the user to the Google OAuth consent screen."""
-    client_id = os.getenv("GOOGLE_OAUTH_CLIENT_ID")
+    client_id = settings.GOOGLE_OAUTH_CLIENT_ID
     if not client_id:
         logger.error("GOOGLE_OAUTH_CLIENT_ID not configured")
         raise HTTPException(status_code=500, detail="Google OAuth Client ID not configured")
@@ -34,14 +32,14 @@ async def google_login():
     params = {
         "response_type": "code",
         "client_id": client_id,
-        "redirect_uri": REDIRECT_URI,
+        "redirect_uri": settings.GOOGLE_OAUTH_REDIRECT_URI,
         "scope": "openid email profile",
         "access_type": "offline",
-        "state": "career_partner_google",
+        "state": settings.GOOGLE_STATE,
         "prompt": "consent",
     }
     url = f"{GOOGLE_AUTH_URL}?{urllib.parse.urlencode(params)}"
-    logger.info("Initiating Google OAuth login flow")
+    logger.info(f"Initiating Google OAuth login flow with redirect: {settings.GOOGLE_OAUTH_REDIRECT_URI}")
     return RedirectResponse(url)
 
 
@@ -52,12 +50,12 @@ async def google_callback(
     session: AsyncSession = Depends(get_session),
 ):
     """Handles the Google OAuth callback, fetches user info, and upserts user."""
-    if state != "career_partner_google":
+    if state != settings.GOOGLE_STATE:
         logger.warning(f"Invalid Google OAuth state received: {state}")
         raise HTTPException(status_code=400, detail="Invalid state parameter")
 
-    client_id = os.getenv("GOOGLE_OAUTH_CLIENT_ID")
-    client_secret = os.getenv("GOOGLE_OAUTH_CLIENT_SECRET")
+    client_id = settings.GOOGLE_OAUTH_CLIENT_ID
+    client_secret = settings.GOOGLE_OAUTH_CLIENT_SECRET
 
     if not client_id or not client_secret:
         logger.error("Google OAuth credentials not configured")
@@ -70,7 +68,7 @@ async def google_callback(
     token_data = {
         "grant_type": "authorization_code",
         "code": code,
-        "redirect_uri": REDIRECT_URI,
+        "redirect_uri": settings.GOOGLE_OAUTH_REDIRECT_URI,
         "client_id": client_id,
         "client_secret": client_secret,
     }
@@ -125,5 +123,5 @@ async def google_callback(
     jwt_token = create_access_token(data={"sub": user.email})
 
     # 5. Redirect back to frontend with the token
-    redirect_url = f"{FRONTEND_URL}/dashboard?token={jwt_token}&user_id={user.id}"
+    redirect_url = f"{settings.FRONTEND_URL}/dashboard?token={jwt_token}&user_id={user.id}"
     return RedirectResponse(redirect_url)

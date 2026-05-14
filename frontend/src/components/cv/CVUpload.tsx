@@ -29,12 +29,13 @@ export default function CVUpload({ onResult, onLoading }: Props) {
 
     // Client-side PII Redaction
     const redactPII = (text: string): Promise<string> => {
-        return new Promise((resolve) => {
+        return new Promise((resolve, reject) => {
             // 1. Basic Regex for speed (Emails/Phones)
             let redacted = text.replace(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/gi, '[REDACTED_EMAIL]');
             redacted = redacted.replace(/(\+?\d{1,3}[\s-]?)?\(?\d{3}\)?[\s-]?\d{3}[\s-]?\d{4}/g, '[REDACTED_PHONE]');
 
             // 2. Transformers.js for Deep NER (Names/Locations)
+            // Using DistilBERT (quantized) for stability and speed
             const worker = new Worker(new URL('../../workers/pii-worker.ts', import.meta.url), { type: 'module' });
             
             worker.onmessage = (event) => {
@@ -48,7 +49,7 @@ export default function CVUpload({ onResult, onLoading }: Props) {
                 } else if (status === 'error') {
                     console.error('Worker error:', workerError);
                     worker.terminate();
-                    resolve(redacted); // Fallback to regex-only if worker fails
+                    reject(new Error(`AI Redaction failed: ${workerError}. Please try again or use the manual text tab.`));
                 }
             };
 

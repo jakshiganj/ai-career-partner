@@ -12,7 +12,7 @@ export default function GoogleLoginButton({ minimal = false }: GoogleLoginButton
         setLoading(true);
         setError(null);
         try {
-            const backendUrl = 'http://localhost:8000';
+            const backendUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'https://ai-career-backend-560579918305.asia-southeast1.run.app';
             window.location.href = `${backendUrl}/api/auth/google/login`;
         } catch (e: unknown) {
             const err = e as Error;

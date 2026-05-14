@@ -15,7 +15,7 @@ export function useInterviewAudio() {
     const [sessionEnded, setSessionEnded] = useState(false);
 
     const wsRef = useRef<WebSocket | null>(null);
-    const messagesEndRef = useRef<HTMLDivElement>(null);
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
     const idRef = useRef(0);
 
     const audioCtxRef = useRef<AudioContext | null>(null);
@@ -248,7 +248,20 @@ export function useInterviewAudio() {
         if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
     }
 
-    useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
+    useEffect(() => {
+        const container = scrollContainerRef.current;
+        if (!container) return;
+
+        // Smart Scroll: Only scroll to bottom if user is already near the bottom (within 100px)
+        const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+        
+        if (isNearBottom || messages.length <= 1) {
+            container.scrollTo({
+                top: container.scrollHeight,
+                behavior: 'auto' // Instant scroll is much more readable during live updates
+            });
+        }
+    }, [messages]);
     useEffect(() => { return () => { cleanupAudio(); if (pingIntervalRef.current) clearInterval(pingIntervalRef.current); wsRef.current?.close(); }; }, []);
 
     return {
@@ -258,7 +271,7 @@ export function useInterviewAudio() {
         connected,
         audioMode,
         sessionEnded,
-        messagesEndRef,
+        scrollContainerRef,
         connect,
         disconnect,
         sendMessage,

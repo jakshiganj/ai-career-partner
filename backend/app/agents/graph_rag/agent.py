@@ -6,9 +6,12 @@ from app.agents.gemini_client import gemini_client
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 
-NEO4J_URI = os.getenv("NEO4J_URI", "bolt://localhost:7687")
-NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
-NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "password123")
+_neo4j_uri = os.getenv("NEO4J_URI", "bolt://localhost:7687")
+_neo4j_user = os.getenv("NEO4J_USER", "neo4j")
+_neo4j_pass = os.getenv("NEO4J_PASSWORD", "password123")
+NEO4J_URI = _neo4j_uri.strip()
+NEO4J_USER = _neo4j_user.strip()
+NEO4J_PASSWORD = _neo4j_pass.strip()
 
 # Initialize the baseline model globally so it doesn't reload on every evaluation loop
 sbert_model = SentenceTransformer('all-MiniLM-L6-v2')
@@ -68,10 +71,9 @@ class GraphRAGAgent:
         system_instruction = '''
         You are an expert IT recruiter. Extract a JSON list of required skills from the job description.
         Only include hard skills, programming languages, frameworks, and tools.
-        CRITICAL: If a skill is a specific modern framework or tool (e.g., React, Docker, Next.js), 
-        also output its broader ESCO-compatible IT category (e.g., Frontend Web Development, Containerization).
-        Return ONLY a JSON array of strings in lowercase (e.g., ["python", "react", "frontend web development"]).
-        Do not include markdown or code block tags.
+        If the job description is very short or generic (e.g., "junior engineer"), extract 
+        foundational skills like "software engineering", "programming", or "computer science".
+        Return ONLY a JSON array of strings in lowercase.
         '''
         prompt = f"--- Job Description ---\n{job_description}"
         for attempt in range(3):
@@ -81,8 +83,13 @@ class GraphRAGAgent:
                     prompt=prompt,
                     config={"system_instruction": system_instruction}
                 )
-                clean_text = response_text.replace("```json", "").replace("```", "").strip()
-                return json.loads(clean_text)
+                # More robust JSON extraction
+                import re
+                json_match = re.search(r'\[.*\]', response_text, re.DOTALL)
+                if json_match:
+                    clean_text = json_match.group(0)
+                    return json.loads(clean_text)
+                return []
             except Exception as e:
                 if attempt == 2:
                     print(f"Error extracting JD skills: {e}")
@@ -160,8 +167,12 @@ class GraphRAGAgent:
                 prompt=prompt,
                 config={"system_instruction": system_instruction}
             )
-            clean_text = response_text.replace("```json", "").replace("```", "").strip()
-            return json.loads(clean_text)
+            import re
+            json_match = re.search(r'\[.*\]', response_text, re.DOTALL)
+            if json_match:
+                clean_text = json_match.group(0)
+                return json.loads(clean_text)
+            return []
         except Exception as e:
             print(f"Error extracting candidate skills: {e}")
             return []
@@ -184,8 +195,6 @@ class GraphRAGAgent:
             candidate_skills = []
             
         required_skills = self.extract_job_skills(job_description)
-        if not required_skills:
-            return {"skill_gaps": [], "skill_match_score": 0.0, "implicit_skills": []}
 
         # Expand candidate skills with graph knowledge
         candidate_expanded_skills = await asyncio.to_thread(self.get_expanded_skills, candidate_skills)

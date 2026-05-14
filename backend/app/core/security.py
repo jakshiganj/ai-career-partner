@@ -9,10 +9,12 @@ from sqlmodel import select
 from app.core.database import get_session
 from app.models.user import User
 
-# Configuration
-SECRET_KEY = "CHANGE_THIS_TO_A_REAL_SECRET_KEY" # In production, use .env
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60
+from app.core.config import settings
+
+# Configuration from centralized settings
+SECRET_KEY = settings.SECRET_KEY
+ALGORITHM = settings.ALGORITHM
+ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
 
 # Password Hashing Context
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

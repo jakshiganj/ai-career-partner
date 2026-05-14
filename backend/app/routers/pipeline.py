@@ -111,7 +111,8 @@ async def start_pipeline(
                 }
             )
 
-    db_url = os.environ.get("LANGGRAPH_CHECKPOINT_URL", "postgresql://admin:password123@localhost:5432/career_db")
+    db_url = settings.CHECKPOINT_URL
+
     orchestrator = MasterOrchestratorAgent(session, db_url)
     pipeline_id = await orchestrator.start_pipeline(
         user_id=str(current_user.id),
@@ -168,8 +169,7 @@ async def resume_pipeline(
     session: AsyncSession = Depends(get_session),
 ):
     """Resume a halted pipeline."""
-    logger.info(f"Resuming pipeline {pipeline_id} for user: {current_user.email}")
-    db_url = os.environ.get("LANGGRAPH_CHECKPOINT_URL", "postgresql://admin:password123@localhost:5432/career_db")
+    db_url = settings.CHECKPOINT_URL
     orchestrator = MasterOrchestratorAgent(session, db_url)
     await orchestrator.resume_pipeline(pipeline_id)
     return {"pipeline_id": pipeline_id, "status": "resumed"}
@@ -211,8 +211,7 @@ async def provide_pipeline_input(
     session.add(run)
     await session.commit()
     
-    # Resume orchestrator
-    db_url = os.environ.get("LANGGRAPH_CHECKPOINT_URL", "postgresql://admin:password123@localhost:5432/career_db")
+    db_url = settings.CHECKPOINT_URL
     orchestrator = MasterOrchestratorAgent(session, db_url)
     await orchestrator.resume_pipeline(str(run.id))
     

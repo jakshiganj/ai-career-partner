@@ -7,6 +7,9 @@ from app.graph.graph import build_graph
 from app.graph.state import AgentState
 from app.models.pipeline import PipelineRun, PipelineState
 from app.services.pipeline_persistence import sync_state, persist_to_tables
+from app.core.logging import get_logger
+
+logger = get_logger(__name__)
 
 class MasterOrchestratorAgent:
 
@@ -49,7 +52,7 @@ class MasterOrchestratorAgent:
             self._run_graph(run.id, initial_state)
         )
         task.add_done_callback(lambda t: (
-            print(f"[PIPELINE ERROR] {t.exception()}") if t.exception() else None
+            logger.error(f"[PIPELINE ERROR] {t.exception()}") if t.exception() else None
         ))
         
         return pipeline_id
@@ -58,7 +61,7 @@ class MasterOrchestratorAgent:
         """Resume an interrupted pipeline from its last completed node."""
         task = asyncio.create_task(self._resume_graph_task(pipeline_id))
         task.add_done_callback(lambda t: (
-            print(f"[RESUME ERROR] {t.exception()}") if t.exception() else None
+            logger.error(f"[RESUME ERROR] {t.exception()}") if t.exception() else None
         ))
         return pipeline_id
 
@@ -76,7 +79,7 @@ class MasterOrchestratorAgent:
         async with async_session() as session:
             run = await session.get(PipelineRun, run_id)
             if not run:
-                print(f"[ERROR] Pipeline run {run_id} not found.")
+                logger.error(f"Pipeline run {run_id} not found.")
                 return
 
         try:
@@ -112,7 +115,7 @@ class MasterOrchestratorAgent:
                         await session.commit()
                     except Exception as commit_err:
                         await session.rollback()
-                        print(f"[FINAL COMMIT ERROR] {commit_err}")
+                        logger.error(f"[FINAL COMMIT ERROR] {commit_err}")
                         raise commit_err
                 
         except Exception as e:

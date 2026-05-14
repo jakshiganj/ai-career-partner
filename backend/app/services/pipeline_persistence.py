@@ -5,6 +5,9 @@ and multi-table persistence. Extracted from MasterOrchestratorAgent.
 import asyncio
 from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
+from app.core.logging import get_logger
+
+logger = get_logger(__name__)
 
 from app.models.pipeline import PipelineRun
 from app.models.cv_history import CVVersion
@@ -45,7 +48,7 @@ async def sync_state(run_id: str, node_output: dict):
                 aws = [ws.send_json(payload) for ws in manager.active_connections[user_id]]
                 await asyncio.gather(*aws, return_exceptions=True)
         except Exception as ws_err:
-            print(f"WebSocket broadcast error: {ws_err}")
+            logger.error(f"WebSocket broadcast error: {ws_err}")
 
 
 async def persist_to_tables(run, state: dict, session: AsyncSession):
@@ -131,12 +134,12 @@ async def persist_to_tables(run, state: dict, session: AsyncSession):
             session.add(sr)
 
         # await session.commit()  <-- Remove internal commit, let orchestrator handle it
-        print(f"[PERSIST] [SUCCESS] All tables queued for pipeline {pipeline_id}")
+        logger.info(f"[PERSIST] [SUCCESS] All tables queued for pipeline {pipeline_id}")
         
     except Exception as e:
         import traceback
         traceback.print_exc()
-        print(f"[PERSIST] [ERROR] Persistence failure: {e}")
+        logger.error(f"[PERSIST] [ERROR] Persistence failure: {e}")
         
         # IMPORTANT: Rollback the aborted transaction so the session can be used again!
         await session.rollback()

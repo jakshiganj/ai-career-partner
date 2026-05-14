@@ -12,7 +12,7 @@ export default function LinkedInLoginButton({ minimal = false }: LinkedInLoginBu
         setLoading(true);
         setError(null);
         try {
-            const backendUrl = 'http://localhost:8000';
+            const backendUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'https://ai-career-backend-560579918305.asia-southeast1.run.app';
             window.location.href = `${backendUrl}/api/auth/linkedin/login`;
         } catch (e: unknown) {
             const err = e as Error;

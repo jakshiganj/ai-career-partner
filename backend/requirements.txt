@@ -1,5 +1,9 @@
 fastapi>=0.110.0
 uvicorn[standard]
+pydantic-settings
+python-dotenv
+psycopg[binary]
+
 sqlmodel              # ORM
 asyncpg               # Async Postgres driver
 alembic                # Database migrations

@@ -17,9 +17,10 @@ class PipelineState(BaseModel):
     ats_breakdown: Optional[Dict[str, Any]] = None
     skill_gaps: Optional[List[str]] = None
     skill_match_score: Optional[float] = None
-    market_trends: Optional[Dict[str, Any]] = None
+    implicit_skills: Optional[List[str]] = None
+    market_analysis: Optional[Dict[str, Any]] = None
     salary_benchmarks: Optional[Dict[str, Any]] = None
-    cv_critique: Optional[str] = None
+    critique: Optional[Dict[str, Any]] = None
     optimised_cv: Optional[str] = None
     cover_letter: Optional[str] = None
     job_tier: Optional[Literal["Realistic", "Stretch", "Reach"]] = None

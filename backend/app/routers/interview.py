@@ -14,23 +14,6 @@ from typing import Dict, Any, List
 router = APIRouter()
 logger = get_logger(__name__)
 
-@router.get("/debug-auth")
-async def debug_auth():
-    import os
-    import google.auth
-    try:
-        creds, proj = google.auth.default()
-        return {
-            "env_var": os.getenv("GOOGLE_APPLICATION_CREDENTIALS"),
-            "status": "success",
-            "project": proj
-        }
-    except Exception as e:
-        return {
-            "env_var": os.getenv("GOOGLE_APPLICATION_CREDENTIALS"),
-            "status": "error",
-            "error": str(e)
-        }
 
 @router.post("/start")
 async def start_interview_session(

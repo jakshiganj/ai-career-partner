@@ -10,21 +10,52 @@ import Sidebar, { SIDEBAR_WIDTH } from '../../components/dashboard/Sidebar';
 export default function InterviewReportPage() {
     const [report, setReport] = useState<InterviewReportData | null>(null);
     const [loading, setLoading] = useState(true);
+    const [retrying, setRetrying] = useState(false);
+    const [retryCount, setRetryCount] = useState(0);
     const navigate = useNavigate();
 
     useEffect(() => {
+        let isMounted = true;
+        let pollTimer: ReturnType<typeof setTimeout>;
+
         const fetchReport = async () => {
             try {
                 const { data } = await client.get('/interview/latest');
-                setReport(data.report);
+                if (data.report) {
+                    if (isMounted) {
+                        setReport(data.report);
+                        setLoading(false);
+                        setRetrying(false);
+                    }
+                } else if (retryCount < 5) {
+                    // Report not found, but we might be in a processing window
+                    if (isMounted) {
+                        setRetrying(true);
+                        setRetryCount(prev => prev + 1);
+                        pollTimer = setTimeout(fetchReport, 3000);
+                    }
+                } else {
+                    if (isMounted) {
+                        setLoading(false);
+                        setRetrying(false);
+                    }
+                }
             } catch (err) {
                 console.error("Failed to fetch report", err);
-            } finally {
-                setLoading(false);
+                if (isMounted) {
+                    setLoading(false);
+                    setRetrying(false);
+                }
             }
         };
+
         fetchReport();
-    }, []);
+
+        return () => {
+            isMounted = false;
+            if (pollTimer) clearTimeout(pollTimer);
+        };
+    }, [retryCount]);
 
     return (
         <div className="flex min-h-screen bg-[#F9F9F9]" style={{ fontFamily: "'Inter', sans-serif" }}>
@@ -56,10 +87,52 @@ export default function InterviewReportPage() {
                 </header>
 
                 <div className="p-12 max-w-6xl mx-auto w-full">
-                    {loading ? (
-                        <div className="flex h-96 flex-col items-center justify-center rounded-xl border border-[#E0E0E0] bg-white p-12">
-                            <div className="h-10 w-10 animate-spin rounded-full border-2 border-[#E0E0E0] border-t-[#5BC0EB]" />
-                            <p className="mt-6 text-[10px] font-bold uppercase tracking-[0.2em] text-[#4A4A4A] opacity-40">Synthesizing Results...</p>
+                    {loading || retrying ? (
+                        <div className="flex h-[60vh] flex-col items-center justify-center rounded-xl border border-[#E0E0E0] bg-white p-12 relative overflow-hidden">
+                            {/* Animated Background Progress Bar */}
+                            {retrying && (
+                                <motion.div 
+                                    className="absolute bottom-0 left-0 h-1 bg-[#5BC0EB]"
+                                    initial={{ width: 0 }}
+                                    animate={{ width: `${(retryCount / 5) * 100}%` }}
+                                    transition={{ duration: 0.5 }}
+                                />
+                            )}
+                            
+                            <div className="relative">
+                                <div className="h-16 w-16 animate-spin rounded-full border-2 border-[#E0E0E0] border-t-[#5BC0EB]" />
+                                <motion.div 
+                                    className="absolute inset-0 flex items-center justify-center"
+                                    animate={{ opacity: [0.4, 1, 0.4] }}
+                                    transition={{ repeat: Infinity, duration: 2 }}
+                                >
+                                    <FileText className="h-6 w-6 text-[#5BC0EB]" />
+                                </motion.div>
+                            </div>
+
+                            <div className="mt-10 text-center">
+                                <h3 className="text-sm font-bold uppercase tracking-[0.3em] text-[#0D0D0D]">
+                                    {retrying ? "Synthesizing Evaluation" : "Retrieving Dossier"}
+                                </h3>
+                                <p className="mt-4 max-w-md text-[11px] font-medium leading-relaxed text-[#4A4A4A] opacity-60 uppercase tracking-widest">
+                                    {retrying 
+                                        ? "Our AI is currently analyzing your behavioral patterns and linguistic clarity to generate a comprehensive scoring matrix..."
+                                        : "Connecting to secure evaluation servers..."}
+                                </p>
+                                
+                                {retrying && (
+                                    <div className="mt-8 flex items-center justify-center gap-3">
+                                        {[...Array(5)].map((_, i) => (
+                                            <motion.div
+                                                key={i}
+                                                className={`h-1 w-8 rounded-full ${i < retryCount ? 'bg-[#5BC0EB]' : 'bg-[#E0E0E0]'}`}
+                                                animate={i === retryCount ? { opacity: [0.3, 1, 0.3] } : {}}
+                                                transition={{ repeat: Infinity, duration: 1.5 }}
+                                            />
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     ) : report ? (
                         <motion.div

@@ -6,6 +6,9 @@ from datetime import datetime
 from sqlmodel.ext.asyncio.session import AsyncSession
 from app.models.interview_roadmap import InterviewSession
 from app.agents.interview_scorer_agent import InterviewScorerAgent
+from app.core.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 async def score_and_save_interview(
@@ -20,14 +23,14 @@ async def score_and_save_interview(
     Requires at least 2 transcript turns to be worth scoring.
     """
     if len(transcript) < 2:
-        print(f"Skipping scoring — only {len(transcript)} turns.")
+        logger.info(f"Skipping scoring — only {len(transcript)} turns.")
         return
 
     scorer = InterviewScorerAgent()
     score_data = await scorer.run(transcript, target_role)
     
     if 'error' in score_data:
-        print("Error scoring interview:", score_data.get('error'))
+        logger.error(f"Error scoring interview: {score_data.get('error')}")
         return
 
     scores = score_data.get('scores', {})
@@ -47,7 +50,7 @@ async def score_and_save_interview(
     )
     db.add(db_session)
     await db.commit()
-    print("Successfully configured and saved native audio interview score.")
+    logger.info("Successfully configured and saved native audio interview score.")
 
 
 def format_interview_report(session: InterviewSession) -> dict:

@@ -1,7 +1,10 @@
 import { pipeline, env } from '@xenova/transformers';
 
-// Skip local check to download from Hugging Face hub
+// Configure to look for models locally on our own domain
 env.allowLocalModels = false;
+env.useBrowserCache = true;
+
+console.log('🚀 PII Worker v4 (Official Xenova) Loaded');
 
 class PIIPipeline {
     static task = 'token-classification' as const;
@@ -10,10 +13,12 @@ class PIIPipeline {
 
     static async getInstance(progress_callback?: any) {
         if (this.instance === null) {
+            // Reset to defaults for public Hugging Face access
+            env.remoteHost = 'https://huggingface.co';
+            env.remotePathTemplate = '{model}/resolve/{revision}/';
+
             this.instance = pipeline(this.task, this.model, { 
                 progress_callback,
-                // Quantization is enabled by default in Transformers.js for most models
-                // but we specify it here for clarity with the report.
                 quantized: true 
             });
         }
@@ -34,13 +39,31 @@ self.addEventListener('message', async (event) => {
             self.postMessage({ status: 'progress', data });
         });
 
-        // 2. Run NER
-        // We look for: PER (Person), ORG (Organization), LOC (Location)
-        const output = await classifier(text);
+        // 2. Run NER in chunks to prevent OOM
+        // Most NER models have a token limit (usually 512). Chunking also keeps RAM usage stable.
+        const chunkSize = 400; // Character-based chunks
+        const chunks: string[] = [];
+        for (let i = 0; i < text.length; i += chunkSize) {
+            chunks.push(text.substring(i, i + chunkSize));
+        }
+
+        const allEntities: any[] = [];
+        let offset = 0;
+
+        for (const chunk of chunks) {
+            const chunkOutput = await classifier(chunk);
+            for (const entity of chunkOutput) {
+                allEntities.push({
+                    ...entity,
+                    start: entity.start + offset,
+                    end: entity.end + offset
+                });
+            }
+            offset += chunk.length;
+        }
 
         // 3. Define Regex for Emails and Phones (High Precision)
         const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
-        // Updated to support 2-3 digit area/network codes (e.g., +94 77 123 4567)
         const phoneRegex = /(\+?\d{1,3}[-.\s]?)?\(?\d{2,3}\)?[-.\s]?\d{3}[-.\s]?\d{4,}/g;
 
         let redactedText = text;
@@ -50,23 +73,28 @@ self.addEventListener('message', async (event) => {
         redactedText = redactedText.replace(phoneRegex, '[REDACTED_PHONE]');
         
         // 4. Run NER Redactions
-        const entities = output.sort((a: any, b: any) => b.start - a.start);
+        // Sort entities by length (longest first) to avoid partial redactions
+        const entities = allEntities.sort((a: any, b: any) => (b.end - b.start) - (a.end - a.start));
+        
+        // Use a Set to track words we've already redacted to avoid infinite loops
+        const redactedWords = new Set<string>();
 
         for (const entity of entities) {
             const label = entity.entity;
-            const start = entity.start;
-            const end = entity.end;
-
-            const originalWord = text.substring(start, end);
+            const originalWord = text.substring(entity.start, entity.end);
             
+            if (originalWord.length < 2 || redactedWords.has(originalWord)) continue;
+
             if (label.includes('PER')) {
                 redactedText = redactedText.split(originalWord).join('[REDACTED_NAME]');
+                redactedWords.add(originalWord);
             } else if (label.includes('LOC')) {
                 redactedText = redactedText.split(originalWord).join('[REDACTED_LOCATION]');
+                redactedWords.add(originalWord);
             }
         }
 
-        // 4. Send result back
+        // 5. Send result back
         self.postMessage({ status: 'complete', redactedText });
 
     } catch (error: any) {

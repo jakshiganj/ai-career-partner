@@ -23,7 +23,7 @@ export default function CVTimeline({ userId }: Props) {
 
     const fetchVersions = useCallback(async () => {
         try {
-            const response = await axios.get(`http://localhost:8000/api/cv-versions/${userId}`, {
+            const response = await axios.get(`${import.meta.env.VITE_API_URL}/cv-versions/${userId}`, {
                 headers: { Authorization: `Bearer ${localStorage.getItem('access_token') || localStorage.getItem('token')}` }
             });
             setVersions(response.data || []);
@@ -44,7 +44,7 @@ export default function CVTimeline({ userId }: Props) {
         if (!confirm("Are you sure you want to restore this version? This will retrigger the pipeline.")) return;
         
         try {
-            const response = await axios.post(`http://localhost:8000/api/cv-versions/restore/${versionId}`, {}, {
+            const response = await axios.post(`${import.meta.env.VITE_API_URL}/cv-versions/restore/${versionId}`, {}, {
                 headers: { Authorization: `Bearer ${localStorage.getItem('access_token') || localStorage.getItem('token')}` }
             });
             alert(response.data.message || `Restored version ${versionId}`);

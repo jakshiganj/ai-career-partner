@@ -5,6 +5,9 @@ from datetime import datetime
 from google import genai
 from google.genai.types import (Content, HttpOptions, LiveConnectConfig,
                                 Modality, Part, AudioTranscriptionConfig)
+from app.core.logging import get_logger
+
+logger = get_logger(__name__)
 
 class LiveInterviewSession:
     """
@@ -12,8 +15,8 @@ class LiveInterviewSession:
     Following: https://docs.cloud.google.com/vertex-ai/generative-ai/docs/live-api/get-started-sdk
     """
     def __init__(self, job_description: str, cv_text: str, frontend_ws):
-        # Model: Prefer preview for stability if 2.5 flash native audio is closing early
-        self.model = os.getenv("GEMINI_LIVE_MODEL", "gemini-2.0-flash-live-preview-04-09")
+        # Model: Prefer native-audio optimized variant for live streaming in May 2026
+        self.model = os.getenv("GEMINI_LIVE_MODEL", "gemini-live-2.5-flash-native-audio")
         
         # Vertex AI is MANDATORY for projects starting with gen-lang-client-
         project_id = os.getenv("GOOGLE_CLOUD_PROJECT")
@@ -21,12 +24,23 @@ class LiveInterviewSession:
         
         http_options = HttpOptions(api_version="v1beta1")
         
-        # Default to Vertex AI as it supports gen-lang-client via OAuth2
-        print(f"DEBUG: Initializing Vertex AI Client (Project: {project_id}, Location: us-central1)...")
+        # Vertex AI is MANDATORY for Live API (API Keys not supported)
+        location = "us-central1"
+        
+        # Diagnostic logging for environment
+        creds_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+        logger.debug(f"Project ID: {project_id}")
+        logger.debug(f"Location: {location}")
+        logger.debug(f"Credentials Path: {creds_path}")
+        logger.debug(f"Model: {self.model}")
+        
+        if not project_id:
+            logger.warning("GOOGLE_CLOUD_PROJECT is not set. This may cause handshake failures.")
+
         self.client = genai.Client(
             vertexai=True,
             project=project_id,
-            location=os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1"),
+            location=location,
             http_options=http_options
         )
         
@@ -45,6 +59,7 @@ class LiveInterviewSession:
         )
 
         # Config standard for 2.5 Flash GA with transcription enabled
+        # Debug Tip: Disable transcriptions if connection fails immediately
         self.config = LiveConnectConfig(
             system_instruction=Content(parts=[Part(text=instruction_text)]),
             response_modalities=[Modality.AUDIO],
@@ -57,98 +72,105 @@ class LiveInterviewSession:
 
     async def _run_session(self):
         try:
-            print(f"DEBUG: Connecting to {self.model} (Official SDK Pattern)...")
+            logger.debug(f"Connecting to {self.model} (Official SDK Pattern)...")
             
             current_model_text = ""
             current_user_text = ""
             
-            async with self.client.aio.live.connect(model=self.model, config=self.config) as session:
-                self.session = session
-                self.is_connected = True
-                
-                # Initiation pattern matching standard SDK
-                print(f"> Initializing session with {self.model}...")
-                await session.send(input="Hi, I am ready to start the interview.", end_of_turn=True)
+            try:
+                async with self.client.aio.live.connect(model=self.model, config=self.config) as session:
+                    self.session = session
+                    self.is_connected = True
+                    
+                    # Initiation pattern matching standard SDK
+                    logger.info(f"Initializing session with {self.model}...")
+                    await session.send(input="Hi, I am ready to start the interview.", end_of_turn=True)
 
-                while self.is_connected:
-                    try:
-                        async for message in session.receive():
-                            # Handle server_content (audio, turn_complete, interrupted)
-                            if message.server_content:
-                                model_turn = message.server_content.model_turn
-                                if model_turn:
-                                    for part in model_turn.parts:
-                                        if part.inline_data:
-                                            # Stream 24kHz PCM directly to frontend
-                                            await self.frontend_ws.send_bytes(part.inline_data.data)
-                                            
-                                # 2. Handle Text Transcriptions explicitly from transcript fields, not model_turn.parts
-                                out_tx = getattr(message.server_content, "output_transcription", None)
-                                if out_tx and getattr(out_tx, "text", None):
-                                    current_model_text += out_tx.text
-                                    
-                                in_tx = getattr(message.server_content, "input_transcription", None)
-                                if in_tx and getattr(in_tx, "text", None):
-                                    current_user_text += in_tx.text
-                                    
-                                # Flush User Text on model_turn OR turn_complete
-                                if current_user_text.strip() and (model_turn or message.server_content.turn_complete):
-                                    self.transcript.append({
-                                        "role": "candidate",
-                                        "content": current_user_text.strip(),
-                                        "timestamp": datetime.utcnow().isoformat()
-                                    })
-                                    # Echo back candidate transcript if needed. (Optional as frontend tracks its own text, but audio doesn't)
-                                    current_user_text = ""
-
-                                # 3. Turn Complete
-                                if message.server_content.turn_complete:
-                                    print("DEBUG: Gemini signaled TURN_COMPLETE.")
-                                    if current_model_text.strip():
-                                        self.transcript.append({
-                                            "role": "interviewer",
-                                            "content": current_model_text.strip(),
-                                            "timestamp": datetime.utcnow().isoformat()
-                                        })
-                                        await self.frontend_ws.send_text(json.dumps({
-                                            "type": "agent_transcript",
-                                            "text": current_model_text.strip()
-                                        }))
-                                        current_model_text = ""
+                    while self.is_connected:
+                        try:
+                            async for message in session.receive():
+                                # Handle server_content (audio, turn_complete, interrupted)
+                                if message.server_content:
+                                    model_turn = message.server_content.model_turn
+                                    if model_turn:
+                                        for part in model_turn.parts:
+                                            if part.inline_data:
+                                                # Stream 24kHz PCM directly to frontend
+                                                await self.frontend_ws.send_bytes(part.inline_data.data)
+                                                
+                                    # 2. Handle Text Transcriptions explicitly from transcript fields, not model_turn.parts
+                                    out_tx = getattr(message.server_content, "output_transcription", None)
+                                    if out_tx and getattr(out_tx, "text", None):
+                                        current_model_text += out_tx.text
                                         
-                                    await self.frontend_ws.send_text(json.dumps({"type": "agent_turn_complete"}))
-                                    
-                                # 4. Interrupted
-                                if message.server_content.interrupted:
-                                    print("DEBUG: Gemini signaled INTERRUPTED.")
-                                    if current_model_text.strip():
+                                    in_tx = getattr(message.server_content, "input_transcription", None)
+                                    if in_tx and getattr(in_tx, "text", None):
+                                        current_user_text += in_tx.text
+                                        
+                                    # Flush User Text on model_turn OR turn_complete
+                                    if current_user_text.strip() and (model_turn or message.server_content.turn_complete):
                                         self.transcript.append({
-                                            "role": "interviewer",
-                                            "content": current_model_text.strip() + " [Interrupted]",
+                                            "role": "candidate",
+                                            "content": current_user_text.strip(),
                                             "timestamp": datetime.utcnow().isoformat()
                                         })
-                                        await self.frontend_ws.send_text(json.dumps({
-                                            "type": "agent_transcript",
-                                            "text": current_model_text.strip() + "..."
-                                        }))
-                                        current_model_text = ""
-                    except asyncio.CancelledError:
-                        break
-                    except Exception as e:
-                        print(f"DEBUG inside receive loop: {e}")
-                        # Don't break immediately; try to receive again unless disconnected.
-                        await asyncio.sleep(1)
+                                        # Echo back candidate transcript if needed. (Optional as frontend tracks its own text, but audio doesn't)
+                                        current_user_text = ""
 
-                print("DEBUG: session.receive() loop terminated normally.")
+                                    # 3. Turn Complete
+                                    if message.server_content.turn_complete:
+                                        logger.debug("Gemini signaled TURN_COMPLETE.")
+                                        if current_model_text.strip():
+                                            self.transcript.append({
+                                                "role": "interviewer",
+                                                "content": current_model_text.strip(),
+                                                "timestamp": datetime.utcnow().isoformat()
+                                            })
+                                            await self.frontend_ws.send_text(json.dumps({
+                                                "type": "agent_transcript",
+                                                "text": current_model_text.strip()
+                                            }))
+                                            current_model_text = ""
+                                            
+                                        await self.frontend_ws.send_text(json.dumps({"type": "agent_turn_complete"}))
+                                        
+                                    # 4. Interrupted
+                                    if message.server_content.interrupted:
+                                        logger.debug("Gemini signaled INTERRUPTED.")
+                                        if current_model_text.strip():
+                                            self.transcript.append({
+                                                "role": "interviewer",
+                                                "content": current_model_text.strip() + " [Interrupted]",
+                                                "timestamp": datetime.utcnow().isoformat()
+                                            })
+                                            await self.frontend_ws.send_text(json.dumps({
+                                                "type": "agent_transcript",
+                                                "text": current_model_text.strip() + "..."
+                                            }))
+                                            current_model_text = ""
+                        except asyncio.CancelledError:
+                            break
+                        except Exception as e:
+                            logger.error(f"Error inside receive loop: {e}")
+                            # Don't break immediately; try to receive again unless disconnected.
+                            await asyncio.sleep(1)
+
+                    logger.debug("session.receive() loop terminated normally.")
+            except Exception as e:
+                # Aggressive catch for handshake failures (close codes 1000, 1006, 403, etc.)
+                logger.error(f"FATAL: Connection failed during setup: {type(e).__name__}: {e}")
+                if hasattr(e, 'code'):
+                    logger.debug(f"WebSocket Close Code: {e.code}")
+                raise e
 
         except Exception as e:
             import traceback
             traceback.print_exc()
-            print(f"DEBUG Session Error: {e}")
+            logger.error(f"Session Error: {e}")
         finally:
             self.is_connected = False
             self.session = None
-            print("DEBUG: Session closed.")
+            logger.debug("Session closed.")
             try:
                 await self.frontend_ws.send_text(json.dumps({"type": "system", "message": "Live session concluded."}))
                 await self.frontend_ws.close()
@@ -164,7 +186,7 @@ class LiveInterviewSession:
             except Exception as e:
                 import traceback
                 traceback.print_exc()
-                print(f"DEBUG Audio Send Error: {e}")
+                logger.error(f"Audio Send Error: {e}")
             
     async def send_text(self, text: str):
         """Sends candidate text turn"""
@@ -177,11 +199,11 @@ class LiveInterviewSession:
             try:
                 # Official SDK pattern: session.send() with end_of_turn=True
                 await self.session.send(input=text, end_of_turn=True)
-                print(f"USER: {text[:30]}...")
+                logger.info(f"USER: {text[:30]}...")
             except Exception as e:
                 import traceback
                 traceback.print_exc()
-                print(f"DEBUG Text Send Error: {e}")
+                logger.error(f"Text Send Error: {e}")
 
     def stop(self):
         if self._connect_task:

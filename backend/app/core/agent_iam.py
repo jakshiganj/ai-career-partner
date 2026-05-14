@@ -12,7 +12,8 @@ from fastapi import Header, HTTPException, status
 from jose import jwt, JWTError
 
 # M2M secret — set AGENT_IAM_SECRET in .env for production
-AGENT_IAM_SECRET = os.getenv("AGENT_IAM_SECRET", "CHANGE_THIS_M2M_SECRET")
+_iam_secret = os.getenv("AGENT_IAM_SECRET", "CHANGE_THIS_M2M_SECRET")
+AGENT_IAM_SECRET = _iam_secret.strip()
 ALGORITHM = "HS256"
 
 # Allowlist of valid internal agent IDs

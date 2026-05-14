@@ -8,8 +8,6 @@ from alembic import context
 # 1. IMPORT YOUR MODELS
 from app.models.user import User
 from app.models.profile import CandidateProfile
-from app.models.resume import Resume 
-from app.models.job import Job
 from app.models.task_state import TaskState, DecisionAudit
 from app.models.esco import EscoSkill, EscoRelation
 from app.models.pipeline import PipelineRun
@@ -26,9 +24,16 @@ if config.config_file_name is not None:
 
 target_metadata = SQLModel.metadata
 
-# 3. DATABASE CONNECTION (Using localhost for migrations)
-# Note the driver: postgresql+asyncpg
-config.set_main_option("sqlalchemy.url", "postgresql+asyncpg://admin:password123@localhost:5432/career_db")
+# 3. DATABASE CONNECTION
+import os
+from dotenv import load_dotenv
+
+load_dotenv() # Load local .env if present
+
+db_url = os.getenv("DATABASE_URL", "postgresql+asyncpg://admin:password123@localhost:5432/career_db")
+# Escape '%' to '%%' because Alembic uses configparser which interpolates '%'
+db_url_escaped = db_url.replace("%", "%%").strip()
+config.set_main_option("sqlalchemy.url", db_url_escaped)
 
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode."""

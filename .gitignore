@@ -28,4 +28,10 @@ test-results/
 playwright-report/
 blob-report/
 playwright/.cache/
+# Deployments and Secrets
+service_desc.yaml
+*.yaml
 
+# Cache
+.cache/
+backend/.cache/

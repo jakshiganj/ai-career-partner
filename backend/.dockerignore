@@ -13,3 +13,4 @@ evaluation
 *.log
 .vscode
 .idea
+.cache

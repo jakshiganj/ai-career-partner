@@ -13,6 +13,12 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 COPY requirements.txt .
 RUN uv pip install --system --no-cache -r requirements.txt
 
+# Set Hugging Face cache directory so it persists in the image
+ENV HF_HOME=/app/.cache/huggingface
+
+# Pre-download the SBERT model into the Docker image layer to avoid Cloud Run cold starts
+RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')"
+
 # Copy the rest of the application code
 COPY . .
 
@@ -22,5 +28,5 @@ USER appuser
 
 EXPOSE 8000
 
-# Production: use multiple workers; dev override via docker-compose command
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]
+# Cloud Run compatibility: bind to the port defined by the PORT environment variable
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --workers 2"]

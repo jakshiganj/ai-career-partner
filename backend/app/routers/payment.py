@@ -16,13 +16,16 @@ from app.schemas.response import CheckoutSessionResponse
 router = APIRouter()
 logger = get_logger(__name__)
 
-stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
-DOMAIN = os.getenv("FRONTEND_URL", "http://localhost:3000")
+_stripe_key = os.getenv("STRIPE_SECRET_KEY")
+stripe.api_key = _stripe_key.strip() if _stripe_key else None
+DOMAIN = os.getenv("FRONTEND_URL", "http://localhost:3000").strip()
 
 # Tier Price IDs
+_pro_price = os.getenv("STRIPE_PRO_PRICE_ID")
+_premium_price = os.getenv("STRIPE_PREMIUM_PRICE_ID")
 PRICE_IDS = {
-    "pro": os.getenv("STRIPE_PRO_PRICE_ID"),
-    "premium": os.getenv("STRIPE_PREMIUM_PRICE_ID"),
+    "pro": _pro_price.strip() if _pro_price else None,
+    "premium": _premium_price.strip() if _premium_price else None,
 }
 
 from app.schemas.response import (
@@ -125,7 +128,8 @@ async def stripe_webhook(request: Request, session: AsyncSession = Depends(get_s
     try:
         payload = await request.body()
         sig_header = request.headers.get("stripe-signature")
-        endpoint_secret = os.getenv("STRIPE_WEBHOOK_SECRET")
+        _endpoint_secret = os.getenv("STRIPE_WEBHOOK_SECRET")
+        endpoint_secret = _endpoint_secret.strip() if _endpoint_secret else None
 
         event = None
 

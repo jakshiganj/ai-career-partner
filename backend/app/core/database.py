@@ -1,13 +1,10 @@
 from sqlmodel import SQLModel, create_engine
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
-from dotenv import load_dotenv
-import os
+from app.core.config import settings
 
-load_dotenv()  # Load environment variables from .env file
-
-# 1. Get DB URL from environment variables (or use default for Docker)
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://admin:password123@db:5432/career_db")
+# 1. Get DB URL from centralized settings
+DATABASE_URL = settings.DATABASE_URL.strip()
 
 # 2. Create the Async Engine (Allows non-blocking DB calls)
 engine = create_async_engine(DATABASE_URL, echo=True, future=True)

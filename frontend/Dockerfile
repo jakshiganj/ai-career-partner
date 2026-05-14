@@ -13,9 +13,9 @@ RUN npm ci
 # Copy source and build the production bundle
 COPY . .
 
-# Accept the backend URL at build-time so Vite can inline it
-ARG VITE_API_URL=http://localhost:8000/api
-ENV VITE_API_URL=${VITE_API_URL}
+# Force the production backend URL into the build
+ENV VITE_API_URL=https://ai-career-backend-560579918305.asia-southeast1.run.app/api
+ENV VITE_WS_HOST=ai-career-backend-560579918305.asia-southeast1.run.app
 
 RUN npm run build
 
@@ -32,6 +32,6 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 # Copy our custom Nginx configuration
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-EXPOSE 80
+EXPOSE 8080
 
 CMD ["nginx", "-g", "daemon off;"]

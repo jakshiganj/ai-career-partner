@@ -20,7 +20,7 @@ export default function EmailPreferences() {
 
     async function fetchPrefs() {
         try {
-            const res = await axios.get('http://localhost:8000/api/preferences', {
+            const res = await axios.get(`${import.meta.env.VITE_API_URL}/preferences`, {
                 headers: { Authorization: `Bearer ${localStorage.getItem('access_token') || localStorage.getItem('token')}` }
             });
             setPrefs({
@@ -42,7 +42,7 @@ export default function EmailPreferences() {
         setSaving(true);
         setMsg(null);
         try {
-            await axios.put('http://localhost:8000/api/preferences', newPrefs, {
+            await axios.put(`${import.meta.env.VITE_API_URL}/preferences`, newPrefs, {
                 headers: { Authorization: `Bearer ${localStorage.getItem('access_token') || localStorage.getItem('token')}` }
             });
             setMsg('Preferences updated.');
