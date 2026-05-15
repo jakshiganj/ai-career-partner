@@ -156,7 +156,6 @@ ai-career-partner/
 
 ## 📝 Academic Project Information
 
-- **Submission Date**: May 15, 2026
 - **Status**: Production-deployed on Google Cloud Run
 - **Author**: Jakshiganj
 
