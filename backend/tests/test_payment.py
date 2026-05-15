@@ -2,31 +2,34 @@ import pytest
 from unittest.mock import patch, MagicMock
 from fastapi.testclient import TestClient
 from app.main import app
+from app.core.security import get_current_user
+import stripe
 
 def test_create_checkout_session(client):
     """TC_PAY_02: Test /api/payment session creation"""
+    mock_user = MagicMock(id="test-id", email="test@example.com")
+    
+    # Override the FastAPI dependency properly
+    app.dependency_overrides[get_current_user] = lambda: mock_user
+    
     with patch("stripe.checkout.Session.create") as mock_create:
         mock_create.return_value = MagicMock(url="https://checkout.stripe.com/test")
         
-        # We need a token for get_current_user
-        # For simplicity in this test, we can mock get_current_user or provide a dummy token
-        with patch("app.routers.payment.get_current_user") as mock_user:
-            mock_user.return_value = MagicMock(id="test-id", email="test@example.com")
-            
-            response = client.post(
-                "/api/payment/create-checkout-session",
-                json={"tier": "pro"}
-            )
-            
-            assert response.status_code == 200
-            assert response.json()["url"] == "https://checkout.stripe.com/test"
-            mock_create.assert_called_once()
+        response = client.post(
+            "/api/payment/create-checkout-session",
+            json={"tier": "pro"}
+        )
+        
+        assert response.status_code == 200
+        assert response.json()["url"] == "https://checkout.stripe.com/test"
+        mock_create.assert_called_once()
+    
+    app.dependency_overrides.pop(get_current_user, None)
 
 def test_stripe_webhook_invalid_signature(client):
     """TC_PAY_01: Test Stripe webhook signature validation failure"""
     with patch("stripe.Webhook.construct_event") as mock_construct:
-        import stripe
-        mock_construct.side_effect = stripe.error.SignatureVerificationError("Invalid", "sig")
+        mock_construct.side_effect = stripe.SignatureVerificationError("Invalid", "sig")
         
         response = client.post(
             "/api/payment/webhook",
@@ -59,8 +62,6 @@ def test_stripe_webhook_success(client):
                 "items": {"data": [{"price": {"id": "price_premium"}}]}
             })
             
-            # The session fixture from conftest will be used
-            # We don't actually need to assert DB changes here if we just want to test the router logic
             response = client.post(
                 "/api/payment/webhook",
                 data="{}",

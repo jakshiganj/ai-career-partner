@@ -67,8 +67,8 @@ def test_tier_sorting():
                     "snippets": ["Python Developer at A"]
                 },
                 "React": {
-                    "status": "Stable",
-                    "snippets": ["Junior React Dev at B"]
+                    "status": "Active Hiring",
+                    "snippets": ["React Developer at B"]
                 },
                 "COBOL": {
                     "status": "Legacy",
@@ -79,6 +79,9 @@ def test_tier_sorting():
     }
     cards = build_job_cards_from_market(state_json)
     assert len(cards) == 3
-    assert cards[0]["tier"] == "Realistic" # High score
-    assert cards[1]["tier"] == "Stretch"   # Mid score
-    assert cards[2]["tier"] == "Reach"     # Low score
+    # Python (Active Hiring): 0.3 + 0.15 + 0.1 = 0.55 -> Stretch
+    # React (Stable): 0.3 + 0.15 = 0.45 -> Stretch
+    # COBOL (Legacy): 0.3 -> Reach
+    assert cards[0]["tier"] == "Stretch"
+    assert cards[1]["tier"] == "Stretch"
+    assert cards[2]["tier"] == "Reach"

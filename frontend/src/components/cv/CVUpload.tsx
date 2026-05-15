@@ -69,7 +69,7 @@ export default function CVUpload({ onResult, onLoading }: Props) {
                     for (let i = 1; i <= pdf.numPages; i++) {
                         const page = await pdf.getPage(i);
                         const content = await page.getTextContent();
-                        const pageText = content.items.map((item: { str?: string }) => item.str ?? '').join(' ');
+                        const pageText = content.items.filter(item => 'str' in item).map(item => item.str).join(' ');
                         fullText += pageText + '\n';
                     }
                     resolve(fullText);

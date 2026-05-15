@@ -145,7 +145,7 @@ async def stripe_webhook(request: Request, session: AsyncSession = Depends(get_s
         except ValueError as e:
             logger.warning(f"Invalid webhook payload: {e}")
             raise HTTPException(status_code=400, detail="Invalid payload")
-        except stripe.error.SignatureVerificationError as e:
+        except stripe.SignatureVerificationError as e:
             logger.warning(f"Invalid webhook signature: {e}")
             raise HTTPException(status_code=400, detail="Invalid signature")
 
@@ -302,6 +302,8 @@ async def stripe_webhook(request: Request, session: AsyncSession = Depends(get_s
                 await session.commit()
 
         return {"status": "success"}
+    except HTTPException:
+        raise
     except Exception as e:
         logger.critical(f"[STRIPE] Fatal error in webhook: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal webhook error")

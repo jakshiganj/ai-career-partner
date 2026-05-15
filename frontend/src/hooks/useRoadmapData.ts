@@ -22,7 +22,7 @@ function migrateRoadmap(data: SkillRoadmapResponse): SkillRoadmapResponse {
         action_items: phase.action_items?.map(item => {
             if (typeof item === 'string') return { task: item, completed: false };
             if (typeof item === 'object' && item !== null) {
-                const anyItem = item as Record<string, unknown>;
+                const anyItem = item as unknown as Record<string, unknown>;
                 return {
                     ...anyItem,
                     task: (anyItem.task || anyItem.skill || anyItem.name || 'Action Item') as string,

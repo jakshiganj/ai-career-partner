@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import patch, AsyncMock, MagicMock
 from app.core.security import get_password_hash, verify_password, create_access_token
-import jwt
+from jose import jwt
 from app.core.security import SECRET_KEY, ALGORITHM
 from app.models.user import User
 import uuid
@@ -39,7 +39,7 @@ def test_signup_valid_user(mock_session, client):
         
     app.dependency_overrides[get_session] = override_get_session
     
-    response = client.post("/auth/signup", json={
+    response = client.post("/api/auth/signup", json={
         "email": "test@example.com",
         "full_name": "Test User",
         "password": "Password123!"
@@ -71,7 +71,7 @@ def test_signup_existing_email(mock_session, client):
         
     app.dependency_overrides[get_session] = override_get_session
     
-    response = client.post("/auth/signup", json={
+    response = client.post("/api/auth/signup", json={
         "email": "exist@example.com",
         "full_name": "Another User",
         "password": "Password123!"
@@ -105,7 +105,7 @@ def test_login_valid_credentials(mock_session, client):
         
     app.dependency_overrides[get_session] = override_get_session
     
-    response = client.post("/auth/login", data={
+    response = client.post("/api/auth/login", data={
         "username": "login@example.com",
         "password": "Password123!"
     })
