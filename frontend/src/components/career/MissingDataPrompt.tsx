@@ -39,7 +39,7 @@ export default function MissingDataPrompt({ pipelineId, missingFields, onResumed
             if (isMissing('cv_raw')) data.cv_raw = cvRaw;
             if (isMissing('skills') || skills.length > 0) data.skills = skills;
 
-            await axios.patch(`http://localhost:8000/api/pipeline/${pipelineId}/input`, data, {
+            await axios.patch(`${import.meta.env.VITE_API_URL}/pipeline/${pipelineId}/input`, data, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             onResumed();

@@ -6,12 +6,58 @@ from app.agents.gemini_client import gemini_client
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 
-NEO4J_URI = os.getenv("NEO4J_URI", "bolt://localhost:7687")
-NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
-NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "password123")
+_neo4j_uri = os.getenv("NEO4J_URI", "bolt://localhost:7687")
+_neo4j_user = os.getenv("NEO4J_USER", "neo4j")
+_neo4j_pass = os.getenv("NEO4J_PASSWORD", "password123")
+NEO4J_URI = _neo4j_uri.strip()
+NEO4J_USER = _neo4j_user.strip()
+NEO4J_PASSWORD = _neo4j_pass.strip()
 
 # Initialize the baseline model globally so it doesn't reload on every evaluation loop
 sbert_model = SentenceTransformer('all-MiniLM-L6-v2')
+
+def calculate_hybrid_match_score(
+    sbert_vector_score: float, 
+    jd_required_skills: list[str], 
+    graph_inferred_skills: list[str]
+) -> float:
+    """
+    Calculates the hybrid match score blending SBERT semantic similarity with Neo4j deterministic graph logic.
+    Aligned with Appendix I of the Technical Report.
+    """
+    if not jd_required_skills:
+        return sbert_vector_score
+        
+    validated_skills_count = 0
+    # Fuzzy substring matching for graph validation
+    for req_skill in jd_required_skills:
+        req_lower = req_skill.lower()
+        for exp_skill in graph_inferred_skills:
+            if req_lower in exp_skill.lower() or exp_skill.lower() in req_lower:
+                validated_skills_count += 1
+                break
+                
+    graph_ratio_score = validated_skills_count / len(jd_required_skills)
+    
+    # Weights: 60% Semantic, 40% Graph
+    S_base_weight = 0.6
+    R_graph_weight = 0.4
+    
+    hybrid_score = (sbert_vector_score * S_base_weight) + (graph_ratio_score * R_graph_weight)
+    
+    return round(max(0.0, min(1.0, hybrid_score)), 4)
+
+def determine_job_tier(hybrid_score: float) -> str:     
+    """
+    Classifies the job opportunity based on the Hybrid Score.
+    Aligned with Appendix I of the Technical Report.
+    """     
+    if hybrid_score >= 0.80:         
+        return "Realistic"     
+    elif 0.50 <= hybrid_score < 0.80:         
+        return "Stretch"     
+    else:         
+        return "Reach" 
 
 class GraphRAGAgent:
     def __init__(self):
@@ -25,10 +71,9 @@ class GraphRAGAgent:
         system_instruction = '''
         You are an expert IT recruiter. Extract a JSON list of required skills from the job description.
         Only include hard skills, programming languages, frameworks, and tools.
-        CRITICAL: If a skill is a specific modern framework or tool (e.g., React, Docker, Next.js), 
-        also output its broader ESCO-compatible IT category (e.g., Frontend Web Development, Containerization).
-        Return ONLY a JSON array of strings in lowercase (e.g., ["python", "react", "frontend web development"]).
-        Do not include markdown or code block tags.
+        If the job description is very short or generic (e.g., "junior engineer"), extract 
+        foundational skills like "software engineering", "programming", or "computer science".
+        Return ONLY a JSON array of strings in lowercase.
         '''
         prompt = f"--- Job Description ---\n{job_description}"
         for attempt in range(3):
@@ -38,8 +83,13 @@ class GraphRAGAgent:
                     prompt=prompt,
                     config={"system_instruction": system_instruction}
                 )
-                clean_text = response_text.replace("```json", "").replace("```", "").strip()
-                return json.loads(clean_text)
+                # More robust JSON extraction
+                import re
+                json_match = re.search(r'\[.*\]', response_text, re.DOTALL)
+                if json_match:
+                    clean_text = json_match.group(0)
+                    return json.loads(clean_text)
+                return []
             except Exception as e:
                 if attempt == 2:
                     print(f"Error extracting JD skills: {e}")
@@ -117,8 +167,12 @@ class GraphRAGAgent:
                 prompt=prompt,
                 config={"system_instruction": system_instruction}
             )
-            clean_text = response_text.replace("```json", "").replace("```", "").strip()
-            return json.loads(clean_text)
+            import re
+            json_match = re.search(r'\[.*\]', response_text, re.DOTALL)
+            if json_match:
+                clean_text = json_match.group(0)
+                return json.loads(clean_text)
+            return []
         except Exception as e:
             print(f"Error extracting candidate skills: {e}")
             return []
@@ -141,49 +195,34 @@ class GraphRAGAgent:
             candidate_skills = []
             
         required_skills = self.extract_job_skills(job_description)
-        if not required_skills:
-            return {"skill_gaps": [], "skill_match_score": 0.0, "implicit_skills": []}
 
         # Expand candidate skills with graph knowledge
         candidate_expanded_skills = await asyncio.to_thread(self.get_expanded_skills, candidate_skills)
         
+        # Determine Gaps
         gaps = []
-        matched_count = 0
-        
-        # --- FUZZY SUBSTRING MATCHING ---
+        expanded_lower = [s.lower() for s in candidate_expanded_skills]
         for req_skill in required_skills:
             req_lower = req_skill.lower()
             match_found = False
-            
-            # Check if the required skill is a substring of the expanded skill, or vice versa
-            for exp_skill in candidate_expanded_skills:
+            for exp_skill in expanded_lower:
                 if req_lower in exp_skill or exp_skill in req_lower:
                     match_found = True
                     break
-                    
-            if match_found:
-                matched_count += 1
-            else:
+            if not match_found:
                 gaps.append(req_skill)
-                
-        # --- HYBRID SCORING LOGIC ---
-        
-        # 1. Calculate the Graph Overlap Ratio (0.0 to 1.0)
-        if len(required_skills) > 0:
-            graph_ratio = matched_count / len(required_skills)
-        else:
-            graph_ratio = 0.0
 
-        # 2. Calculate the Baseline SBERT Score
+        # 1. Calculate the Baseline SBERT Score
         base_semantic_score = 0.0
         if cv_raw and job_description:
-            # SBERT encode is CPU intensive, run in thread
             cv_emb = await asyncio.to_thread(sbert_model.encode, [cv_raw])
             jd_emb = await asyncio.to_thread(sbert_model.encode, [job_description])
             base_semantic_score = float(cosine_similarity(cv_emb, jd_emb)[0][0])
             
-        # 3. Calculate Final Weighted Hybrid Score (60% Baseline, 40% Graph Validation)
-        final_score = round((base_semantic_score * 0.6) + (graph_ratio * 0.4), 4)
+        # 2. Calculate Final Weighted Hybrid Score via standalone function
+        final_score = calculate_hybrid_match_score(
+            base_semantic_score, required_skills, list(candidate_expanded_skills)
+        )
             
         implicit_skills = list(candidate_expanded_skills - set(s.lower() for s in candidate_skills))
         

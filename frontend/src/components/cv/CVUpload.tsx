@@ -1,15 +1,20 @@
 import { useRef, useState, useEffect } from 'react';
-import axios from 'axios';
 import * as pdfjsLib from 'pdfjs-dist';
+import { useToast } from '../ui/Toast';
 
-// import worker directly with vite ?url
-import pdfWorker from 'pdfjs-dist/build/pdf.worker.mjs?url';
+// Import worker code as a raw string via Vite
+import pdfWorkerCodeRaw from 'pdfjs-dist/build/pdf.worker.mjs?raw';
 
-// Configure the PDF.js worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
+// Strip source map reference to prevent 404s
+const pdfWorkerCode = pdfWorkerCodeRaw.replace(/\/\/# sourceMappingURL=.*/, '');
+
+// Create a Blob URL to bypass all MIME type/fetch issues
+const blob = new Blob([pdfWorkerCode], { type: 'application/javascript' });
+const workerUrl = URL.createObjectURL(blob);
+pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
 
 interface Props {
-    onResult?: (cvId: number, feedback: unknown, preview: string) => void;
+    onResult?: (cvId: string, feedback: unknown, preview: string) => void;
     onLoading?: (isLoading: boolean) => void;
 }
 
@@ -20,15 +25,36 @@ export default function CVUpload({ onResult, onLoading }: Props) {
     const [analyzing, setAnalyzing] = useState(false);
     const [fileName, setFileName] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const { success: toastSuccess, error: toastError } = useToast();
 
     // Client-side PII Redaction
-    const redactPII = (text: string) => {
-        // Redact standard Emails
-        let redacted = text.replace(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/gi, '[REDACTED_EMAIL]');
-        // Redact standard Phone Numbers (basic formatting)
-        redacted = redacted.replace(/(\+?\d{1,3}[\s-]?)?\(?\d{3}\)?[\s-]?\d{3}[\s-]?\d{4}/g, '[REDACTED_PHONE]');
-        // Transformers.js NER step would go here if running fully locally in pure browser (skipped here to save 20mb payload constraint)
-        return redacted;
+    const redactPII = (text: string): Promise<string> => {
+        return new Promise((resolve, reject) => {
+            // 1. Basic Regex for speed (Emails/Phones)
+            let redacted = text.replace(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/gi, '[REDACTED_EMAIL]');
+            redacted = redacted.replace(/(\+?\d{1,3}[\s-]?)?\(?\d{3}\)?[\s-]?\d{3}[\s-]?\d{4}/g, '[REDACTED_PHONE]');
+
+            // 2. Transformers.js for Deep NER (Names/Locations)
+            // Using DistilBERT (quantized) for stability and speed
+            const worker = new Worker(new URL('../../workers/pii-worker.ts', import.meta.url), { type: 'module' });
+            
+            worker.onmessage = (event) => {
+                const { status, redactedText, data, error: workerError } = event.data;
+                if (status === 'progress') {
+                    // Update progress if we had a state for it
+                    console.log(`Model Loading: ${data.progress || 0}%`);
+                } else if (status === 'complete') {
+                    worker.terminate();
+                    resolve(redactedText);
+                } else if (status === 'error') {
+                    console.error('Worker error:', workerError);
+                    worker.terminate();
+                    reject(new Error(`AI Redaction failed: ${workerError}. Please try again or use the manual text tab.`));
+                }
+            };
+
+            worker.postMessage({ text: redacted });
+        });
     }
 
     async function extractTextFromPDF(file: File): Promise<string> {
@@ -43,7 +69,7 @@ export default function CVUpload({ onResult, onLoading }: Props) {
                     for (let i = 1; i <= pdf.numPages; i++) {
                         const page = await pdf.getPage(i);
                         const content = await page.getTextContent();
-                        const pageText = content.items.map((item: unknown) => (item as { str?: string }).str ?? '').join(' ');
+                        const pageText = content.items.filter(item => 'str' in item).map(item => item.str).join(' ');
                         fullText += pageText + '\n';
                     }
                     resolve(fullText);
@@ -57,11 +83,11 @@ export default function CVUpload({ onResult, onLoading }: Props) {
 
     async function handleFile(file: File) {
         if (file.type !== 'application/pdf') {
-            setError('Only PDF files are accepted.');
+            toastError('Only PDF files are accepted.');
             return;
         }
         if (file.size > 5 * 1024 * 1024) {
-            setError('File exceeds 5MB limit.');
+            toastError('File exceeds 5MB limit.');
             return;
         }
 
@@ -78,29 +104,23 @@ export default function CVUpload({ onResult, onLoading }: Props) {
             }
 
             // 2. Client-Side Redaction (Transformers.js / Regex)
-            const redactedText = redactPII(rawText);
+            setAnalyzing(true); // Show "Analyzing..." during NER
+            const redactedText = await redactPII(rawText);
+            setAnalyzing(false);
 
-            // 3. Send securely redacted text to backend endpoint
-            const token = localStorage.getItem('access_token') || localStorage.getItem('token');
-            if (!token) {
-                setError('You must be logged in to upload a CV.');
-                setUploading(false);
-                return;
-            }
-
-            const res = await axios.post(
-                'http://localhost:8000/cv/upload',
-                { text: redactedText },
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
+            // 3. Send securely redacted text to backend
+            const { uploadCV } = await import('../../api/cv');
+            const res = await uploadCV(redactedText);
 
             setUploading(false);
-
-            onResult?.(res.data.cv_id, null, redactedText);
+            toastSuccess('CV uploaded and redacted successfully!');
+            onResult?.(res.cv_id, null, redactedText);
 
         } catch (e: unknown) {
-            const axiosError = e as { response?: { data?: { detail?: string } }, message?: string };
-            setError(axiosError?.response?.data?.detail ?? axiosError.message ?? 'Upload failed.');
+            const err = e as { response?: { data?: { detail?: string } }; message?: string };
+            const msg = err.response?.data?.detail ?? err.message ?? 'Upload failed.';
+            toastError(msg);
+            setError(msg);
             setUploading(false);
             setAnalyzing(false);
         }

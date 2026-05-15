@@ -5,6 +5,7 @@ export default function Navbar() {
 
     function logout() {
         localStorage.removeItem('access_token');
+        localStorage.removeItem('token');
         localStorage.removeItem('user_id');
         navigate('/login');
     }

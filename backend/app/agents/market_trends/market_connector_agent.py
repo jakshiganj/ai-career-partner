@@ -11,7 +11,7 @@ class MarketConnectorAgent:
     """
     
     async def run(self, job_title: str, location: str = "remote, Sri Lanka, global") -> dict:
-        print(f"DEBUG: MarketConnectorAgent.run called for '{job_title}'")
+        print(f"[MARKET] MarketConnectorAgent.run called for '{job_title}'")
         """
         Gathers salary expectations and scrapes job vacancies for the target role.
         """

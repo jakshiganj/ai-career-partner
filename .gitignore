@@ -21,3 +21,17 @@ pip-delete-this-directory.txt
 pid_content.txt
 extract_pdf_text.py
 10953354_PID.pdf
+
+# Testing
+.pytest_cache/
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+# Deployments and Secrets
+service_desc.yaml
+*.yaml
+
+# Cache
+.cache/
+backend/.cache/

@@ -45,49 +45,43 @@ async def embed_skills():
         skills = run_query(driver, fetch_query)
         print(f"Found {len(skills)} skills to embed.")
         
-        batch_size = 50
-        batch = []
+        batch_size = 100
         count = 0
         
-        for skill in skills:
-            # Combine name and description for better semantics
-            text_to_embed = f"Skill: {skill['name']}\nDescription: {skill.get('description', 'No description available.')}"
+        for i in range(0, len(skills), batch_size):
+            skill_batch = skills[i:i+batch_size]
+            texts_to_embed = [
+                f"Skill: {skill['name']}\nDescription: {skill.get('description', 'No description available.')}"
+                for skill in skill_batch
+            ]
             
-            # Embed
             try:
-                embedding = gemini_client.embed_content('text-embedding-004', text_to_embed)
-                if not embedding or all(v == 0.0 for v in embedding):
-                    print(f"Skipping {skill['name']} (Failed to get embedding)")
-                    continue
+                embeddings = gemini_client.embed_content_batch('text-embedding-004', texts_to_embed)
                 
-                batch.append({
-                    "uri": skill["uri"],
-                    "embedding": embedding
-                })
+                update_batch = []
+                for idx, emb in enumerate(embeddings):
+                    if not emb or all(v == 0.0 for v in emb):
+                        print(f"Skipping {skill_batch[idx]['name']} (Failed to get embedding)")
+                        continue
+                        
+                    update_batch.append({
+                        "uri": skill_batch[idx]["uri"],
+                        "embedding": emb
+                    })
+                    
+                if update_batch:
+                    update_query = """
+                    UNWIND $rows AS row
+                    MATCH (s:Skill {uri: row.uri})
+                    SET s.embedding = row.embedding
+                    """
+                    run_query(driver, update_query, {"rows": update_batch})
+                    count += len(update_batch)
+                    print(f"Embedded and updated {count} / {len(skills)} skills...")
             except Exception as e:
-                print(f"Error embedding {skill['name']}: {e}")
-                
-            if len(batch) >= batch_size:
-                update_query = """
-                UNWIND $rows AS row
-                MATCH (s:Skill {uri: row.uri})
-                SET s.embedding = row.embedding
-                """
-                run_query(driver, update_query, {"rows": batch})
-                count += len(batch)
-                print(f"Embedded and updated {count} / {len(skills)} skills...")
-                batch = []
-                
-        # Final batch
-        if batch:
-            update_query = """
-            UNWIND $rows AS row
-            MATCH (s:Skill {uri: row.uri})
-            SET s.embedding = row.embedding
-            """
-            run_query(driver, update_query, {"rows": batch})
-            count += len(batch)
-            print(f"Finished. Total updated: {count}")
+                print(f"Error in batch: {e}")
+        
+        print(f"Finished. Total updated: {count}")
 
     finally:
         driver.close()

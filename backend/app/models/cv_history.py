@@ -13,5 +13,5 @@ class CVVersion(SQLModel, table=True):
     ats_score: Optional[int] = None
     match_score: Optional[float] = None
     job_target: Optional[str] = None
-    pipeline_id: Optional[uuid.UUID] = Field(default=None, foreign_key="pipeline_runs.id")
+    pipeline_id: Optional[uuid.UUID] = Field(default=None, foreign_key="pipeline_runs.id", ondelete="CASCADE")
     created_at: datetime = Field(default_factory=datetime.utcnow)

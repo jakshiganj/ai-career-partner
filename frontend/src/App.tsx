@@ -6,13 +6,16 @@ import SignupPage from './pages/auth/SignupPage';
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
 import ResetPasswordPage from './pages/auth/ResetPasswordPage';
 import DashboardPage from './pages/dashboard/DashboardPage';
+import BillingPage from './pages/dashboard/BillingPage';
 import InterviewPage from './pages/interview/InterviewPage';
 import InterviewReportPage from './pages/interview/InterviewReportPage';
 import LandingPage from './pages/landing/LandingPage';
+import { ToastProvider } from './components/ui/Toast';
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <ToastProvider>
+      <BrowserRouter>
       <Routes>
         {/* Public routes — no navbar */}
         <Route path="/" element={<LandingPage />} />
@@ -22,6 +25,14 @@ export default function App() {
         <Route path="/reset-password" element={<ResetPasswordPage />} />
 
         {/* Protected routes — with navbar */}
+        <Route
+          path="/dashboard/billing"
+          element={
+            <ProtectedRoute>
+              <BillingPage />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/dashboard"
           element={
@@ -83,5 +94,6 @@ export default function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
+  </ToastProvider>
   );
 }

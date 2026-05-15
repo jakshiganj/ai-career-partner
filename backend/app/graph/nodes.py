@@ -4,9 +4,12 @@ from app.graph.wave1 import analyse_node
 from app.graph.wave2 import optimise_node
 from app.agents.roadmap_agent import RoadmapAgent
 from app.agents.interview_prep.agent import interview_prep_agent
+from app.core.logging import get_logger
+
+logger = get_logger(__name__)
 
 async def ingest_node(state: AgentState) -> dict:
-    print(f"[Stage 1] INGEST — pipeline_id={state.get('pipeline_id')}")
+    logger.info(f"[PIPELINE] Stage 1: INGEST — pipeline_id={state.get('pipeline_id')}")
     missing = []
     if not state.get("cv_raw") or len(state.get("cv_raw", "").strip()) < 50:
         missing.append("cv_raw")
@@ -25,7 +28,7 @@ async def classify_node(state: AgentState) -> dict:
     return {"current_stage": 4, "messages": ["Stage 4: Job classification complete"]}
 
 async def roadmap_node(state: AgentState) -> dict:
-    print(f"[Stage 5] ROADMAP — Generating skill progression")
+    logger.info(f"[PIPELINE] Stage 5: ROADMAP — Generating skill progression")
     missing_skills = state.get("skill_gaps", []) or state.get("missing_skills", [])
     target_role = state.get("job_description", "Software Engineer")
     
@@ -42,6 +45,7 @@ async def roadmap_node(state: AgentState) -> dict:
             "messages": ["Stage 5: Skill roadmap generated successfully"]
         }
     except Exception as e:
+        logger.error(f"[PIPELINE] Roadmap generation failed: {e}")
         import traceback
         error_msg = f"Roadmap failed: {e}\n{traceback.format_exc()}"
         return {
@@ -51,7 +55,7 @@ async def roadmap_node(state: AgentState) -> dict:
         }
 
 async def interview_prep_node(state: AgentState) -> dict:
-    print(f"[Stage 6] INTERVIEW PREP — Generating question bank")
+    logger.info(f"[PIPELINE] Stage 6: INTERVIEW PREP — Generating question bank")
     jd = state.get("job_description", "")
     resume = state.get("cv_raw", "")
     tier = state.get("job_tier", "Realistic")
@@ -65,6 +69,7 @@ async def interview_prep_node(state: AgentState) -> dict:
             "messages": ["Stage 6: Interview preparation materials ready"]
         }
     except Exception as e:
+        logger.error(f"[PIPELINE] Interview prep failed: {e}")
         import traceback
         error_msg = f"Interview prep failed: {e}\n{traceback.format_exc()}"
         return {
@@ -74,7 +79,7 @@ async def interview_prep_node(state: AgentState) -> dict:
         }
 
 async def persist_node(state: AgentState) -> dict:
-    print(f"[Stage 7] PERSIST")
+    logger.info(f"[PIPELINE] Stage 7: PERSIST")
     error_log = list(state.get("error_log", []))
     return {"status": "completed", "current_stage": 7, "completed_at": datetime.utcnow().isoformat(), "error_log": error_log, "messages": ["Stage 7: Pipeline completed successfully"]}
 

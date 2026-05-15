@@ -1,4 +1,5 @@
 import client from './client';
+import type { RoadmapPhase } from './roadmap';
 
 export interface DashboardSummary {
     cv_raw?: string;
@@ -36,7 +37,7 @@ export interface DashboardSummary {
         currency?: string;
     }>;
     skill_progress?: { roadmap_exists: boolean; completed: number; total: number };
-    skill_roadmap?: unknown[];
+    skill_roadmap?: RoadmapPhase[];
     interview_readiness?: {
         last_score?: number | null;
         report?: {

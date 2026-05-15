@@ -62,7 +62,8 @@ def scrape_topjobs_software_vacancies():
 
 def scrape_linkedin_jobs_via_apify(keyword):
     import urllib.parse
-    token = os.getenv("APIFY_API_TOKEN")
+    _token = os.getenv("APIFY_API_TOKEN")
+    token = _token.strip() if _token else None
     if not token:
         print("Apify Scrape: No APIFY_API_TOKEN found.")
         return []

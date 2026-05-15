@@ -24,7 +24,10 @@ export function useAgentPipeline({ userId, onEvent }: UsePipelineOptions) {
 
     const connect = useCallback(() => {
         if (!userId || wsRef.current) return;
-        const wsUrl = `ws://${import.meta.env.VITE_WS_HOST ?? 'localhost:8000'}/api/pipeline/ws/${userId}`;
+        const isProd = import.meta.env.VITE_WS_HOST && !import.meta.env.VITE_WS_HOST.includes('localhost');
+        const wsProtocol = isProd ? 'wss' : 'ws';
+        const wsHost = import.meta.env.VITE_WS_HOST || 'localhost:8000';
+        const wsUrl = `${wsProtocol}://${wsHost}/api/pipeline/ws/${userId}`;
         const ws = new WebSocket(wsUrl);
 
         ws.onopen = () => {

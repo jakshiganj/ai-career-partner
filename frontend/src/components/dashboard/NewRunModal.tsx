@@ -20,7 +20,7 @@ export default function NewRunModal({ onClose, onSuccess, onUpgradeRequired }: N
         setIsCvLoading(loadingVal);
     }, []);
 
-    const handleCvResult = useCallback((_id: number, _fb: unknown, redactedText: string) => {
+    const handleCvResult = useCallback((_id: string, _fb: unknown, redactedText: string) => {
         setNewRunCv(redactedText);
         setUploadMode('text'); // Auto-switch to verify text
         setIsCvLoading(false); // Ensure loading is cleared

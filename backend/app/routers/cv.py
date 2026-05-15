@@ -1,47 +1,40 @@
-from fastapi import APIRouter, UploadFile, File, Depends, HTTPException
+import uuid
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlmodel import select, desc
+
 from app.core.database import get_session
-from app.models.resume import Resume
-from app.utils.parsing import extract_text_from_pdf
-from app.agents.cv_critique.agent import analyze_cv_with_gemini 
 from app.core.security import get_current_user
+from app.core.logging import get_logger
 from app.models.user import User
 from app.models.cv_history import CVVersion
 from app.models.profile import CandidateProfile
+from app.agents.cv_critique.agent import analyze_cv_with_gemini 
 from app.agents.cv_parser_agent import CVParserAgent
-from sqlmodel import select
+from app.schemas.response import CVUploadResponse, CVAnalysisResponse
+from app.schemas.cv import CVUploadRequest
 
 router = APIRouter()
+logger = get_logger(__name__)
 
-from pydantic import BaseModel
-
-class CVUploadRequest(BaseModel):
-    text: str
-
-@router.post("/upload", status_code=201)
+@router.post("/upload", status_code=201, response_model=CVUploadResponse)
 async def upload_cv(
     req: CVUploadRequest,
     current_user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session)
 ):
+    """Handles CV text upload, versions it, and updates the candidate profile."""
+    logger.info(f"Processing CV upload for user: {current_user.email}")
     text = req.text
     
-    # 3. Use the pre-redacted text from the frontend
-    # Text is already supplied in `req.text`
-    
-    # 4. Save to Database
-    # Fetch existing to calculate version
+    # 1. Fetch existing versions to calculate version number
     result = await session.execute(
         select(CVVersion).where(CVVersion.user_id == current_user.id)
     )
     existing_versions = result.scalars().all()
     next_version = len(existing_versions) + 1
     
-    new_cv = Resume(user_id=current_user.id, content_text=text)
-    session.add(new_cv)
-    await session.commit()
-    await session.refresh(new_cv)
-    
+    # 2. Save to History (Primary storage)
     new_version = CVVersion(
         user_id=current_user.id,
         version_number=next_version,
@@ -49,12 +42,14 @@ async def upload_cv(
     )
     session.add(new_version)
     await session.commit()
+    await session.refresh(new_version)
     
-    # 5. Extract Structured Data via Agent
+    # 4. Extract Structured Data via Agent
+    logger.info("Parsing CV structured data via AI Agent")
     parser = CVParserAgent()
     parsed_data = await parser.run(text)
     
-    # 6. Upsert into CandidateProfile
+    # 5. Upsert into CandidateProfile
     result_profile = await session.execute(
         select(CandidateProfile).where(CandidateProfile.user_id == current_user.id)
     )
@@ -82,10 +77,9 @@ async def upload_cv(
         
     await session.commit()
     
-    # 7. Auto-Sync Roadmap with new CV Data
+    # 6. Auto-Sync Roadmap with new CV Data
     from app.models.interview_roadmap import SkillRoadmap
     from app.agents.roadmap_sync_agent import RoadmapSyncAgent
-    from sqlmodel import desc
     
     try:
         query = select(SkillRoadmap).where(SkillRoadmap.user_id == current_user.id).order_by(desc(SkillRoadmap.created_at)).limit(1)
@@ -93,6 +87,7 @@ async def upload_cv(
         active_roadmap = res_rm.scalar_one_or_none()
         
         if active_roadmap:
+            logger.info("Syncing active roadmap with new CV data")
             sync_agent = RoadmapSyncAgent()
             sync_result = await sync_agent.sync(parsed_data, active_roadmap.roadmap)
             if sync_result and "updated_roadmap" in sync_result:
@@ -100,31 +95,28 @@ async def upload_cv(
                 session.add(active_roadmap)
                 await session.commit()
     except Exception as e:
-        print(f"Roadmap sync failed silently: {e}")
+        logger.error(f"Roadmap sync failed: {e}")
         pass
     
     return {
         "message": "CV uploaded and parsed successfully", 
-        "cv_id": new_cv.id,
-        "version": next_version,
-        "profile": parsed_data
+        "cv_id": new_version.id,
+        "text_preview": text[:200] + "..." if len(text) > 200 else text
     }
 
-import uuid
 
-@router.post("/analyze/{cv_id}")
+@router.post("/analyze/{cv_id}", response_model=CVAnalysisResponse)
 async def analyze_cv(cv_id: uuid.UUID, session: AsyncSession = Depends(get_session)):
-    # 1. Find the CV in the database
-    cv = await session.get(Resume, cv_id)
+    """Analyzes a specific CV version using the Critique Agent."""
+    logger.info(f"Analyzing CV: {cv_id}")
+    cv = await session.get(CVVersion, cv_id)
     if not cv:
-        raise HTTPException(status_code=404, detail="CV not found")
+        logger.warning(f"CV Version not found for analysis: {cv_id}")
+        raise HTTPException(status_code=404, detail="CV Version not found")
         
-    # 2. Send the text to the AI Agent
-    critique_result = await analyze_cv_with_gemini(cv.content_text, session)
+    critique_result = await analyze_cv_with_gemini(cv.cv_text, session)
     
-    # 3. (Optional) Save the result to the DB? 
-    # For now, just return it to the user
     return {
         "cv_id": cv_id,
         "ai_feedback": critique_result
-    }
+    }

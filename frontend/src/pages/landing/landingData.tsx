@@ -80,7 +80,7 @@ export const faqs = [
     { q: 'How does the AI analysis work?', a: 'We use a multi-agent pipeline where specialized AI agents handle CV parsing, skill extraction, job matching, and interview prep independently — then synthesize results into a unified career dashboard.' },
     { q: 'Is my data secure?', a: 'Yes. Your CV and personal data are encrypted at rest and in transit. We never share your information with third parties or use it for training purposes.' },
     { q: 'How long does the analysis take?', a: 'The full pipeline — from CV upload to complete results — typically runs in under 2 minutes. You can track each agent\'s progress in real-time.' },
-    { q: 'Is there a free plan?', a: 'Yes. The free tier includes full CV analysis, skill mapping, and up to 10 matched job listings per run. Pro users get unlimited runs, interview prep, and priority processing.' },
+    { q: 'Is there a free plan?', a: 'Yes. The free tier includes full CV analysis, skill mapping, and up to 10 matched job listings. Our Pro and Premium plans offer unlimited pipeline runs, AI interview coaching, cover letter generation, and priority processing.' },
 ];
 
 export const processSteps = [

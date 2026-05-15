@@ -16,13 +16,13 @@ export default function LinkedInImport({ onImportComplete }: Props) {
             // Step 1: Redirect to LinkedIn OAuth flow
             // The backend /auth/linkedin/login route should redirect the user to LinkedIn
             // We will open it in a popup window to keep the SPA state
-            const backendUrl = 'http://localhost:8000';
+            const backendUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'https://ai-career-backend-560579918305.asia-southeast1.run.app';
             const width = 600, height = 700;
             const left = window.screen.width / 2 - width / 2;
             const top = window.screen.height / 2 - height / 2;
 
             const popup = window.open(
-                `${backendUrl}/auth/linkedin/login`,
+                `${backendUrl}/api/auth/linkedin/login`,
                 'LinkedIn Login',
                 `width=${width},height=${height},top=${top},left=${left}`
             );
@@ -34,7 +34,7 @@ export default function LinkedInImport({ onImportComplete }: Props) {
             // Step 2: Listen for message from popup once callback is complete
             const handleMessage = async (event: MessageEvent) => {
                 // Ensure message is from our backend
-                if (event.origin !== backendUrl && event.origin !== "http://127.0.0.1:8000") return;
+                if (event.origin !== backendUrl) return;
 
                 if (event.data?.type === 'LINKEDIN_AUTH_SUCCESS') {
                     // Callback success, access token is in event data
