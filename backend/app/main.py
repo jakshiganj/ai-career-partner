@@ -1,6 +1,7 @@
 from dotenv import load_dotenv
 load_dotenv()
 
+import os
 import sys
 import asyncio
 from contextlib import asynccontextmanager
@@ -95,7 +96,10 @@ for router, prefix, tag in _ROUTERS:
     app.include_router(router, prefix=prefix, tags=[tag])
 
 # ── Static Files & Root ──────────────────────────────────────────────
-app.mount("/static", StaticFiles(directory="static"), name="static")
+static_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static")
+if not os.path.exists(static_path):
+    os.makedirs(static_path)
+app.mount("/static", StaticFiles(directory=static_path), name="static")
 
 
 @app.get("/")

@@ -14,12 +14,14 @@ interface NEREntity {
     word: string;
 }
 
-type PipelineInstance = ReturnType<typeof pipeline>;
+// Define a type for the classifier that matches how we use it
+// This bypasses the TS2554 error by explicitly allowing a single string argument
+type TokenClassificationPipeline = (text: string, options?: Record<string, unknown>) => Promise<NEREntity[]>;
 
 class PIIPipeline {
     static task = 'token-classification' as const;
     static model = 'Xenova/bert-base-NER' as const;
-    static instance: PipelineInstance | null = null;
+    static instance: TokenClassificationPipeline | null = null;
 
     static async getInstance(progress_callback?: (data: { progress?: number }) => void) {
         if (this.instance === null) {
@@ -27,10 +29,13 @@ class PIIPipeline {
             env.remoteHost = 'https://huggingface.co';
             env.remotePathTemplate = '{model}/resolve/{revision}/';
 
-            this.instance = pipeline(this.task, this.model, { 
+            // We cast the pipeline result to our known usage type to avoid build errors
+            const classifier = await pipeline(this.task, this.model, { 
                 progress_callback,
                 quantized: true 
             });
+            
+            this.instance = classifier as unknown as TokenClassificationPipeline;
         }
         return this.instance;
     }
@@ -44,7 +49,7 @@ self.addEventListener('message', async (event) => {
 
     try {
         // 1. Initialize pipeline
-        const classifier = await PIIPipeline.getInstance((data: { progress?: number }) => {
+        const classifier = await PIIPipeline.getInstance((data) => {
             // Send progress updates back to the UI
             self.postMessage({ status: 'progress', data });
         });
@@ -61,7 +66,7 @@ self.addEventListener('message', async (event) => {
         let offset = 0;
 
         for (const chunk of chunks) {
-            const chunkOutput = await classifier(chunk) as NEREntity[];
+            const chunkOutput = await classifier(chunk);
             for (const entity of chunkOutput) {
                 allEntities.push({
                     ...entity,
@@ -84,7 +89,7 @@ self.addEventListener('message', async (event) => {
         
         // 4. Run NER Redactions
         // Sort entities by length (longest first) to avoid partial redactions
-        const entities = allEntities.sort((a: NEREntity, b: NEREntity) => (b.end - b.start) - (a.end - a.start));
+        const entities = allEntities.sort((a, b) => (b.end - b.start) - (a.end - a.start));
         
         // Use a Set to track words we've already redacted to avoid infinite loops
         const redactedWords = new Set<string>();
