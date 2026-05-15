@@ -1,45 +1,74 @@
 # ⚡ AI Partner for Career Development
 
-An advanced, agentic career development platform that automates the end-to-end journey from profile ingestion to interview preparation. Built with a multi-agent architecture using **LangGraph**, **FastAPI**, and **React**.
+An advanced, agentic career development platform that automates the end-to-end journey from profile ingestion to interview preparation. Built with a multi-agent architecture using **LangGraph**, **FastAPI**, and **React** — deployed on **Google Cloud Run**.
+
+> **Live Production**
+> - 🌐 Frontend: [ai-career-frontend](https://ai-career-frontend-560579918305.asia-southeast1.run.app)
+> - 🔌 Backend API: [ai-career-backend](https://ai-career-backend-560579918305.asia-southeast1.run.app/docs)
 
 ---
 
-## 🚀 Quick Start (Docker)
+## 🚀 Quick Start
 
-To get the application up and running on your local machine:
+### Option A: Local Development (Docker)
 
-### 1. Prerequisites
+#### 1. Prerequisites
 - [Docker](https://www.docker.com/get-started) installed.
-- A **Google Gemini API Key** (Get one at [Google AI Studio](https://aistudio.google.com/)).
+- A **Google Cloud Project** with Vertex AI enabled.
 
-### 2. Environment Setup
-Clone the repository and create your environment file:
+#### 2. Environment Setup
 ```bash
 cp backend/.env.example backend/.env
 ```
-Edit `backend/.env` and add your `GOOGLE_API_KEY`.
+Edit `backend/.env` and configure:
+- `GOOGLE_CLOUD_PROJECT` — your GCP project ID
+- `GOOGLE_GENAI_USE_VERTEXAI=True`
+- `STRIPE_SECRET_KEY` / `STRIPE_WEBHOOK_SECRET` — for payment features
 
-### 3. Build & Launch
+#### 3. Build & Launch
 ```bash
 docker compose up --build
 ```
-Once the containers are running:
-- **Frontend**: [http://localhost:3000](http://localhost:3000)
-- **Backend API**: [http://localhost:8000/docs](http://localhost:8000/docs)
-- **PGAdmin**: [http://localhost:5050](http://localhost:5050) (User: `admin@admin.com`, Pass: `root`)
+Once running:
+| Service       | URL                                                         |
+| ------------- | ----------------------------------------------------------- |
+| Frontend      | [http://localhost:3000](http://localhost:3000)               |
+| Backend API   | [http://localhost:8000/docs](http://localhost:8000/docs)     |
+| PGAdmin       | [http://localhost:5050](http://localhost:5050)               |
+| Neo4j Browser | [http://localhost:7474](http://localhost:7474)               |
 
-### 4. Initialize Data (Seeding)
-To populate the system with ESCO skills and job ontologies:
+#### 4. Seed Data
+Populate the system with ESCO skills and job ontologies:
 ```bash
 docker exec -it career_backend python scripts/seed_esco.py
 docker exec -it career_backend python scripts/seed_neo4j_skills.py
+```
+
+### Option B: Cloud Deployment (Google Cloud Run)
+
+The project is production-deployed on Cloud Run with:
+- **Cloud SQL** (PostgreSQL 18 + pgvector) via Cloud SQL Auth Proxy
+- **Neo4j AuraDB** for the skill knowledge graph
+- **Vertex AI** (Gemini 2.5 Flash) for all LLM inference
+- Environment-aware configuration (`APP_ENV=production`) for automatic URL routing
+
+Deploy commands:
+```bash
+# Backend
+gcloud run deploy ai-career-backend --source ./backend \
+  --region asia-southeast1 --allow-unauthenticated \
+  --add-cloudsql-instances PROJECT:REGION:INSTANCE
+
+# Frontend
+gcloud run deploy ai-career-frontend --source ./frontend \
+  --region asia-southeast1 --allow-unauthenticated
 ```
 
 ---
 
 ## 🧠 Architecture: The "Thin Orchestrator" Pattern
 
-The system utilizes a state-of-the-art multi-agent design where a **Master Orchestrator** delegates specialized tasks to a swarm of autonomous agents.
+The system uses a multi-agent design where a **Master Orchestrator** (LangGraph state machine) delegates specialized tasks to a swarm of autonomous agents with persistent checkpointing.
 
 ```mermaid
 graph TD
@@ -56,9 +85,9 @@ graph TD
     end
     
     subgraph "Storage & Intelligence"
-        RAG <--> NEO[Neo4j - Skill Graph]
-        ORCH <--> PG[PostgreSQL - pgvector]
-        CV & RAG & IV <--> GEM[Gemini 2.5 Flash]
+        RAG <--> NEO[Neo4j AuraDB - Skill Graph]
+        ORCH <--> PG[Cloud SQL - PostgreSQL + pgvector]
+        CV & RAG & IV <--> GEM[Vertex AI - Gemini 2.5 Flash]
     end
     
     ORCH -->|Final Result| FE
@@ -68,31 +97,67 @@ graph TD
 
 ## ✨ Core Features
 
-- **Multi-Source Ingestion**: Import your professional profile via PDF upload or LinkedIn public URL.
-- **GraphRAG Skill Gap Analysis**: Uses a Neo4j-backed skill ontology (ESCO) to find precise gaps between your profile and target roles.
-- **ATS Optimization Engine**: Predicts your ATS score and generates a version of your CV tailored to a specific job description.
-- **AI Interview Coach**: Interactive, voice-capable interview practice sessions that score your responses based on Relevance, Clarity, and Depth.
-- **Career Roadmap**: A visual learning path with recommended resources to bridge identified skill gaps.
-- **Privacy-First**: Client-side PII redaction ensures sensitive data never leaves your browser unless necessary.
+- **Multi-Source Ingestion** — Import your professional profile via PDF upload or LinkedIn public URL (Apify-powered scraping).
+- **GraphRAG Skill Gap Analysis** — Neo4j-backed ESCO skill ontology finds precise gaps between your profile and target roles.
+- **ATS Optimization Engine** — Predicts ATS score and generates a tailored CV version for any job description.
+- **AI Interview Coach** — Real-time, voice-capable interview sessions using Vertex AI Multimodal Live API, scored on Relevance, Clarity, and Depth.
+- **Career Roadmap** — Visual learning path with recommended resources to bridge identified skill gaps.
+- **Privacy-First** — Client-side PII redaction via Web Workers ensures sensitive data never leaves the browser.
+- **OAuth Authentication** — Sign in with Google or LinkedIn alongside traditional email/password.
+- **Stripe Payments** — Tiered subscription system (Free / Pro / Premium) with webhook-driven status sync.
+- **7-Stage Pipeline UX** — Real-time WebSocket progress updates with a multi-stage loading system during AI processing.
 
 ---
 
 ## 🛠️ Technical Stack
 
-- **Backend**: FastAPI (Python 3.11+), LangGraph (Orchestration), SQLAlchemy/SQLModel.
-- **Frontend**: React (TypeScript), Vite, Tailwind CSS, Framer Motion, Recharts.
-- **Databases**: 
-  - **PostgreSQL**: Application data & Vector storage (`pgvector`).
-  - **Neo4j**: Graph-based skill matching.
-- **AI/ML**: Google Gemini 2.5 Flash, Sentence-Transformers (Embeddings).
-- **DevOps**: Docker, Nginx.
+| Layer        | Technologies                                                                    |
+| ------------ | ------------------------------------------------------------------------------- |
+| **Backend**  | FastAPI, Python 3.11, LangGraph, SQLAlchemy/SQLModel, Alembic, Uvicorn          |
+| **Frontend** | React 19, TypeScript, Vite, Tailwind CSS, Framer Motion, Recharts               |
+| **AI/ML**    | Vertex AI (Gemini 2.5 Flash), Sentence-Transformers (`all-MiniLM-L6-v2`)        |
+| **Databases**| Cloud SQL PostgreSQL 18 + pgvector, Neo4j AuraDB                                |
+| **Auth**     | JWT (python-jose), Google OAuth 2.0, LinkedIn OAuth 2.0                         |
+| **Payments** | Stripe Checkout + Webhooks                                                      |
+| **DevOps**   | Google Cloud Run, Cloud Build, Cloud SQL Auth Proxy, Docker, Nginx, `uv`        |
+| **Testing**  | Pytest, Vitest, Playwright (E2E)                                                |
+
+---
+
+## 📁 Project Structure
+
+```
+ai-career-partner/
+├── backend/
+│   ├── app/
+│   │   ├── core/           # Config, database, security, logging
+│   │   ├── models/         # SQLModel database models
+│   │   ├── routers/        # FastAPI route handlers
+│   │   ├── orchestrator/   # LangGraph master orchestrator
+│   │   ├── services/       # Business logic layer
+│   │   └── schemas/        # Pydantic request/response schemas
+│   ├── alembic/            # Database migrations
+│   ├── scripts/            # Seed scripts (ESCO, Neo4j)
+│   ├── Dockerfile
+│   └── requirements.txt
+├── frontend/
+│   ├── src/
+│   │   ├── components/     # Reusable UI components
+│   │   ├── pages/          # Route pages
+│   │   ├── services/       # API client layer
+│   │   └── workers/        # Web Workers (PII redaction)
+│   ├── Dockerfile
+│   └── nginx.conf
+├── docker-compose.yml      # Local development stack
+└── README.md
+```
 
 ---
 
 ## 📝 Academic Project Information
 
 - **Submission Date**: May 15, 2026
-- **Status**: Dockerized & Feature Complete
+- **Status**: Production-deployed on Google Cloud Run
 - **Author**: Jakshiganj
 
 ---

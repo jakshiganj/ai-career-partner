@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisco
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select, desc, func
 
+from app.core.config import settings
 from app.core.database import get_session
 from app.core.security import get_current_user
 from app.core.ws_manager import manager
