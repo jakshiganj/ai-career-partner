@@ -6,12 +6,22 @@ env.useBrowserCache = true;
 
 console.log('🚀 PII Worker v4 (Official Xenova) Loaded');
 
+interface NEREntity {
+    entity: string;
+    start: number;
+    end: number;
+    score: number;
+    word: string;
+}
+
+type PipelineInstance = ReturnType<typeof pipeline>;
+
 class PIIPipeline {
     static task = 'token-classification' as const;
     static model = 'Xenova/bert-base-NER' as const;
-    static instance: any = null;
+    static instance: PipelineInstance | null = null;
 
-    static async getInstance(progress_callback?: any) {
+    static async getInstance(progress_callback?: (data: { progress?: number }) => void) {
         if (this.instance === null) {
             // Reset to defaults for public Hugging Face access
             env.remoteHost = 'https://huggingface.co';
@@ -34,7 +44,7 @@ self.addEventListener('message', async (event) => {
 
     try {
         // 1. Initialize pipeline
-        const classifier = await PIIPipeline.getInstance((data: any) => {
+        const classifier = await PIIPipeline.getInstance((data: { progress?: number }) => {
             // Send progress updates back to the UI
             self.postMessage({ status: 'progress', data });
         });
@@ -47,11 +57,11 @@ self.addEventListener('message', async (event) => {
             chunks.push(text.substring(i, i + chunkSize));
         }
 
-        const allEntities: any[] = [];
+        const allEntities: NEREntity[] = [];
         let offset = 0;
 
         for (const chunk of chunks) {
-            const chunkOutput = await classifier(chunk);
+            const chunkOutput = await classifier(chunk) as NEREntity[];
             for (const entity of chunkOutput) {
                 allEntities.push({
                     ...entity,
@@ -74,7 +84,7 @@ self.addEventListener('message', async (event) => {
         
         // 4. Run NER Redactions
         // Sort entities by length (longest first) to avoid partial redactions
-        const entities = allEntities.sort((a: any, b: any) => (b.end - b.start) - (a.end - a.start));
+        const entities = allEntities.sort((a: NEREntity, b: NEREntity) => (b.end - b.start) - (a.end - a.start));
         
         // Use a Set to track words we've already redacted to avoid infinite loops
         const redactedWords = new Set<string>();
@@ -97,7 +107,8 @@ self.addEventListener('message', async (event) => {
         // 5. Send result back
         self.postMessage({ status: 'complete', redactedText });
 
-    } catch (error: any) {
-        self.postMessage({ status: 'error', error: error.message });
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        self.postMessage({ status: 'error', error: message });
     }
 });

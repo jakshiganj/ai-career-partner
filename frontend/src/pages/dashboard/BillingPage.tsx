@@ -91,7 +91,7 @@ export default function BillingPage() {
         try {
             const { url } = await createCheckoutSession(tierId as 'pro' | 'premium');
             window.location.href = url;
-        } catch (err) {
+        } catch {
             error('Failed to initiate checkout. Please try again.');
         } finally {
             setActionLoading(null);
@@ -103,7 +103,7 @@ export default function BillingPage() {
         try {
             const { url } = await createPortalSession();
             window.location.href = url;
-        } catch (err) {
+        } catch {
             error('Failed to open billing portal.');
         } finally {
             setActionLoading(null);

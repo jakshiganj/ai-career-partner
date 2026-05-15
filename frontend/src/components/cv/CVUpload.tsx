@@ -69,7 +69,7 @@ export default function CVUpload({ onResult, onLoading }: Props) {
                     for (let i = 1; i <= pdf.numPages; i++) {
                         const page = await pdf.getPage(i);
                         const content = await page.getTextContent();
-                        const pageText = content.items.map((item: any) => item.str ?? '').join(' ');
+                        const pageText = content.items.map((item: { str?: string }) => item.str ?? '').join(' ');
                         fullText += pageText + '\n';
                     }
                     resolve(fullText);
@@ -116,8 +116,9 @@ export default function CVUpload({ onResult, onLoading }: Props) {
             toastSuccess('CV uploaded and redacted successfully!');
             onResult?.(res.cv_id, null, redactedText);
 
-        } catch (e: any) {
-            const msg = e.response?.data?.detail ?? e.message ?? 'Upload failed.';
+        } catch (e: unknown) {
+            const err = e as { response?: { data?: { detail?: string } }; message?: string };
+            const msg = err.response?.data?.detail ?? err.message ?? 'Upload failed.';
             toastError(msg);
             setError(msg);
             setUploading(false);

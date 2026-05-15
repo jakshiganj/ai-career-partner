@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, XCircle, Info, AlertCircle, X } from 'lucide-react';
@@ -34,10 +35,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setTimeout(() => removeToast(id), 5000);
     }, [removeToast]);
 
-    // Expose for debugging
-    React.useEffect(() => {
-        (window as any).showToast = toast;
-    }, [toast]);
+
 
     const success = (msg: string) => toast(msg, 'success');
     const error = (msg: string) => toast(msg, 'error');

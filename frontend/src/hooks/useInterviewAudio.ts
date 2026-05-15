@@ -151,9 +151,9 @@ export function useInterviewAudio() {
             const source = audioCtx.createMediaStreamSource(stream);
             source.connect(workletNode);
             workletNode.connect(audioCtx.destination);
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error("Microphone access failed", err);
-            const errorMessage = err?.message || String(err);
+            const errorMessage = err instanceof Error ? err.message : String(err);
             addMsg('system', `Microphone access failed (${errorMessage}). Text mode only. If you are accessing via an IP address (HTTP), browsers block microphones. Use localhost or HTTPS.`);
             setAudioMode(false);
         }
