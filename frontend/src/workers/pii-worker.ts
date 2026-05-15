@@ -15,7 +15,6 @@ interface NEREntity {
 }
 
 // Define a type for the classifier that matches how we use it
-// This bypasses the TS2554 error by explicitly allowing a single string argument
 type TokenClassificationPipeline = (text: string, options?: Record<string, unknown>) => Promise<NEREntity[]>;
 
 class PIIPipeline {
@@ -30,11 +29,11 @@ class PIIPipeline {
             env.remotePathTemplate = '{model}/resolve/{revision}/';
 
             // We cast the pipeline result to our known usage type to avoid build errors
-            const classifier = await pipeline(this.task, this.model, { 
+            const classifier = await pipeline(this.task, this.model, {
                 progress_callback,
-                quantized: true 
+                quantized: true
             });
-            
+
             this.instance = classifier as unknown as TokenClassificationPipeline;
         }
         return this.instance;
@@ -86,18 +85,18 @@ self.addEventListener('message', async (event) => {
         // Apply Regex Redactions first
         redactedText = redactedText.replace(emailRegex, '[REDACTED_EMAIL]');
         redactedText = redactedText.replace(phoneRegex, '[REDACTED_PHONE]');
-        
+
         // 4. Run NER Redactions
         // Sort entities by length (longest first) to avoid partial redactions
         const entities = allEntities.sort((a, b) => (b.end - b.start) - (a.end - a.start));
-        
+
         // Use a Set to track words we've already redacted to avoid infinite loops
         const redactedWords = new Set<string>();
 
         for (const entity of entities) {
             const label = entity.entity;
             const originalWord = text.substring(entity.start, entity.end);
-            
+
             if (originalWord.length < 2 || redactedWords.has(originalWord)) continue;
 
             if (label.includes('PER')) {
